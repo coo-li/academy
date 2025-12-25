@@ -1,0 +1,34 @@
+# trafficdesign Tool UI Kit - Laravel Design System Rules
+
+**UI Kit Repo:** https://github.com/simse0/trafficdesign-tool-ui-kit  
+**Referenz:** Alle Komponenten, Farben & CSS-Klassen → `DESIGN-SYSTEM.md`
+
+## Tech-Stack
+Laravel Breeze (Blade) + Tailwind (Custom Theme) + Alpine.js
+
+## Design System
+
+**Farben:** NIEMALS Tailwind Defaults!
+- ❌ `bg-blue-500`, `text-green-600`
+- ✅ `bg-brand-primary`, `text-ui-success`, `border-surface-300`
+
+**Komponenten:** CSS-Klassen aus `DESIGN-SYSTEM.md` nutzen
+- `.btn-primary`, `.card-tool`, `.input-field`, `.table-tool`, `.badge-success`
+
+**Interaktivität:** Alpine.js bevorzugen (kein Livewire, kein jQuery)
+- Toast-Notifications: `notify('Nachricht', 'success')`
+
+## Laravel-Konventionen
+
+- **Blade:** `<x-component>` statt `@include`
+- **Validation:** FormRequest-Klassen, nicht im Controller
+- **Authorization:** Policies, nicht inline im Controller
+- **Business Logic:** Service-Klassen, Controller bleibt dünn
+- **Testing:** Feature-Tests für kritische Flows mitdenken!
+
+## Projekt-Dokumentation
+
+Feature-Doku in `docs/features/[BEREICH]-FEATURES.md`:
+- AUTH-FEATURES.md, IMPORT-FEATURES.md, REPORTING-FEATURES.md, ADMIN-FEATURES.md
+
+⚠️ **WÄHREND** der Entwicklung dokumentieren!
