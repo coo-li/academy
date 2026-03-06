@@ -1,200 +1,190 @@
 <x-app-layout>
     @section('page-title', 'Dashboard')
-    
+
     <div class="space-y-6">
-        <!-- Page Header -->
+        {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Dashboard</h1>
-                <p class="text-surface-500 mt-1">Willkommen zurück, {{ Auth::user()->name }}!</p>
+                <h1 class="text-3xl font-bold text-brand-dark">Willkommen, {{ Auth::user()->name }}!</h1>
+                <p class="text-surface-500 mt-1">Dein Lernfortschritt auf einen Blick.</p>
             </div>
+            @if(Auth::user()->isManager())
             <div class="flex items-center gap-2">
-                <x-button variant="secondary">
+                <a href="#" class="btn-secondary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
-                    Export
-                </x-button>
-                <x-button variant="primary">
+                    Berichte
+                </a>
+                <a href="#" class="btn-primary">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
                     </svg>
-                    Neu erstellen
-                </x-button>
+                    Modul erstellen
+                </a>
             </div>
+            @endif
         </div>
 
-        <!-- Stats Grid -->
+        {{-- Stats --}}
+        @php
+            $user = Auth::user();
+            $enrollmentCount = $user->enrollments()->count();
+            $completedCount = $user->enrollments()->where('status', 'completed')->count();
+            $inProgressCount = $user->enrollments()->where('status', 'in_progress')->count();
+            $percentage = $enrollmentCount > 0 ? round(($completedCount / $enrollmentCount) * 100) : 0;
+        @endphp
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <div class="stat-card">
-                <div class="stat-label">Gesamtumsatz</div>
-                <div class="stat-value">€124.520</div>
-                <div class="stat-trend-up">
+                <div class="stat-label">Eingeschriebene Module</div>
+                <div class="stat-value">{{ $enrollmentCount }}</div>
+                <div class="help-text mt-2">Pflicht- und Wahlmodule</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-label">Abgeschlossen</div>
+                <div class="stat-value text-ui-success">{{ $completedCount }}</div>
+                <div class="stat-trend-up mt-2" style="{{ $completedCount === 0 ? 'display:none' : '' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>+12.5% gegenüber Vormonat</span>
+                    <span>{{ $percentage }}% Fortschritt</span>
                 </div>
             </div>
-            
+
             <div class="stat-card">
-                <div class="stat-label">Aktive Nutzer</div>
-                <div class="stat-value">2.847</div>
-                <div class="stat-trend-up">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                    </svg>
-                    <span>+8.2%</span>
-                </div>
+                <div class="stat-label">In Bearbeitung</div>
+                <div class="stat-value text-brand-primary">{{ $inProgressCount }}</div>
+                <div class="help-text mt-2">Aktuell aktive Module</div>
             </div>
-            
+
             <div class="stat-card">
-                <div class="stat-label">Offene Aufgaben</div>
-                <div class="stat-value">24</div>
-                <div class="stat-trend-down">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path>
-                    </svg>
-                    <span>-5 seit gestern</span>
-                </div>
-            </div>
-            
-            <div class="stat-card">
-                <div class="stat-label">Erfolgsquote</div>
-                <div class="stat-value">94.2%</div>
-                <div class="stat-trend-neutral">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14"></path>
-                    </svg>
-                    <span>Keine Änderung</span>
+                <div class="stat-label">Gesamtfortschritt</div>
+                <div class="stat-value">{{ $percentage }}%</div>
+                <div class="mt-3">
+                    <div class="progress-bar">
+                        <div class="progress-bar-fill" style="width: {{ $percentage }}%"></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Main Content Grid -->
+        {{-- Main Content --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- Chart Card -->
+            {{-- Karrierepfade --}}
             <div class="lg:col-span-2">
-                <x-card title="Übersicht">
-                    <x-slot:header>
-                        <div class="flex items-center gap-2">
-                            <select class="select-field w-auto text-sm">
-                                <option>Letzte 7 Tage</option>
-                                <option>Letzte 30 Tage</option>
-                                <option>Dieses Jahr</option>
-                            </select>
+                <x-card title="Karrierepfade">
+                    @php $paths = \App\Models\CareerPath::with('levels.modules')->get(); @endphp
+
+                    @forelse($paths as $path)
+                    <div class="{{ !$loop->first ? 'mt-6 pt-6 border-t border-surface-200' : '' }}">
+                        <h3 class="font-semibold text-brand-dark text-lg">{{ $path->name }}</h3>
+                        <p class="text-sm text-surface-500 mt-1">{{ $path->description }}</p>
+
+                        <div class="mt-4 space-y-3">
+                            @foreach($path->levels as $level)
+                            <div class="panel-compact">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold
+                                            {{ $level->level_number === 1 ? 'bg-ui-success-light text-ui-success-dark' : '' }}
+                                            {{ $level->level_number === 2 ? 'bg-ui-info-light text-ui-info-dark' : '' }}
+                                            {{ $level->level_number >= 3 ? 'bg-ui-warning-light text-ui-warning-dark' : '' }}">
+                                            {{ $level->level_number }}
+                                        </div>
+                                        <div>
+                                            <div class="font-medium text-brand-dark">{{ $level->title }}</div>
+                                            <div class="text-xs text-surface-500">{{ $level->modules->count() }} Module</div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        @foreach($level->modules as $module)
+                                        @if($module->method)
+                                        <span class="badge-primary hidden md:inline-flex">
+                                            {{ $module->method->name }}
+                                        </span>
+                                        @endif
+                                        @endforeach
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
                         </div>
-                    </x-slot:header>
-                    
-                    <div id="dashboard-chart" class="chart-container"></div>
-                    
-                    <script>
-                        document.addEventListener('DOMContentLoaded', function() {
-                            if (typeof createChart === 'function') {
-                                createChart(document.querySelector('#dashboard-chart'), {
-                                    chart: {
-                                        type: 'area',
-                                        height: 320
-                                    },
-                                    series: [{
-                                        name: 'Umsatz',
-                                        data: [31, 40, 28, 51, 42, 109, 100]
-                                    }],
-                                    xaxis: {
-                                        categories: ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So']
-                                    }
-                                });
-                            }
-                        });
-                    </script>
+                    </div>
+                    @empty
+                    <div class="empty-state">
+                        <svg class="empty-state-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                        </svg>
+                        <div class="empty-state-title">Noch keine Karrierepfade</div>
+                        <div class="empty-state-description">Karrierepfade werden vom Admin in der Struktur-Verwaltung angelegt.</div>
+                    </div>
+                    @endforelse
                 </x-card>
             </div>
 
-            <!-- Recent Activity -->
-            <x-card title="Letzte Aktivitäten">
-                <div class="timeline">
-                    <div class="timeline-item">
-                        <span class="timeline-marker-success"></span>
-                        <div class="timeline-content">
-                            <div class="timeline-title">Neuer Benutzer registriert</div>
-                            <div class="timeline-time">Vor 5 Minuten</div>
+            {{-- Sidebar: Quick Actions + Info --}}
+            <div class="space-y-6">
+                {{-- Rolle --}}
+                <div class="card-tool p-4">
+                    <div class="flex items-center gap-3">
+                        <div class="avatar-lg">
+                            <span>{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
                         </div>
-                    </div>
-                    <div class="timeline-item">
-                        <span class="timeline-marker-primary"></span>
-                        <div class="timeline-content">
-                            <div class="timeline-title">Projekt aktualisiert</div>
-                            <div class="timeline-time">Vor 15 Minuten</div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <span class="timeline-marker"></span>
-                        <div class="timeline-content">
-                            <div class="timeline-title">Aufgabe abgeschlossen</div>
-                            <div class="timeline-time">Vor 1 Stunde</div>
-                        </div>
-                    </div>
-                    <div class="timeline-item">
-                        <span class="timeline-marker-primary"></span>
-                        <div class="timeline-content">
-                            <div class="timeline-title">Neues Feature deployed</div>
-                            <div class="timeline-time">Vor 2 Stunden</div>
+                        <div>
+                            <div class="font-semibold text-brand-dark">{{ Auth::user()->name }}</div>
+                            <div class="text-sm text-surface-500">{{ Auth::user()->email }}</div>
+                            @php
+                                $roleBadgeMap = [
+                                    'admin' => 'badge-error',
+                                    'people_manager' => 'badge-warning',
+                                    'head_of' => 'badge-warning',
+                                    'trainer' => 'badge-info',
+                                    'mitarbeitender' => 'badge-success',
+                                ];
+                            @endphp
+                            <div class="flex flex-wrap gap-1 mt-1">
+                                @forelse(Auth::user()->roles as $role)
+                                    <span class="{{ $roleBadgeMap[$role->slug] ?? 'badge-neutral' }}">{{ $role->name }}</span>
+                                @empty
+                                    <span class="badge-neutral">Mitarbeitender</span>
+                                @endforelse
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <x-slot:footer>
-                    <a href="#" class="text-brand-primary text-sm font-medium hover:underline">
-                        Alle Aktivitäten anzeigen →
-                    </a>
-                </x-slot:footer>
-            </x-card>
-        </div>
 
-        <!-- Quick Actions -->
-        <x-card title="Schnellzugriff">
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <a href="{{ route('demo') }}" class="panel-padded hover:bg-surface-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-3 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        <svg class="w-5 h-5 text-brand-primary group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                        </svg>
+                {{-- Quick Actions --}}
+                <x-card title="Schnellzugriff">
+                    <div class="space-y-2">
+                        <a href="#" class="sidebar-link">
+                            <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            Modulkatalog öffnen
+                        </a>
+                        <a href="#" class="sidebar-link">
+                            <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
+                            </svg>
+                            Digitale Mappe
+                        </a>
+                        <a href="#" class="sidebar-link">
+                            <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Nächste Termine
+                        </a>
+                        <a href="{{ route('profile.edit') }}" class="sidebar-link">
+                            <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Profil bearbeiten
+                        </a>
                     </div>
-                    <h4 class="font-medium text-brand-dark">UI Demo</h4>
-                    <p class="text-xs text-surface-500 mt-1">Alle Komponenten ansehen</p>
-                </a>
-                
-                <a href="{{ route('profile.edit') }}" class="panel-padded hover:bg-surface-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-3 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        <svg class="w-5 h-5 text-brand-primary group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="font-medium text-brand-dark">Profil</h4>
-                    <p class="text-xs text-surface-500 mt-1">Einstellungen bearbeiten</p>
-                </a>
-                
-                <a href="#" class="panel-padded hover:bg-surface-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-3 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        <svg class="w-5 h-5 text-brand-primary group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="font-medium text-brand-dark">Berichte</h4>
-                    <p class="text-xs text-surface-500 mt-1">Analysen und Reports</p>
-                </a>
-                
-                <a href="#" class="panel-padded hover:bg-surface-50 transition-colors group">
-                    <div class="w-10 h-10 rounded-lg bg-brand-light flex items-center justify-center mb-3 group-hover:bg-brand-primary group-hover:text-white transition-colors">
-                        <svg class="w-5 h-5 text-brand-primary group-hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                        </svg>
-                    </div>
-                    <h4 class="font-medium text-brand-dark">Einstellungen</h4>
-                    <p class="text-xs text-surface-500 mt-1">System konfigurieren</p>
-                </a>
+                </x-card>
             </div>
-        </x-card>
+        </div>
     </div>
 </x-app-layout>

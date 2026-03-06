@@ -43,7 +43,7 @@
                 <span class="absolute -top-1 -right-1 w-4 h-4 bg-ui-error text-white text-xs rounded-full flex items-center justify-center">3</span>
             </button>
             
-            <div x-show="open" @click.away="open = false" 
+            <div x-show="open" x-cloak @click.away="open = false" 
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100"
@@ -81,7 +81,7 @@
                 </svg>
             </button>
             
-            <div x-show="open" @click.away="open = false"
+            <div x-show="open" x-cloak @click.away="open = false"
                  x-transition:enter="transition ease-out duration-100"
                  x-transition:enter-start="opacity-0 scale-95"
                  x-transition:enter-end="opacity-100 scale-100"

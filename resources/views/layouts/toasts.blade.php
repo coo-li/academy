@@ -1,7 +1,7 @@
 <!-- Toast Container -->
 <div class="fixed bottom-4 right-4 z-50 flex flex-col gap-2" x-data>
     <template x-for="notification in $store.notifications.items" :key="notification.id">
-        <div x-show="true"
+        <div x-show="true" x-cloak
              x-transition:enter="transition ease-out duration-300"
              x-transition:enter-start="opacity-0 translate-x-4"
              x-transition:enter-end="opacity-100 translate-x-0"

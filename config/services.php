@@ -35,4 +35,20 @@ return [
         ],
     ],
 
+    'asana' => [
+        'token' => env('ASANA_ACCESS_TOKEN'),
+        'project_id' => env('ASANA_PROJECT_ID'),
+    ],
+
+    'google' => [
+        'calendar_id' => env('GOOGLE_CALENDAR_ID', 'primary'),
+        'calendar_impersonate' => env('GOOGLE_CALENDAR_IMPERSONATE'),
+    ],
+
+    'personio' => [
+        'client_id' => env('PERSONIO_CLIENT_ID'),
+        'client_secret' => env('PERSONIO_CLIENT_SECRET'),
+        'base_url' => env('PERSONIO_BASE_URL', 'https://api.personio.de/v1'),
+    ],
+
 ];

@@ -18,7 +18,7 @@
     <div class="flex min-h-screen">
         
         <!-- Mobile Sidebar Backdrop -->
-        <div x-show="mobileMenuOpen" 
+        <div x-show="mobileMenuOpen" x-cloak
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0"
              x-transition:enter-end="opacity-100"
@@ -32,7 +32,7 @@
         @include('layouts.sidebar')
         
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col min-w-0" :class="{ 'lg:ml-64': sidebarOpen, 'lg:ml-0': !sidebarOpen }">
+        <div class="flex-1 flex flex-col min-w-0 lg:ml-64" :class="{ 'lg:ml-64': sidebarOpen, 'lg:!ml-0': !sidebarOpen }">
             
             <!-- Topbar -->
             @include('layouts.topbar')
@@ -49,5 +49,7 @@
     
     <!-- Toast Container -->
     @include('layouts.toasts')
+
+    @stack('scripts')
 </body>
 </html>

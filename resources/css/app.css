@@ -5,6 +5,8 @@
 @tailwind components;
 @tailwind utilities;
 
+[x-cloak] { display: none !important; }
+
 /* ============================================
    trafficdesign ENTERPRISE UI KIT
    Globals & Component Classes

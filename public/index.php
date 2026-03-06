@@ -3,6 +3,10 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
 
+// Override Docker environment variables before Laravel loads
+$_ENV['DB_HOST'] = $_SERVER['DB_HOST'] ?? '172.19.0.1';
+putenv('DB_HOST=' . $_ENV['DB_HOST']);
+
 define('LARAVEL_START', microtime(true));
 
 // Determine if the application is in maintenance mode...

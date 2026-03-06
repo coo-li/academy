@@ -1,59 +1,118 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# td Academy - Lernplattform für trafficdesign
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+> Interne Lernplattform zur strukturierten Weiterentwicklung aller Mitarbeitenden bei trafficdesign.  
+> Karrierestufen, Module, Prüfungen und nahtlose Integration in bestehende Systeme.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Vision
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+Die **td Academy** ist die zentrale Lernplattform von trafficdesign. Sie bildet den gesamten Karrierepfad eines Mitarbeitenden ab – vom Onboarding bis zur Spezialisierung. Ziel ist eine transparente, messbare und motivierende Weiterentwicklung über alle Abteilungen hinweg.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Karrierestufen
 
-## Learning Laravel
+Jeder Mitarbeitende durchläuft klar definierte Karrierestufen:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+| Stufe | Beschreibung |
+|-------|-------------|
+| **Junior** | Einstieg, Grundlagen-Module, begleitetes Onboarding |
+| **Mid-Level** | Vertiefung in Fachbereichen, erste eigenständige Projekte |
+| **Senior** | Spezialisierung, Mentoring, strategische Aufgaben |
+| **Lead / Expert** | Teamführung, Wissenstransfer, Prozessgestaltung |
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Jede Stufe hat zugeordnete **Pflicht-Module** und **optionale Vertiefungen**, die im System hinterlegt sind.
 
-## Laravel Sponsors
+### Lernmodule
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Module bestehen aus strukturierten Lerneinheiten:
 
-### Premium Partners
+- **Theorie-Blöcke** (Text, Video, Dokumente)
+- **Praxis-Aufgaben** mit Bewertung
+- **Wissenstests / Quizzes** zur Lernkontrolle
+- **Digitale Mappe** (Portfolio) – Upload von Arbeitsergebnissen (S3-Storage)
+- **Fortschrittstracking** mit visueller Darstellung (Progress Bars, Stepper)
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Integrationen
 
-## Contributing
+| System | Zweck | Beschreibung |
+|--------|-------|-------------|
+| **Google Calendar** | Terminplanung | Automatische Synchronisation von Schulungsterminen, Deadlines und Prüfungsterminen in den persönlichen Kalender |
+| **Personio** | HR-Daten | Abgleich von Mitarbeiterdaten, Karrierestufen und Abteilungszugehörigkeit; automatisiertes Onboarding neuer Mitarbeitender |
+| **Asana** | Aufgabenmanagement | Erstellung von Lernaufgaben als Asana-Tasks, Tracking von Abgabefristen, Benachrichtigungen bei Fälligkeiten |
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Kernfunktionen
 
-## Code of Conduct
+- **Dashboard** – Persönlicher Lernfortschritt, anstehende Module, KPIs
+- **Modulkatalog** – Übersicht aller verfügbaren Lernmodule nach Karrierestufe
+- **Prüfungen** – Online-Tests mit automatischer Auswertung
+- **Digitale Mappe** – Persönliches Portfolio mit S3-basiertem Datei-Upload
+- **Admin-Bereich** – Modul-Verwaltung, Nutzer-Management, Fortschrittsberichte
+- **Benachrichtigungen** – Erinnerungen an Fristen, neue Module, Feedback
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+---
 
-## Security Vulnerabilities
+## Tech-Stack
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+| Technologie | Einsatz |
+|-------------|---------|
+| **Laravel** (Breeze/Blade) | Backend, Routing, Auth |
+| **Tailwind CSS** | Styling via trafficdesign UI Kit |
+| **Alpine.js** | Frontend-Interaktivität |
+| **MySQL** | Datenbank |
+| **S3-Storage** | Datei-Uploads (Digitale Mappe) |
+| **Vite** | Build-Tooling |
 
-## License
+### UI Kit
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Das Projekt nutzt das **trafficdesign Tool UI Kit** – ein Enterprise SaaS Design System mit:
+
+- Brand Colors (`brand-primary: #00AFCE`, `brand-dark: #1d1d1d`)
+- 50+ vordefinierte CSS-Komponenten-Klassen (`.btn-primary`, `.card-tool`, `.table-tool`, etc.)
+- Alpine.js Notification-Store (`notify()`)
+
+Referenz: [`DESIGN-SYSTEM.md`](DESIGN-SYSTEM.md) | [`docs/USAGE.md`](docs/USAGE.md)
+
+---
+
+## Entwicklung
+
+```bash
+# Dependencies installieren
+composer install
+npm install
+
+# Entwicklungsserver starten
+npm run dev
+
+# Produktion bauen
+npm run build
+```
+
+### Environment
+
+```bash
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+```
+
+Produktions-URL: `https://academy.trafficdesign.de`
+
+---
+
+## Dokumentation
+
+Feature-Dokumentation befindet sich in `docs/features/`:
+
+| Datei | Bereich |
+|-------|---------|
+| `AUTH-FEATURES.md` | Authentifizierung, Rollen, Berechtigungen |
+| `IMPORT-FEATURES.md` | Datenimport, Personio-/Asana-Sync |
+| `REPORTING-FEATURES.md` | Fortschrittsberichte, KPIs, Auswertungen |
+| `ADMIN-FEATURES.md` | Administration, Modul-Verwaltung |
+
+---
+
+## Lizenz
+
+Internes Projekt – trafficdesign GmbH
