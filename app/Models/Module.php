@@ -104,6 +104,11 @@ class Module extends Model
         return $this->hasMany(PortfolioUpload::class);
     }
 
+    public function trainingMaterials(): HasMany
+    {
+        return $this->hasMany(TrainingMaterial::class);
+    }
+
     public function methodLabel(): string
     {
         return $this->method?->name ?? '–';

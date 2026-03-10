@@ -119,6 +119,7 @@
                                                 $badgeClass = match($role->slug) {
                                                     'admin' => 'badge-error',
                                                     'people_manager', 'head_of' => 'badge-warning',
+                                                    'schulungsmanager' => 'badge-success',
                                                     'trainer' => 'badge-info',
                                                     default => 'badge-neutral',
                                                 };

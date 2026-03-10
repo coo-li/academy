@@ -13,7 +13,9 @@ use App\Http\Controllers\ModuleAssignmentController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
-use App\Http\Controllers\TeacherController;
+use App\Http\Controllers\TrainerTerminController;
+use App\Http\Controllers\TrainerSchulungController;
+use App\Http\Controllers\TrainerTeilnehmerController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -23,49 +25,46 @@ Route::get('/demo', fn () => view('demo'))
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
-    // Student Dashboard ("Meine Academy")
+    // === Lernen (alle Rollen) ===
     Route::get('/dashboard', [AcademyController::class, 'dashboard'])->name('dashboard');
+    Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
 
-    // Enrollment
     Route::post('/enroll', [EnrollmentController::class, 'store'])->name('enroll');
     Route::patch('/enrollment/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('enrollment.cancel');
     Route::patch('/enrollment/{enrollment}/rebook', [EnrollmentController::class, 'rebook'])->name('enrollment.rebook');
 
-    Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
-
-    // Portfolio (Digital Portfolio)
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
     Route::get('/portfolio/{upload}/preview', [PortfolioController::class, 'preview'])->name('portfolio.preview');
     Route::get('/portfolio/{upload}/download', [PortfolioController::class, 'download'])->name('portfolio.download');
     Route::delete('/portfolio/{upload}', [PortfolioController::class, 'destroy'])->name('portfolio.destroy');
+    Route::get('/portfolio/material/{material}/download', [PortfolioController::class, 'downloadMaterial'])->name('portfolio.material.download');
 
-    // Quizzes
     Route::get('/quiz/{quiz}', [QuizController::class, 'show'])->name('quiz.show');
     Route::post('/quiz/{quiz}/submit', [QuizController::class, 'submit'])->name('quiz.submit');
 
-    // Employee Management (People Manager)
-    Route::middleware('can:manager')->prefix('manage')->name('manage.')->group(function () {
-        Route::get('/employees', [EmployeeManagementController::class, 'index'])->name('employees.index');
-        Route::get('/employees/{user}', [EmployeeManagementController::class, 'show'])->name('employees.show');
-        Route::post('/employees/{user}/modules', [EmployeeManagementController::class, 'assignModule'])->name('employees.assignModule');
-        Route::delete('/employees/{user}/modules/{module}', [EmployeeManagementController::class, 'removeModule'])->name('employees.removeModule');
-        Route::post('/employees/{user}/modules/{module}/disable', [EmployeeManagementController::class, 'disableCareerModule'])->name('employees.disableCareerModule');
-        Route::delete('/employees/{user}/modules/{module}/disable', [EmployeeManagementController::class, 'enableCareerModule'])->name('employees.enableCareerModule');
-        Route::patch('/employees/{user}/career-level', [EmployeeManagementController::class, 'assignCareerLevel'])->name('employees.assignCareerLevel');
-        Route::delete('/employees/{user}/career-path', [EmployeeManagementController::class, 'removeCareerPath'])->name('employees.removeCareerPath');
+    // === Mitarbeiterorga (People Manager / Head of / Admin) ===
+    Route::middleware('can:manager')->group(function () {
+        Route::prefix('manage')->name('manage.')->group(function () {
+            Route::get('/employees', [EmployeeManagementController::class, 'index'])->name('employees.index');
+            Route::get('/employees/{user}', [EmployeeManagementController::class, 'show'])->name('employees.show');
+            Route::post('/employees/{user}/modules', [EmployeeManagementController::class, 'assignModule'])->name('employees.assignModule');
+            Route::delete('/employees/{user}/modules/{module}', [EmployeeManagementController::class, 'removeModule'])->name('employees.removeModule');
+            Route::post('/employees/{user}/modules/{module}/disable', [EmployeeManagementController::class, 'disableCareerModule'])->name('employees.disableCareerModule');
+            Route::delete('/employees/{user}/modules/{module}/disable', [EmployeeManagementController::class, 'enableCareerModule'])->name('employees.enableCareerModule');
+            Route::patch('/employees/{user}/career-level', [EmployeeManagementController::class, 'assignCareerLevel'])->name('employees.assignCareerLevel');
+            Route::delete('/employees/{user}/career-path', [EmployeeManagementController::class, 'removeCareerPath'])->name('employees.removeCareerPath');
+        });
+
+        Route::prefix('admin')->name('admin.')->group(function () {
+            Route::get('/matrix', [AdminMatrixController::class, 'index'])->name('matrix.index');
+            Route::patch('/matrix/{mapping}', [AdminMatrixController::class, 'updateMapping'])->name('matrix.update');
+            Route::post('/matrix/sync', [AdminMatrixController::class, 'sync'])->name('matrix.sync');
+        });
     });
 
-    // Teacher Console
-    Route::middleware('can:teacher')->group(function () {
-        Route::get('/teacher', [TeacherController::class, 'dashboard'])->name('teacher.dashboard');
-        Route::post('/teacher/sessions', [TeacherController::class, 'storeSession'])->name('teacher.sessions.store');
-        Route::post('/teacher/sessions/{session}/confirm-attendance', [TeacherController::class, 'confirmAttendance'])->name('teacher.sessions.confirmAttendance');
-        Route::delete('/teacher/sessions/{session}', [TeacherController::class, 'destroySession'])->name('teacher.sessions.destroy');
-    });
-
-    // Admin: Strukturverwaltung (Manager: admin, people_manager, head_of)
-    Route::middleware('can:manager')->prefix('admin')->name('admin.')->group(function () {
+    // === Schulungsmanagement (Schulungsmanager / Admin) ===
+    Route::middleware('can:schulungsmanager')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/modules', [AdminModuleController::class, 'index'])->name('modules.index');
         Route::get('/modules/create', [AdminModuleController::class, 'create'])->name('modules.create');
         Route::post('/modules', [AdminModuleController::class, 'store'])->name('modules.store');
@@ -75,11 +74,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/modules/{module}/quiz', [AdminModuleController::class, 'storeQuiz'])->name('modules.quiz.store');
         Route::get('/paths/create', [AdminModuleController::class, 'createPath'])->name('paths.create');
         Route::post('/paths', [AdminModuleController::class, 'storePath'])->name('paths.store');
+        Route::get('/paths/{path}/edit', [AdminModuleController::class, 'editPath'])->name('paths.edit');
+        Route::put('/paths/{path}', [AdminModuleController::class, 'updatePath'])->name('paths.update');
         Route::delete('/paths/{path}', [AdminModuleController::class, 'destroyPath'])->name('paths.destroy');
-    });
 
-    // Admin: Skill-Kategorien & Methoden (Teacher: admin, people_manager, head_of, trainer)
-    Route::middleware('can:teacher')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/skill-categories', [AdminSkillCategoryController::class, 'index'])->name('skill-categories.index');
         Route::post('/skill-categories', [AdminSkillCategoryController::class, 'store'])->name('skill-categories.store');
         Route::put('/skill-categories/{skillCategory}', [AdminSkillCategoryController::class, 'update'])->name('skill-categories.update');
@@ -91,7 +89,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/methods/{method}', [AdminMethodController::class, 'destroy'])->name('methods.destroy');
     });
 
-    // Admin: System (nur Admin)
+    // === Trainer-Konsole (Trainer / Admin) ===
+    Route::middleware('can:trainer')->prefix('trainer')->name('trainer.')->group(function () {
+        Route::get('/termine', [TrainerTerminController::class, 'index'])->name('termine.index');
+        Route::post('/termine', [TrainerTerminController::class, 'store'])->name('termine.store');
+        Route::delete('/termine/{session}', [TrainerTerminController::class, 'destroy'])->name('termine.destroy');
+
+        Route::get('/schulungen', [TrainerSchulungController::class, 'index'])->name('schulungen.index');
+        Route::get('/schulungen/{module}', [TrainerSchulungController::class, 'show'])->name('schulungen.show');
+        Route::put('/schulungen/{module}', [TrainerSchulungController::class, 'update'])->name('schulungen.update');
+        Route::post('/schulungen/{module}/materials', [TrainerSchulungController::class, 'storeMaterial'])->name('schulungen.materials.store');
+        Route::delete('/schulungen/materials/{material}', [TrainerSchulungController::class, 'destroyMaterial'])->name('schulungen.materials.destroy');
+
+        Route::get('/teilnehmer', [TrainerTeilnehmerController::class, 'index'])->name('teilnehmer.index');
+        Route::post('/teilnehmer/{session}/confirm', [TrainerTeilnehmerController::class, 'confirmAttendance'])->name('teilnehmer.confirm');
+    });
+
+    // === System (nur Admin) ===
     Route::middleware('can:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
         Route::patch('/users/{user}/career-path', [AdminUserController::class, 'assignCareerPath'])->name('users.assignCareerPath');
@@ -102,10 +116,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/users/{user}/archive', [AdminUserController::class, 'archive'])->name('users.archive');
         Route::post('/users/{user}/restore', [AdminUserController::class, 'restore'])->name('users.restore');
         Route::post('/users/sync-personio', [AdminUserController::class, 'syncPersonio'])->name('users.syncPersonio');
-
-        Route::get('/matrix', [AdminMatrixController::class, 'index'])->name('matrix.index');
-        Route::patch('/matrix/{mapping}', [AdminMatrixController::class, 'updateMapping'])->name('matrix.update');
-        Route::post('/matrix/sync', [AdminMatrixController::class, 'sync'])->name('matrix.sync');
 
         Route::get('/settings', [AdminSettingsController::class, 'index'])->name('settings.index');
     });

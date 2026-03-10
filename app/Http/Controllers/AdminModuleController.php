@@ -122,6 +122,70 @@ class AdminModuleController extends Controller
         return view('admin.modules.create-path');
     }
 
+    public function editPath(CareerPath $path)
+    {
+        $path->load('levels.modules');
+
+        return view('admin.modules.edit-path', compact('path'));
+    }
+
+    public function updatePath(Request $request, CareerPath $path)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'levels' => ['required', 'array', 'min:1'],
+            'levels.*.id' => ['nullable', 'integer'],
+            'levels.*.title' => ['required', 'string', 'max:255'],
+            'levels.*.description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $path->update([
+            'name' => $request->name,
+            'description' => $request->description,
+        ]);
+
+        $existingLevelIds = $path->levels->pluck('id')->toArray();
+        $submittedIds = collect($request->levels)
+            ->pluck('id')
+            ->filter()
+            ->toArray();
+
+        $toDelete = array_diff($existingLevelIds, $submittedIds);
+        if (!empty($toDelete)) {
+            CareerLevel::whereIn('id', $toDelete)
+                ->where('career_path_id', $path->id)
+                ->delete();
+        }
+
+        foreach ($request->levels as $index => $levelData) {
+            if (!empty($levelData['id'])) {
+                $level = CareerLevel::where('id', $levelData['id'])
+                    ->where('career_path_id', $path->id)
+                    ->first();
+
+                if ($level) {
+                    $level->update([
+                        'level_number' => $index + 1,
+                        'title' => $levelData['title'],
+                        'description' => $levelData['description'] ?? null,
+                    ]);
+                    continue;
+                }
+            }
+
+            $path->levels()->create([
+                'level_number' => $index + 1,
+                'title' => $levelData['title'],
+                'description' => $levelData['description'] ?? null,
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.modules.index')
+            ->with('success', "Karrierepfad \"{$path->name}\" wurde aktualisiert!");
+    }
+
     public function storePath(Request $request)
     {
         $request->validate([

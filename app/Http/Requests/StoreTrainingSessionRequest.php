@@ -8,7 +8,7 @@ class StoreTrainingSessionRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isTeacher();
+        return $this->user()->isTrainer();
     }
 
     public function rules(): array

@@ -9,11 +9,6 @@ class AdminMethodController extends Controller
 {
     public function index()
     {
-        // #region agent log
-        $u = auth()->user();
-        file_put_contents('/var/www/html/.cursor/debug-f4ed0e.log', json_encode(['sessionId'=>'f4ed0e','hypothesisId'=>'H4','location'=>'AdminMethodController.php:index','message'=>'Methods page accessed','data'=>['user_id'=>$u->id,'user_name'=>$u->name,'role_slugs'=>$u->roles->pluck('slug')->toArray(),'isTeacher'=>$u->isTeacher(),'isManager'=>$u->isManager(),'isAdmin'=>$u->isAdmin()],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
-        // #endregion
-
         $methods = Method::withCount('modules')
             ->orderBy('name')
             ->get();

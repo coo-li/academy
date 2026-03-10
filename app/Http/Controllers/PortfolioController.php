@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\PortfolioUploadRequest;
 use App\Models\Module;
 use App\Models\PortfolioUpload;
+use App\Models\TrainingMaterial;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
@@ -28,7 +29,25 @@ class PortfolioController extends Controller
         $groupedUploads = $uploads->groupBy('module_id');
         $modules = Module::orderBy('title')->get();
 
-        return view('portfolio.index', compact('uploads', 'groupedUploads', 'modules'));
+        $attendedModuleIds = $user->enrollments()
+            ->whereIn('status', ['attended', 'completed'])
+            ->pluck('module_id')
+            ->unique();
+
+        $trainingMaterialsQuery = TrainingMaterial::with('module')
+            ->whereIn('module_id', $attendedModuleIds);
+
+        if ($search) {
+            $trainingMaterialsQuery->where(function ($q) use ($search) {
+                $q->where('original_filename', 'like', "%{$search}%")
+                  ->orWhereHas('module', fn ($m) => $m->where('title', 'like', "%{$search}%"));
+            });
+        }
+
+        $trainingMaterials = $trainingMaterialsQuery->orderBy('created_at', 'desc')->get();
+        $groupedMaterials = $trainingMaterials->groupBy('module_id');
+
+        return view('portfolio.index', compact('uploads', 'groupedUploads', 'modules', 'trainingMaterials', 'groupedMaterials'));
     }
 
     public function store(PortfolioUploadRequest $request)
@@ -56,7 +75,7 @@ class PortfolioController extends Controller
 
     public function preview(PortfolioUpload $upload)
     {
-        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTeacher()) {
+        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTrainer() && ! Auth::user()->isManager()) {
             abort(403);
         }
 
@@ -71,7 +90,7 @@ class PortfolioController extends Controller
 
     public function download(PortfolioUpload $upload)
     {
-        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTeacher()) {
+        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTrainer() && ! Auth::user()->isManager()) {
             abort(403);
         }
 
@@ -84,7 +103,7 @@ class PortfolioController extends Controller
 
     public function destroy(PortfolioUpload $upload)
     {
-        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTeacher()) {
+        if ($upload->user_id !== Auth::id() && ! Auth::user()->isTrainer() && ! Auth::user()->isManager()) {
             abort(403);
         }
 
@@ -92,5 +111,27 @@ class PortfolioController extends Controller
         $upload->delete();
 
         return back()->with('success', 'Datei gelöscht.');
+    }
+
+    public function downloadMaterial(TrainingMaterial $material)
+    {
+        $user = Auth::user();
+
+        $hasAccess = $user->isAdmin()
+            || $user->isTrainer()
+            || $user->enrollments()
+                ->where('module_id', $material->module_id)
+                ->whereIn('status', ['attended', 'completed'])
+                ->exists();
+
+        if (! $hasAccess) {
+            abort(403);
+        }
+
+        $url = Storage::disk('gcs')->temporaryUrl($material->storage_path, now()->addMinutes(5), [
+            'response-content-disposition' => 'attachment; filename="' . $material->original_filename . '"',
+        ]);
+
+        return redirect($url);
     }
 }

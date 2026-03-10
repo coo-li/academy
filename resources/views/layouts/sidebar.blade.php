@@ -46,19 +46,38 @@
             </a>
         </div>
 
-        {{-- === Teacher-Rollen: Verwaltung (admin, people_manager, head_of, trainer) === --}}
-        @if(Auth::user()?->isTeacher())
+        {{-- === Mitarbeiterorga (People Manager / Head of / Admin) === --}}
+        @if(Auth::user()?->isManager())
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Verwaltung</div>
+            <div class="sidebar-section-title">Mitarbeiterorga</div>
 
-            @if(Auth::user()->isManager())
+            <a href="{{ route('manage.employees.index') }}" class="{{ request()->routeIs('manage.employees.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Meine Mitarbeiter
+            </a>
+
+            <a href="{{ route('admin.matrix.index') }}" class="{{ request()->routeIs('admin.matrix.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                </svg>
+                Karriere-Matrix
+            </a>
+        </div>
+        @endif
+
+        {{-- === Schulungsmanagement (Schulungsmanager / Admin) === --}}
+        @if(Auth::user()?->isSchulungsmanager())
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Schulungsmanagement</div>
+
             <a href="{{ route('admin.modules.index') }}" class="{{ request()->routeIs('admin.modules.*', 'admin.paths.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
                 Struktur-Verwaltung
             </a>
-            @endif
 
             <a href="{{ route('admin.skill-categories.index') }}" class="{{ request()->routeIs('admin.skill-categories.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -73,21 +92,33 @@
                 </svg>
                 Methoden
             </a>
+        </div>
+        @endif
 
-            @if(Auth::user()->isManager())
-            <a href="{{ route('manage.employees.index') }}" class="{{ request()->routeIs('manage.employees.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
+        {{-- === Trainer-Konsole (Trainer / Admin) === --}}
+        @if(Auth::user()?->isTrainer())
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Trainer</div>
+
+            <a href="{{ route('trainer.termine.index') }}" class="{{ request()->routeIs('trainer.termine.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                 </svg>
-                Meine Mitarbeiter
+                Terminmanagement
             </a>
-            @endif
 
-            <a href="{{ route('teacher.dashboard') }}" class="{{ request()->routeIs('teacher.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
+            <a href="{{ route('trainer.schulungen.index') }}" class="{{ request()->routeIs('trainer.schulungen.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
-                Lehrer-Konsole
+                Schulungsdurchführung
+            </a>
+
+            <a href="{{ route('trainer.teilnehmer.index') }}" class="{{ request()->routeIs('trainer.teilnehmer.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+                Teilnehmermanagement
             </a>
         </div>
         @endif
@@ -102,13 +133,6 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197V21"></path>
                 </svg>
                 Nutzerverwaltung
-            </a>
-
-            <a href="{{ route('admin.matrix.index') }}" class="{{ request()->routeIs('admin.matrix.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
-                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
-                </svg>
-                Karriere-Matrix
             </a>
 
             <a href="{{ route('admin.settings.index') }}" class="{{ request()->routeIs('admin.settings.*') ? 'sidebar-link-active' : 'sidebar-link' }}">

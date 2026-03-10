@@ -8,7 +8,7 @@ class StoreModuleRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isManager();
+        return $this->user()->isSchulungsmanager();
     }
 
     public function rules(): array

@@ -73,9 +73,20 @@ class User extends Authenticatable
         return $this->hasRole(['admin', 'people_manager', 'head_of']);
     }
 
+    public function isSchulungsmanager(): bool
+    {
+        return $this->hasRole(['admin', 'schulungsmanager']);
+    }
+
+    public function isTrainer(): bool
+    {
+        return $this->hasRole(['admin', 'trainer']);
+    }
+
+    /** @deprecated Use isTrainer() or isSchulungsmanager() instead */
     public function isTeacher(): bool
     {
-        return $this->hasRole(['admin', 'people_manager', 'head_of', 'trainer']);
+        return $this->hasRole(['admin', 'people_manager', 'head_of', 'trainer', 'schulungsmanager']);
     }
 
     public function isArchived(): bool

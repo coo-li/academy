@@ -34,15 +34,9 @@ class AppServiceProvider extends ServiceProvider
         }
 
         Gate::define('admin', fn ($user) => $user->isAdmin());
-        // #region agent log
-        Gate::define('teacher', function ($user) {
-            $result = $user->isTeacher();
-            $roleSlugs = $user->roles->pluck('slug')->toArray();
-            file_put_contents('/var/www/html/.cursor/debug-f4ed0e.log', json_encode(['sessionId'=>'f4ed0e','hypothesisId'=>'H5','location'=>'AppServiceProvider.php:gate-teacher','message'=>'Teacher gate evaluated','data'=>['user_id'=>$user->id,'user_name'=>$user->name,'role_slugs'=>$roleSlugs,'roles_count'=>count($roleSlugs),'isTeacher_result'=>$result,'has_trainer'=>in_array('trainer',$roleSlugs)],'timestamp'=>round(microtime(true)*1000)])."\n", FILE_APPEND);
-            return $result;
-        });
-        // #endregion
         Gate::define('manager', fn ($user) => $user->isManager());
+        Gate::define('schulungsmanager', fn ($user) => $user->isSchulungsmanager());
+        Gate::define('trainer', fn ($user) => $user->isTrainer());
 
         Event::listen(Login::class, AssignCareerPathOnLogin::class);
     }
