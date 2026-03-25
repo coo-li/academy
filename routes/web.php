@@ -10,9 +10,13 @@ use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\EnrollmentController;
 use App\Http\Controllers\EmployeeManagementController;
 use App\Http\Controllers\ModuleAssignmentController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\SearchController;
 use App\Http\Controllers\PortfolioController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuizController;
+use App\Http\Controllers\AdminMilestoneController;
+use App\Http\Controllers\SkillOverviewController;
 use App\Http\Controllers\TrainerTerminController;
 use App\Http\Controllers\TrainerSchulungController;
 use App\Http\Controllers\TrainerTeilnehmerController;
@@ -25,13 +29,25 @@ Route::get('/demo', fn () => view('demo'))
 
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    // === Globale Suche & Benachrichtigungen ===
+    Route::get('/search', SearchController::class)->name('search');
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.readAll');
+
     // === Lernen (alle Rollen) ===
     Route::get('/dashboard', [AcademyController::class, 'dashboard'])->name('dashboard');
+    Route::get('/module/{module}', [AcademyController::class, 'showModule'])->name('academy.module.show');
     Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
 
     Route::post('/enroll', [EnrollmentController::class, 'store'])->name('enroll');
     Route::patch('/enrollment/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('enrollment.cancel');
     Route::patch('/enrollment/{enrollment}/rebook', [EnrollmentController::class, 'rebook'])->name('enrollment.rebook');
+
+    // === Schulungskatalog ===
+    Route::get('/skill-overview', [SkillOverviewController::class, 'index'])->name('academy.skill-overview');
+    Route::post('/skill-overview/{module}/interest', [SkillOverviewController::class, 'expressInterest'])->name('academy.interest.store');
+    Route::delete('/skill-overview/{module}/interest', [SkillOverviewController::class, 'withdrawInterest'])->name('academy.interest.destroy');
 
     Route::get('/portfolio', [PortfolioController::class, 'index'])->name('portfolio.index');
     Route::post('/portfolio', [PortfolioController::class, 'store'])->name('portfolio.store');
@@ -54,12 +70,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::delete('/employees/{user}/modules/{module}/disable', [EmployeeManagementController::class, 'enableCareerModule'])->name('employees.enableCareerModule');
             Route::patch('/employees/{user}/career-level', [EmployeeManagementController::class, 'assignCareerLevel'])->name('employees.assignCareerLevel');
             Route::delete('/employees/{user}/career-path', [EmployeeManagementController::class, 'removeCareerPath'])->name('employees.removeCareerPath');
+            Route::patch('/employees/{user}/interests/{interest}/note', [EmployeeManagementController::class, 'noteInterest'])->name('employees.noteInterest');
+            Route::post('/employees/{user}/interests/{interest}/assign', [EmployeeManagementController::class, 'assignFromInterest'])->name('employees.assignFromInterest');
+            Route::post('/employees/{user}/milestones/{milestone}/disable', [EmployeeManagementController::class, 'disableMilestone'])->name('employees.disableMilestone');
+            Route::delete('/employees/{user}/milestones/{milestone}/disable', [EmployeeManagementController::class, 'enableMilestone'])->name('employees.enableMilestone');
         });
 
         Route::prefix('admin')->name('admin.')->group(function () {
             Route::get('/matrix', [AdminMatrixController::class, 'index'])->name('matrix.index');
             Route::patch('/matrix/{mapping}', [AdminMatrixController::class, 'updateMapping'])->name('matrix.update');
             Route::post('/matrix/sync', [AdminMatrixController::class, 'sync'])->name('matrix.sync');
+            Route::post('/matrix/auto-map', [AdminMatrixController::class, 'autoMap'])->name('matrix.autoMap');
+
+            Route::resource('milestones', AdminMilestoneController::class)->except(['show']);
         });
     });
 
@@ -71,14 +94,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/modules/{module}/edit', [AdminModuleController::class, 'edit'])->name('modules.edit');
         Route::put('/modules/{module}', [AdminModuleController::class, 'update'])->name('modules.update');
         Route::delete('/modules/{module}', [AdminModuleController::class, 'destroy'])->name('modules.destroy');
-        Route::post('/modules/{module}/quiz', [AdminModuleController::class, 'storeQuiz'])->name('modules.quiz.store');
         Route::get('/paths/create', [AdminModuleController::class, 'createPath'])->name('paths.create');
         Route::post('/paths', [AdminModuleController::class, 'storePath'])->name('paths.store');
+        Route::get('/paths/{path}', [AdminModuleController::class, 'showPath'])->name('paths.show');
         Route::get('/paths/{path}/edit', [AdminModuleController::class, 'editPath'])->name('paths.edit');
         Route::put('/paths/{path}', [AdminModuleController::class, 'updatePath'])->name('paths.update');
         Route::delete('/paths/{path}', [AdminModuleController::class, 'destroyPath'])->name('paths.destroy');
 
         Route::get('/skill-categories', [AdminSkillCategoryController::class, 'index'])->name('skill-categories.index');
+        Route::get('/skill-categories/{skillCategory}', [AdminSkillCategoryController::class, 'show'])->name('skill-categories.show');
         Route::post('/skill-categories', [AdminSkillCategoryController::class, 'store'])->name('skill-categories.store');
         Route::put('/skill-categories/{skillCategory}', [AdminSkillCategoryController::class, 'update'])->name('skill-categories.update');
         Route::delete('/skill-categories/{skillCategory}', [AdminSkillCategoryController::class, 'destroy'])->name('skill-categories.destroy');
@@ -93,12 +117,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::middleware('can:trainer')->prefix('trainer')->name('trainer.')->group(function () {
         Route::get('/termine', [TrainerTerminController::class, 'index'])->name('termine.index');
         Route::post('/termine', [TrainerTerminController::class, 'store'])->name('termine.store');
+        Route::post('/termine/check-availability', [TrainerTerminController::class, 'checkAvailability'])->name('termine.check-availability');
+        Route::post('/termine/{session}/sync-calendar', [TrainerTerminController::class, 'syncCalendar'])->name('termine.sync-calendar');
+        Route::put('/termine/{session}', [TrainerTerminController::class, 'update'])->name('termine.update');
         Route::delete('/termine/{session}', [TrainerTerminController::class, 'destroy'])->name('termine.destroy');
 
         Route::get('/schulungen', [TrainerSchulungController::class, 'index'])->name('schulungen.index');
         Route::get('/schulungen/{module}', [TrainerSchulungController::class, 'show'])->name('schulungen.show');
         Route::put('/schulungen/{module}', [TrainerSchulungController::class, 'update'])->name('schulungen.update');
+        Route::post('/schulungen/{module}/quiz', [TrainerSchulungController::class, 'storeQuiz'])->name('schulungen.quiz.store');
         Route::post('/schulungen/{module}/materials', [TrainerSchulungController::class, 'storeMaterial'])->name('schulungen.materials.store');
+        Route::post('/schulungen/{module}/links', [TrainerSchulungController::class, 'storeLink'])->name('schulungen.links.store');
         Route::delete('/schulungen/materials/{material}', [TrainerSchulungController::class, 'destroyMaterial'])->name('schulungen.materials.destroy');
 
         Route::get('/teilnehmer', [TrainerTeilnehmerController::class, 'index'])->name('teilnehmer.index');

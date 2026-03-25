@@ -115,12 +115,21 @@ class EnrollmentController extends Controller
 
     protected function syncCalendarAttendee($user, ?TrainingSession $session): void
     {
-        if (! $session?->google_event_id) {
+        if (! $session) {
             return;
         }
 
         try {
             $calendarId = config('services.google.calendar_id', 'primary');
+
+            if (! $session->google_event_id) {
+                $this->createCalendarEventForSession($session, $calendarId);
+            }
+
+            if (! $session->google_event_id) {
+                return;
+            }
+
             $this->calendar->addAttendee(
                 $calendarId,
                 $session->google_event_id,
@@ -129,6 +138,34 @@ class EnrollmentController extends Controller
             );
         } catch (\Throwable $e) {
             Log::warning('Google Calendar: Could not add attendee to event.', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    protected function createCalendarEventForSession(TrainingSession $session, string $calendarId): void
+    {
+        if (! $this->calendar->isConfigured()) {
+            return;
+        }
+
+        try {
+            $module = $session->module;
+            $event = $this->calendar->createEvent(
+                $calendarId,
+                "Workshop: {$module->title}",
+                $session->start_at,
+                $session->end_at,
+                "Academy Workshop – {$module->title}",
+                $session->location,
+            );
+
+            if ($event) {
+                $session->update(['google_event_id' => $event->getId()]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Google Calendar: Could not create event for session.', [
+                'session_id' => $session->id,
                 'error' => $e->getMessage(),
             ]);
         }
@@ -157,7 +194,8 @@ class EnrollmentController extends Controller
     protected function createAsanaBookingTask(Enrollment $enrollment, $user, Module $module, ?TrainingSession $session): void
     {
         try {
-            $taskData = $this->asana->createBookingTask($user, $module, $session);
+            $assigneeEmail = $user->getPeopleManager()?->email;
+            $taskData = $this->asana->createBookingTask($user, $module, $session, $assigneeEmail);
 
             if ($taskData && isset($taskData['gid'])) {
                 $enrollment->update(['asana_task_gid' => $taskData['gid']]);
@@ -190,24 +228,26 @@ class EnrollmentController extends Controller
 
     protected function checkLevelCompletion(int $userId): void
     {
-        $user = \App\Models\User::with('careerLevel')->find($userId);
-        if (! $user?->careerLevel) {
+        $user = \App\Models\User::with('careerLevels')->find($userId);
+        if (! $user || $user->careerLevels->isEmpty()) {
             return;
         }
 
-        $levelModules = $user->careerLevel->modules()->where('is_mandatory', true)->pluck('id');
-        $completedModules = Enrollment::where('user_id', $userId)
-            ->where('status', 'completed')
-            ->whereIn('module_id', $levelModules)
-            ->pluck('module_id');
+        foreach ($user->careerLevels as $level) {
+            $mandatoryIds = $level->modules()->where('is_mandatory', true)->pluck('id');
+            $completedIds = Enrollment::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->whereIn('module_id', $mandatoryIds)
+                ->pluck('module_id');
 
-        if ($levelModules->diff($completedModules)->isEmpty()) {
-            $nextLevel = CareerLevel::where('career_path_id', $user->careerLevel->career_path_id)
-                ->where('level_number', $user->careerLevel->level_number + 1)
-                ->first();
+            if ($mandatoryIds->isNotEmpty() && $mandatoryIds->diff($completedIds)->isEmpty()) {
+                $nextLevel = CareerLevel::where('career_path_id', $level->career_path_id)
+                    ->where('level_number', $level->level_number + 1)
+                    ->first();
 
-            if ($nextLevel) {
-                $user->update(['career_level_id' => $nextLevel->id]);
+                if ($nextLevel) {
+                    $user->replaceCareerLevel($level, $nextLevel);
+                }
             }
         }
     }

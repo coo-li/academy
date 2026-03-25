@@ -13,19 +13,22 @@ class PortfolioUploadRequest extends FormRequest
 
     public function rules(): array
     {
+        $hasNotes = filled($this->input('notes'));
+
         return [
             'module_id' => ['required', 'exists:modules,id'],
-            'file' => ['required', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf'],
-            'notes' => ['nullable', 'string', 'max:500'],
+            'file' => [$hasNotes ? 'nullable' : 'required', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf'],
+            'notes' => [$this->hasFile('file') ? 'nullable' : 'required', 'string', 'max:500'],
         ];
     }
 
     public function messages(): array
     {
         return [
-            'file.required' => 'Bitte wähle eine Datei aus.',
+            'file.required' => 'Bitte wähle eine Datei aus oder fülle das Notiz-Feld aus.',
             'file.max' => 'Die Datei darf maximal 10 MB groß sein.',
             'file.mimes' => 'Erlaubte Formate: JPG, PNG, GIF, WebP, PDF.',
+            'notes.required' => 'Bitte fülle eine Notiz aus oder lade eine Datei hoch.',
         ];
     }
 }

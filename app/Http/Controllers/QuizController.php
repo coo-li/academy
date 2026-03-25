@@ -93,27 +93,26 @@ class QuizController extends Controller
             ]);
         }
 
-        $user = Auth::user()->load('careerLevel');
-        if (! $user->careerLevel) {
+        $user = Auth::user()->load('careerLevels');
+        if ($user->careerLevels->isEmpty()) {
             return;
         }
 
-        $mandatoryModuleIds = $user->careerLevel->modules()
-            ->where('is_mandatory', true)
-            ->pluck('id');
+        foreach ($user->careerLevels as $level) {
+            $mandatoryIds = $level->modules()->where('is_mandatory', true)->pluck('id');
+            $completedIds = Enrollment::where('user_id', $userId)
+                ->where('status', 'completed')
+                ->whereIn('module_id', $mandatoryIds)
+                ->pluck('module_id');
 
-        $completedModuleIds = Enrollment::where('user_id', $userId)
-            ->where('status', 'completed')
-            ->whereIn('module_id', $mandatoryModuleIds)
-            ->pluck('module_id');
+            if ($mandatoryIds->isNotEmpty() && $mandatoryIds->diff($completedIds)->isEmpty()) {
+                $nextLevel = CareerLevel::where('career_path_id', $level->career_path_id)
+                    ->where('level_number', $level->level_number + 1)
+                    ->first();
 
-        if ($mandatoryModuleIds->diff($completedModuleIds)->isEmpty()) {
-            $nextLevel = CareerLevel::where('career_path_id', $user->careerLevel->career_path_id)
-                ->where('level_number', $user->careerLevel->level_number + 1)
-                ->first();
-
-            if ($nextLevel) {
-                $user->update(['career_level_id' => $nextLevel->id]);
+                if ($nextLevel) {
+                    $user->replaceCareerLevel($level, $nextLevel);
+                }
             }
         }
     }

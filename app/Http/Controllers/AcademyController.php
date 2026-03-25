@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CareerLevel;
 use App\Models\CareerPath;
 use App\Models\Enrollment;
+use App\Models\Milestone;
 use App\Models\Module;
 use App\Services\PersonioService;
 use Illuminate\Http\Request;
@@ -15,16 +16,25 @@ class AcademyController extends Controller
     public function dashboard()
     {
         $user = Auth::user();
-        $user->load(['careerLevel.careerPath', 'enrollments.module', 'enrollments.trainingSession', 'disabledCareerModules']);
+        $user->load([
+            'careerLevel.careerPath',
+            'careerLevels.careerPath',
+            'enrollments.module',
+            'enrollments.trainingSession',
+            'disabledCareerModules',
+            'disabledMilestones',
+            'moduleInterests.module',
+        ]);
 
         $careerLevel = $user->careerLevel;
         $careerPath = $careerLevel?->careerPath;
+        $careerLevels = $user->careerLevels;
 
-        $eagerLoad = ['trainingSessions', 'quiz', 'method', 'accountableUser', 'careerLevel'];
+        $eagerLoad = ['trainingSessions', 'quiz', 'method', 'accountableUser', 'careerLevel.careerPath'];
 
-        $careerModules = $careerLevel
-            ? $careerLevel->modules()->with($eagerLoad)->orderBy('sort_order')->get()
-            : collect();
+        $careerModules = $careerLevels
+            ->flatMap(fn ($level) => $level->modules()->with($eagerLoad)->orderBy('sort_order')->get())
+            ->unique('id');
 
         $disabledIds = $user->disabledCareerModules->pluck('id')->toArray();
         $activeCareerModules = $careerModules->reject(fn ($m) => in_array($m->id, $disabledIds));
@@ -35,11 +45,27 @@ class AcademyController extends Controller
 
         $enrollmentsByModule = $user->enrollments->keyBy('module_id');
 
+        $moduleIds = $modules->pluck('id')->toArray();
+        $interestedModules = $user->moduleInterests
+            ->filter(fn ($interest) => !in_array($interest->module_id, $moduleIds))
+            ->map(function ($interest) use ($eagerLoad) {
+                $module = $interest->module;
+                if ($module) {
+                    $module->load($eagerLoad);
+                }
+                return $module;
+            })
+            ->filter()
+            ->values();
+
+        $interestsByModule = $user->moduleInterests->keyBy('module_id');
+
         $stats = [
             'total' => $modules->count(),
             'completed' => $user->enrollments->where('status', 'completed')->count(),
             'enrolled' => $user->enrollments->where('status', 'enrolled')->count(),
             'attended' => $user->enrollments->where('status', 'attended')->count(),
+            'interested' => $interestedModules->count(),
         ];
 
         $nextLevel = $careerLevel
@@ -56,16 +82,71 @@ class AcademyController extends Controller
             ];
         }
 
+        $disabledMilestoneIds = $user->disabledMilestones->pluck('id')->toArray();
+        $milestonesByCategory = Milestone::forUser($user)
+            ->orderBy('sort_order')
+            ->get()
+            ->reject(fn ($m) => in_array($m->id, $disabledMilestoneIds))
+            ->groupBy('category');
+
         return view('academy.dashboard', compact(
-            'user', 'careerLevel', 'careerPath', 'modules',
-            'enrollmentsByModule', 'stats', 'nextLevel', 'personioStats'
+            'user', 'careerLevel', 'careerPath', 'careerLevels', 'modules',
+            'enrollmentsByModule', 'interestedModules', 'interestsByModule',
+            'stats', 'nextLevel', 'personioStats', 'milestonesByCategory'
+        ));
+    }
+
+    public function showModule(Module $module)
+    {
+        $user = Auth::user();
+
+        $module->load([
+            'trainingSessions.enrollments.user',
+            'quiz',
+            'method',
+            'skillCategory',
+            'trainingMaterials.uploader',
+            'accountableUser',
+            'careerLevel.careerPath',
+        ]);
+
+        $enrollment = Enrollment::where('user_id', $user->id)
+            ->where('module_id', $module->id)
+            ->latest()
+            ->first();
+
+        $status = $enrollment?->status ?? 'open';
+
+        $upcomingSessions = $module->trainingSessions
+            ->where('start_at', '>', now())
+            ->sortBy('start_at')
+            ->values();
+
+        $bookedSession = $enrollment?->trainingSession;
+
+        $sessionParticipants = $bookedSession
+            ? $bookedSession->enrollments()
+                ->whereIn('status', ['enrolled', 'attended', 'completed'])
+                ->with('user:id,name')
+                ->get()
+                ->pluck('user')
+            : collect();
+
+        $canViewMaterials = in_array($status, ['attended', 'completed']);
+
+        $accountable = $module->getAccountableFor($user);
+
+        return view('academy.module-show', compact(
+            'module', 'user', 'enrollment', 'status',
+            'upcomingSessions', 'bookedSession', 'sessionParticipants',
+            'canViewMaterials', 'accountable'
         ));
     }
 
     public function timeline()
     {
         $user = Auth::user();
-        $user->load('careerLevel.careerPath');
+        $user->load(['careerLevel.careerPath', 'careerLevels.careerPath']);
 
         $enrollments = Enrollment::with(['module', 'trainingSession'])
             ->where('user_id', $user->id)

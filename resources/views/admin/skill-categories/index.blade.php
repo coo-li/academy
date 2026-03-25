@@ -1,44 +1,59 @@
 <x-app-layout>
-    @section('page-title', 'Skill-Kategorien')
+    @section('page-title', 'Skill-Gruppen verwalten')
 
     <div class="max-w-3xl mx-auto space-y-6">
         @if(session('success'))
             <x-alert type="success" title="Erfolg!" :dismissible="true">{{ session('success') }}</x-alert>
         @endif
 
+        {{-- Breadcrumb --}}
+        <nav class="flex items-center gap-2 text-sm">
+            <a href="{{ route('admin.modules.index') }}" class="text-surface-500 hover:text-brand-primary transition-colors">Struktur-Verwaltung</a>
+            <svg class="w-4 h-4 text-surface-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+            </svg>
+            <span class="text-brand-dark font-medium">Skill-Gruppen verwalten</span>
+        </nav>
+
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Skill-Kategorien</h1>
-                <p class="text-surface-500 mt-1">Übergreifende Kategorien für Schulungsmodule verwalten.</p>
+                <h1 class="text-3xl font-bold text-brand-dark">Skill-Gruppen</h1>
+                <p class="text-surface-500 mt-1">Skill-Gruppen erstellen und bearbeiten.</p>
             </div>
         </div>
 
         {{-- New Category Form --}}
-        <x-card title="Neue Kategorie anlegen">
-            <form method="POST" action="{{ route('admin.skill-categories.store') }}" class="flex flex-col sm:flex-row gap-3">
+        <x-card title="Neue Skill-Gruppe anlegen">
+            <form method="POST" action="{{ route('admin.skill-categories.store') }}" class="space-y-3">
                 @csrf
-                <div class="flex-1">
-                    <input type="text" name="name" class="input-field" required
-                           placeholder="Name der Kategorie" value="{{ old('name') }}">
-                    @error('name') <p class="error-text">{{ $message }}</p> @enderror
+                <div class="flex flex-col sm:flex-row gap-3">
+                    <div class="w-20">
+                        <input type="text" name="emoji" class="input-field text-center text-xl"
+                               placeholder="🧩" value="{{ old('emoji') }}" maxlength="8">
+                    </div>
+                    <div class="flex-1">
+                        <input type="text" name="name" class="input-field" required
+                               placeholder="Name der Skill-Gruppe" value="{{ old('name') }}">
+                        @error('name') <p class="error-text">{{ $message }}</p> @enderror
+                    </div>
+                    <div class="flex-1">
+                        <input type="text" name="description" class="input-field"
+                               placeholder="Beschreibung (optional)" value="{{ old('description') }}">
+                    </div>
+                    <button type="submit" class="btn-primary whitespace-nowrap">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Anlegen
+                    </button>
                 </div>
-                <div class="flex-1">
-                    <input type="text" name="description" class="input-field"
-                           placeholder="Beschreibung (optional)" value="{{ old('description') }}">
-                </div>
-                <button type="submit" class="btn-primary whitespace-nowrap">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Anlegen
-                </button>
             </form>
         </x-card>
 
         {{-- Category List --}}
         <x-card>
             <x-slot:header>
-                <h2 class="font-semibold text-brand-dark">Alle Kategorien</h2>
+                <h2 class="font-semibold text-brand-dark">Alle Skill-Gruppen</h2>
                 <span class="badge-info">{{ $categories->count() }}</span>
             </x-slot:header>
 
@@ -48,11 +63,14 @@
                 <div x-data="{ editing: false }" class="py-3 first:pt-0 last:pb-0">
                     {{-- Display Mode --}}
                     <div x-show="!editing" class="flex items-center justify-between gap-4">
-                        <div class="flex-1 min-w-0">
-                            <div class="font-medium text-brand-dark">{{ $category->name }}</div>
-                            @if($category->description)
-                            <div class="text-sm text-surface-500">{{ $category->description }}</div>
-                            @endif
+                        <div class="flex items-center gap-3 flex-1 min-w-0">
+                            <span class="text-xl">{{ $category->emoji ?? '🧩' }}</span>
+                            <div class="min-w-0">
+                                <a href="{{ route('admin.skill-categories.show', $category) }}" class="font-medium text-brand-dark hover:text-brand-primary transition-colors">{{ $category->name }}</a>
+                                @if($category->description)
+                                <div class="text-sm text-surface-500 truncate">{{ $category->description }}</div>
+                                @endif
+                            </div>
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
                             <span class="badge-neutral">{{ $category->modules_count }} {{ $category->modules_count === 1 ? 'Modul' : 'Module' }}</span>
@@ -63,7 +81,7 @@
                                     </svg>
                                 </button>
                                 <form method="POST" action="{{ route('admin.skill-categories.destroy', $category) }}" class="inline"
-                                      onsubmit="return confirm('Kategorie &quot;{{ $category->name }}&quot; wirklich löschen?{{ $category->modules_count > 0 ? ' ' . $category->modules_count . ' Module werden entkoppelt.' : '' }}')">
+                                      onsubmit="return confirm('Skill-Gruppe &quot;{{ $category->name }}&quot; wirklich löschen?{{ $category->modules_count > 0 ? ' ' . $category->modules_count . ' Module werden entkoppelt.' : '' }}')">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="btn-danger btn-xs" title="Löschen">
@@ -82,6 +100,10 @@
                           class="flex flex-col sm:flex-row gap-3">
                         @csrf
                         @method('PUT')
+                        <div class="w-20">
+                            <input type="text" name="emoji" class="input-field text-center text-xl"
+                                   value="{{ $category->emoji }}" placeholder="🧩" maxlength="8">
+                        </div>
                         <div class="flex-1">
                             <input type="text" name="name" class="input-field" required
                                    value="{{ $category->name }}" placeholder="Name">
@@ -100,8 +122,8 @@
             </div>
             @else
             <div class="empty-state">
-                <div class="empty-state-title">Keine Kategorien vorhanden</div>
-                <div class="empty-state-description">Erstelle oben die erste Skill-Kategorie.</div>
+                <div class="empty-state-title">Keine Skill-Gruppen vorhanden</div>
+                <div class="empty-state-description">Erstelle oben die erste Skill-Gruppe.</div>
             </div>
             @endif
         </x-card>

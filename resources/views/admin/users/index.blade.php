@@ -97,19 +97,19 @@
                         </thead>
                         <tbody>
                             @forelse($users as $user)
-                            <tr x-data="{ showRoles: false, showTeams: false, showActions: false }">
+                            <tr>
                                 <td>
-                                    <div class="flex items-center gap-3">
+                                    <a href="{{ route('manage.employees.show', $user) }}" class="flex items-center gap-3 group">
                                         <div class="avatar-sm">
-                                            <span>{{ strtoupper(substr($user->name, 0, 2)) }}</span>
+                                            <span>{{ $user->initials }}</span>
                                         </div>
                                         <div>
-                                            <span class="font-medium text-brand-dark">{{ $user->name }}</span>
+                                            <span class="font-medium text-brand-dark group-hover:text-brand-primary transition-colors">{{ $user->name }}</span>
                                             @if($user->personio_department)
                                                 <span class="text-xs text-surface-400 block">{{ $user->personio_department }}</span>
                                             @endif
                                         </div>
-                                    </div>
+                                    </a>
                                 </td>
                                 <td class="text-sm text-surface-500">{{ $user->email }}</td>
                                 <td>
@@ -150,16 +150,17 @@
                                     <div class="flex items-center justify-end gap-2">
                                         {{-- Role Assignment --}}
                                         <div class="relative">
-                                            <button @click="showRoles = !showRoles; showActions = false" class="btn-secondary btn-xs">
+                                            <button @click.stop="$store.dropdown.open('u{{ $user->id }}-roles', $el)" data-dd-trigger class="btn-secondary btn-xs">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                                 </svg>
                                                 Rollen
                                             </button>
-                                            <div x-show="showRoles"
-                                                 x-transition
-                                                 @click.away="showRoles = false"
-                                                 class="dropdown-menu right-0 mt-1 w-72 z-50">
+                                            <template x-if="$store.dropdown.isOpen('u{{ $user->id }}-roles')">
+                                            <div data-dd-panel
+                                                 @click.stop
+                                                 class="fixed w-72 z-[9999] bg-white border border-surface-100 rounded-xl shadow-dropdown py-1.5"
+                                                 :style="'top:'+$store.dropdown.pos.top+'px;right:'+$store.dropdown.pos.right+'px;max-height:'+$store.dropdown.pos.maxH+'px;overflow-y:auto'">
                                                 <div class="dropdown-header">Rollen zuweisen</div>
                                                 <form method="POST" action="{{ route('admin.users.updateRoles', $user) }}">
                                                     @csrf
@@ -184,12 +185,13 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            </template>
                                         </div>
 
                                         {{-- Managed Teams (for managers) --}}
                                         @if($user->hasRole(['people_manager', 'head_of']))
                                         <div class="relative">
-                                            <button @click="showTeams = !showTeams; showRoles = false; showActions = false" class="btn-secondary btn-xs">
+                                            <button @click.stop="$store.dropdown.open('u{{ $user->id }}-teams', $el)" data-dd-trigger class="btn-secondary btn-xs">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                                 </svg>
@@ -198,10 +200,11 @@
                                                     <span class="ml-1 bg-brand-primary/20 text-brand-primary text-xs rounded-full px-1.5">{{ $user->managedTeams->count() }}</span>
                                                 @endif
                                             </button>
-                                            <div x-show="showTeams"
-                                                 x-transition
-                                                 @click.away="showTeams = false"
-                                                 class="dropdown-menu right-0 mt-1 w-72 z-50">
+                                            <template x-if="$store.dropdown.isOpen('u{{ $user->id }}-teams')">
+                                            <div data-dd-panel
+                                                 @click.stop
+                                                 class="fixed w-72 z-[9999] bg-white border border-surface-100 rounded-xl shadow-dropdown py-1.5"
+                                                 :style="'top:'+$store.dropdown.pos.top+'px;right:'+$store.dropdown.pos.right+'px;max-height:'+$store.dropdown.pos.maxH+'px;overflow-y:auto'">
                                                 <div class="dropdown-header">Betreute Teams</div>
                                                 <form method="POST" action="{{ route('admin.users.updateManagedTeams', $user) }}">
                                                     @csrf
@@ -224,24 +227,32 @@
                                                     </div>
                                                 </form>
                                             </div>
+                                            </template>
                                         </div>
                                         @endif
 
                                         {{-- Actions Dropdown --}}
                                         <div class="relative">
-                                            <button @click="showActions = !showActions; showRoles = false; showTeams = false" class="btn-ghost btn-xs">
+                                            <button @click.stop="$store.dropdown.open('u{{ $user->id }}-actions', $el)" data-dd-trigger class="btn-ghost btn-xs">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"></path>
                                                 </svg>
                                             </button>
-                                            <div x-show="showActions"
-                                                 x-transition
-                                                 @click.away="showActions = false"
-                                                 class="dropdown-menu right-0 mt-1 w-56 z-50">
+                                            <template x-if="$store.dropdown.isOpen('u{{ $user->id }}-actions')">
+                                            <div data-dd-panel
+                                                 @click.stop
+                                                 class="fixed w-56 z-[9999] bg-white border border-surface-100 rounded-xl shadow-dropdown py-1.5"
+                                                 :style="'top:'+$store.dropdown.pos.top+'px;right:'+$store.dropdown.pos.right+'px;max-height:'+$store.dropdown.pos.maxH+'px;overflow-y:auto'">
+
+                                                <div class="px-3 py-2 border-b border-surface-100">
+                                                    <span class="text-xs font-medium text-brand-dark block truncate">{{ $user->name }}</span>
+                                                    <span class="text-xs text-surface-400 block truncate">{{ $user->email }}</span>
+                                                </div>
 
                                                 @if(!$user->isArchived())
                                                     {{-- Send Invitation --}}
-                                                    <form method="POST" action="{{ route('admin.users.invite', $user) }}">
+                                                    <form method="POST" action="{{ route('admin.users.invite', $user) }}"
+                                                          onsubmit="return confirm('Einladung an {{ $user->name }} ({{ $user->email }}) senden?')">
                                                         @csrf
                                                         <button type="submit" class="dropdown-item w-full text-left flex items-center gap-2">
                                                             <svg class="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -255,7 +266,8 @@
                                                     </form>
 
                                                     {{-- Reset Password --}}
-                                                    <form method="POST" action="{{ route('admin.users.resetPassword', $user) }}">
+                                                    <form method="POST" action="{{ route('admin.users.resetPassword', $user) }}"
+                                                          onsubmit="return confirm('Passwort-Reset-Link an {{ $user->name }} ({{ $user->email }}) senden?')">
                                                         @csrf
                                                         <button type="submit" class="dropdown-item w-full text-left flex items-center gap-2">
                                                             <svg class="w-4 h-4 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -270,7 +282,7 @@
                                                     {{-- Archive --}}
                                                     @if($user->id !== auth()->id())
                                                         <form method="POST" action="{{ route('admin.users.archive', $user) }}"
-                                                              onsubmit="return confirm('{{ $user->name }} wirklich archivieren? Der Zugang wird sofort gesperrt.')">
+                                                              onsubmit="return confirm('{{ $user->name }} ({{ $user->email }}) wirklich archivieren? Der Zugang wird sofort gesperrt.')">
                                                             @csrf
                                                             <button type="submit" class="dropdown-item w-full text-left flex items-center gap-2 text-ui-error">
                                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -293,6 +305,7 @@
                                                     </form>
                                                 @endif
                                             </div>
+                                            </template>
                                         </div>
                                     </div>
                                 </td>
@@ -326,4 +339,26 @@
             @endif
         </div>
     </div>
+
+{{-- #region agent log --}}
+<script>
+document.addEventListener('click', function(e) {
+    var trigger = e.target.closest('[data-dd-trigger]');
+    if (!trigger) return;
+    setTimeout(function() {
+        var panels = document.querySelectorAll('[data-dd-panel]');
+        var visiblePanels = [];
+        panels.forEach(function(p, i) {
+            var style = window.getComputedStyle(p);
+            if (style.display !== 'none') {
+                var header = p.querySelector('.text-brand-dark');
+                visiblePanels.push({index: i, display: style.display, text: header ? header.textContent.trim() : 'no-header'});
+            }
+        });
+        fetch('http://localhost:7833/ingest/1c51a961-1c92-4f0c-ab60-60f1218d2d67',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'999a08'},body:JSON.stringify({sessionId:'999a08',location:'blade:panel-visibility',message:'panels after click',data:{totalPanels:panels.length,visibleCount:visiblePanels.length,visiblePanels:visiblePanels,activeId:window.Alpine&&Alpine.store('dropdown').active},timestamp:Date.now(),hypothesisId:'A,E'})}).catch(function(){});
+    }, 200);
+});
+</script>
+{{-- #endregion --}}
+
 </x-app-layout>

@@ -139,7 +139,20 @@ class AdminUserController extends Controller
         $log = $personio->syncEmployees();
 
         if ($log->isSuccess()) {
-            return back()->with('success', "Personio-Sync erfolgreich: {$log->employees_fetched} Mitarbeiter abgerufen, {$log->users_created} neu angelegt, {$log->users_updated} aktualisiert.");
+            $details = $log->details ?? [];
+            $archivedCount = $details['users_archived'] ?? 0;
+            $reactivatedCount = $details['users_reactivated'] ?? 0;
+
+            $message = "{$log->employees_fetched} Mitarbeiter abgerufen, {$log->users_created} neu angelegt, {$log->users_updated} aktualisiert.";
+
+            if ($archivedCount > 0) {
+                $message .= " {$archivedCount} archiviert.";
+            }
+            if ($reactivatedCount > 0) {
+                $message .= " {$reactivatedCount} reaktiviert.";
+            }
+
+            return back()->with('success', "Personio-Sync erfolgreich: {$message}");
         }
 
         return back()->with('error', 'Personio-Sync fehlgeschlagen: ' . ($log->error_message ?? 'Unbekannter Fehler'));
@@ -151,12 +164,17 @@ class AdminUserController extends Controller
             'career_level_id' => ['nullable', 'exists:career_levels,id'],
         ]);
 
-        $user->update([
-            'career_level_id' => $request->career_level_id,
-        ]);
+        if ($request->career_level_id) {
+            $level = \App\Models\CareerLevel::find($request->career_level_id);
+            $user->addCareerLevel($level);
+            $label = $level->careerPath->name . ' – ' . $level->title;
 
-        $levelTitle = $user->fresh('careerLevel')->careerLevel?->title ?? 'Keiner';
+            return back()->with('success', "Karrierepfad für {$user->name} hinzugefügt: {$label}");
+        }
 
-        return back()->with('success', "Karrierepfad für {$user->name} aktualisiert: {$levelTitle}");
+        $user->careerLevels()->detach();
+        $user->syncPrimaryCareerLevel();
+
+        return back()->with('success', "Alle Karrierepfade für {$user->name} entfernt.");
     }
 }

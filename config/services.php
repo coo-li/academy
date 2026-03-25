@@ -43,6 +43,7 @@ return [
     'google' => [
         'calendar_id' => env('GOOGLE_CALENDAR_ID', 'primary'),
         'calendar_impersonate' => env('GOOGLE_CALENDAR_IMPERSONATE'),
+        'customer_id' => env('GOOGLE_CUSTOMER_ID', 'my_customer'),
     ],
 
     'personio' => [

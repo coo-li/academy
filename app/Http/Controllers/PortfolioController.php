@@ -40,6 +40,8 @@ class PortfolioController extends Controller
         if ($search) {
             $trainingMaterialsQuery->where(function ($q) use ($search) {
                 $q->where('original_filename', 'like', "%{$search}%")
+                  ->orWhere('link_title', 'like', "%{$search}%")
+                  ->orWhere('url', 'like', "%{$search}%")
                   ->orWhereHas('module', fn ($m) => $m->where('title', 'like', "%{$search}%"));
             });
         }
@@ -52,31 +54,47 @@ class PortfolioController extends Controller
 
     public function store(PortfolioUploadRequest $request)
     {
-        $file = $request->file('file');
         $user = Auth::user();
+        $file = $request->file('file');
 
-        $path = $file->store(
-            "portfolio/{$user->id}/{$request->module_id}",
-            'gcs'
-        );
-
-        PortfolioUpload::create([
+        $data = [
             'user_id' => $user->id,
             'module_id' => $request->module_id,
-            'original_filename' => $file->getClientOriginalName(),
-            'storage_path' => $path,
-            'mime_type' => $file->getMimeType(),
-            'file_size' => $file->getSize(),
             'notes' => $request->notes,
-        ]);
+        ];
 
-        return back()->with('success', 'Datei erfolgreich hochgeladen!');
+        if ($file) {
+            $path = $file->store(
+                "portfolio/{$user->id}/{$request->module_id}",
+                'gcs'
+            );
+
+            $data['original_filename'] = $file->getClientOriginalName();
+            $data['storage_path'] = $path;
+            $data['mime_type'] = $file->getMimeType();
+            $data['file_size'] = $file->getSize();
+        } else {
+            $data['original_filename'] = 'Notiz';
+            $data['storage_path'] = '';
+            $data['mime_type'] = 'text/plain';
+            $data['file_size'] = 0;
+        }
+
+        PortfolioUpload::create($data);
+
+        $message = $file ? 'Datei erfolgreich hochgeladen!' : 'Notiz erfolgreich gespeichert!';
+
+        return back()->with('success', $message);
     }
 
     public function preview(PortfolioUpload $upload)
     {
         if ($upload->user_id !== Auth::id() && ! Auth::user()->isTrainer() && ! Auth::user()->isManager()) {
             abort(403);
+        }
+
+        if ($upload->storage_path === '') {
+            abort(404);
         }
 
         $url = Storage::disk('gcs')->temporaryUrl($upload->storage_path, now()->addMinutes(15));
@@ -94,6 +112,10 @@ class PortfolioController extends Controller
             abort(403);
         }
 
+        if ($upload->storage_path === '') {
+            abort(404);
+        }
+
         $url = Storage::disk('gcs')->temporaryUrl($upload->storage_path, now()->addMinutes(5), [
             'response-content-disposition' => 'attachment; filename="' . $upload->original_filename . '"',
         ]);
@@ -107,10 +129,12 @@ class PortfolioController extends Controller
             abort(403);
         }
 
-        Storage::disk('gcs')->delete($upload->storage_path);
+        if ($upload->storage_path !== '') {
+            Storage::disk('gcs')->delete($upload->storage_path);
+        }
         $upload->delete();
 
-        return back()->with('success', 'Datei gelöscht.');
+        return back()->with('success', $upload->storage_path !== '' ? 'Datei gelöscht.' : 'Notiz gelöscht.');
     }
 
     public function downloadMaterial(TrainingMaterial $material)
@@ -126,6 +150,10 @@ class PortfolioController extends Controller
 
         if (! $hasAccess) {
             abort(403);
+        }
+
+        if ($material->isLink()) {
+            return redirect($material->url);
         }
 
         $url = Storage::disk('gcs')->temporaryUrl($material->storage_path, now()->addMinutes(5), [

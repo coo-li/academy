@@ -24,4 +24,9 @@ class CareerLevel extends Model
     {
         return $this->hasMany(Module::class)->orderBy('sort_order');
     }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class)->orderBy('sort_order');
+    }
 }

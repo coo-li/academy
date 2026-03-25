@@ -12,6 +12,7 @@ class TrainingSession extends Model
 
     protected $fillable = [
         'module_id',
+        'trainer_id',
         'start_at',
         'end_at',
         'google_event_id',
@@ -30,6 +31,11 @@ class TrainingSession extends Model
     public function module(): BelongsTo
     {
         return $this->belongsTo(Module::class);
+    }
+
+    public function trainer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'trainer_id');
     }
 
     public function enrollments(): HasMany

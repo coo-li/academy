@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Meine Mitarbeiter')
+    @section('page-title', $scope === 'all' ? 'Alle Mitarbeitenden' : 'Meine Mitarbeitenden')
 
     <div class="space-y-6" x-data="employeeManager()">
         @if(session('success'))
@@ -12,8 +12,12 @@
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Meine Mitarbeiter</h1>
-                <p class="text-surface-500 mt-1">Karrierepfade und Module f&uuml;r dein Team verwalten</p>
+                <h1 class="text-3xl font-bold text-brand-dark">
+                    {{ $scope === 'all' ? 'Alle Mitarbeitenden' : 'Meine Mitarbeitenden' }}
+                </h1>
+                <p class="text-surface-500 mt-1">
+                    {{ $scope === 'all' ? 'Übersicht über alle Mitarbeitenden' : 'Karrierepfade und Module für dein Team verwalten' }}
+                </p>
             </div>
             <div class="flex items-center gap-2 text-sm text-surface-500">
                 <span class="badge-info">{{ $employees->count() }} Mitarbeitende</span>
@@ -27,7 +31,7 @@
                     <div class="flex-1">
                         <input type="text"
                                x-model="search"
-                               placeholder="Name suchen&hellip;"
+                               placeholder="Name oder E-Mail suchen&hellip;"
                                class="input-field w-full">
                     </div>
                     <div class="w-full sm:w-48">
@@ -69,6 +73,7 @@
                                         </template>
                                     </div>
                                 </th>
+                                <th>E-Mail</th>
                                 <th class="cursor-pointer select-none" @click="toggleSort('team')">
                                     <div class="flex items-center gap-1">
                                         Team
@@ -107,6 +112,9 @@
                                             </div>
                                             <span class="font-medium text-brand-dark" x-text="emp.name"></span>
                                         </div>
+                                    </td>
+                                    <td>
+                                        <span class="text-sm text-surface-500" x-text="emp.email"></span>
                                     </td>
                                     <td>
                                         <span class="text-sm text-surface-500" x-text="emp.team || '\u2013'"></span>
@@ -160,7 +168,7 @@
 
                     if (this.search) {
                         const q = this.search.toLowerCase();
-                        result = result.filter(e => e.name.toLowerCase().includes(q));
+                        result = result.filter(e => e.name.toLowerCase().includes(q) || (e.email && e.email.toLowerCase().includes(q)));
                     }
 
                     if (this.teamFilter) {

@@ -17,6 +17,19 @@ class ImportTrainingCsvCommand extends Command
 
     protected $description = 'Import training modules from Asana CSV exports into the Strukturverwaltung';
 
+    private const SKILL_CATEGORY_MAP = [
+        'Führungskompetenz'                    => 'Führung & People Development',
+        'MA-Führung- & Entwicklung'            => 'Führung & People Development',
+        'Teamführung- & Entwicklung'           => 'Führung & People Development',
+        'Team-KPIs'                            => 'Methodik & Organisation',
+        'Erwartungsmanagement'                 => 'Kommunikation & Beziehungen',
+        'Kommunikation & Beratung'             => 'Kommunikation & Beziehungen',
+        'Beziehungsmanagement'                 => 'Kommunikation & Beziehungen',
+        'Persönliche Entwicklung'              => 'Methodik & Organisation',
+        'Projektsteuerung & Projektmanagement' => 'Methodik & Organisation',
+        'Business Development & Growth'        => 'Strategie & Business',
+    ];
+
     private array $stats = [
         'paths_created' => 0,
         'levels_created' => 0,
@@ -144,7 +157,7 @@ class ImportTrainingCsvCommand extends Command
     }
 
     /**
-     * Group modules into the three career paths, deduplicating cross-references.
+     * Group modules into the three Karrierepfade, deduplicating cross-references.
      *
      * Leadership modules that appear in the AM CSV as cross-references are skipped
      * because they're already covered by the Leadership CSV.
@@ -328,7 +341,8 @@ class ImportTrainingCsvCommand extends Command
                     $description = $this->extractDescription(trim($row['Notes'] ?? ''));
 
                     if ($skillName) {
-                        $skillCategoryId = SkillCategory::firstOrCreate(['name' => $skillName])->id;
+                        $mappedName = self::SKILL_CATEGORY_MAP[$skillName] ?? $skillName;
+                        $skillCategoryId = SkillCategory::firstOrCreate(['name' => $mappedName])->id;
                     }
 
                     $module = Module::firstOrCreate(

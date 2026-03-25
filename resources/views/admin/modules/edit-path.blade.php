@@ -26,6 +26,13 @@
                 </div>
 
                 <div>
+                    <label class="label">Emoji</label>
+                    <input type="text" name="emoji" class="input-field w-20 text-center text-2xl" maxlength="4" placeholder="🚀" value="{{ old('emoji', $path->emoji) }}">
+                    <p class="help-text mt-1">Ein Emoji als Icon für diesen Pfad (z.B. ✨ 🚀 🤝 🩵)</p>
+                    @error('emoji') <p class="error-text">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label class="label">Beschreibung</label>
                     <textarea name="description" class="input-field" rows="2" placeholder="Kurze Beschreibung des Karrierepfades...">{{ old('description', $path->description) }}</textarea>
                 </div>
@@ -86,18 +93,22 @@
         </x-card>
     </div>
 
+    @php
+        $levelsJson = $path->levels->map(fn ($l) => [
+            '_key' => $l->id,
+            'id' => $l->id,
+            'title' => $l->title,
+            'description' => $l->description ?? '',
+            'module_count' => $l->modules->count(),
+        ])->values();
+    @endphp
+
     @push('scripts')
     <script>
     function pathEditor() {
         let keyCounter = {{ $path->levels->count() }};
         return {
-            levels: @json($path->levels->map(fn ($l) => [
-                '_key' => $l->id,
-                'id' => $l->id,
-                'title' => $l->title,
-                'description' => $l->description ?? '',
-                'module_count' => $l->modules->count(),
-            ])->values()),
+            levels: @json($levelsJson),
             addLevel() {
                 keyCounter++;
                 this.levels.push({ _key: 'new_' + keyCounter, id: null, title: '', description: '', module_count: 0 });

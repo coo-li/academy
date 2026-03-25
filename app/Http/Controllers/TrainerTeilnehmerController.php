@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Enrollment;
 use App\Models\Module;
 use App\Models\TrainingSession;
+use App\Notifications\EnrollmentStatusChanged;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,6 +45,9 @@ class TrainerTeilnehmerController extends Controller
                 'attendance_confirmed_at' => now(),
                 'attendance_confirmed_by' => Auth::id(),
             ]);
+
+            $enrollment->load('module');
+            $enrollment->user->notify(new EnrollmentStatusChanged($enrollment));
         }
 
         $count = $confirmed->count();

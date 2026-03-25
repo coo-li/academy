@@ -9,7 +9,9 @@ class SkillCategory extends Model
 {
     protected $fillable = [
         'name',
+        'emoji',
         'description',
+        'sort_order',
     ];
 
     public function modules(): HasMany

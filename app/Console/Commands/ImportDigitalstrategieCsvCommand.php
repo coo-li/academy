@@ -14,7 +14,23 @@ class ImportDigitalstrategieCsvCommand extends Command
     protected $signature = 'academy:import-digitalstrategie-csv
         {--dry-run : Preview without writing to database}';
 
-    protected $description = 'Import Digitalstrategie career path modules from CSV';
+    protected $description = 'Import Digitalstrategie Karrierepfad modules from CSV';
+
+    private const SKILL_CATEGORY_MAP = [
+        'Analyse'    => 'Fachexpertise',
+        'Lead Gen'   => 'Fachexpertise',
+        'ECom'       => 'Fachexpertise',
+        'Recruiting' => 'Fachexpertise',
+        'Brand'      => 'Fachexpertise',
+        'Organic'    => 'Fachexpertise',
+        'Strategie'  => 'Strategie & Business',
+        'Business'   => 'Strategie & Business',
+        'Markt'      => 'Strategie & Business',
+        'Consulting' => 'Strategie & Business',
+        'Growth'     => 'Strategie & Business',
+        'Kommunikation' => 'Kommunikation & Beziehungen',
+        'Methodik'   => 'Methodik & Organisation',
+    ];
 
     private array $stats = [
         'paths_created' => 0,
@@ -198,7 +214,8 @@ class ImportDigitalstrategieCsvCommand extends Command
 
                     $skillCategoryId = null;
                     if ($bereich) {
-                        $category = SkillCategory::firstOrCreate(['name' => $bereich]);
+                        $mappedName = self::SKILL_CATEGORY_MAP[$bereich] ?? $bereich;
+                        $category = SkillCategory::firstOrCreate(['name' => $mappedName]);
                         $skillCategoryId = $category->id;
                         if ($category->wasRecentlyCreated) {
                             $this->stats['categories_created']++;

@@ -4,8 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\CareerLevel;
 use App\Models\CareerPath;
+use App\Models\Milestone;
 use App\Models\Module;
+use App\Models\ModuleInterest;
 use App\Models\User;
+use App\Notifications\ModuleAssigned;
+use App\Services\ModuleInterestService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -16,27 +20,45 @@ class EmployeeManagementController extends Controller
     {
         $manager = Auth::user();
 
-        $query = $manager->managedEmployees()
-            ->with(['team', 'careerLevel.careerPath', 'assignedModules', 'disabledCareerModules']);
+        $scope = $request->query('scope', 'mine');
+
+        if ($scope === 'all' && ! $manager->isAdmin()) {
+            abort(403);
+        }
+
+        if (! $manager->isPeopleManagerOrHeadOf()) {
+            $scope = 'all';
+        }
+
+        $query = $scope === 'all'
+            ? $manager->managedEmployees()
+            : $manager->teamEmployees();
+
+        $query->with(['team', 'careerLevel.careerPath', 'careerLevels.careerPath', 'assignedModules', 'disabledCareerModules']);
 
         $employees = $query->orderBy('name')->get();
-        $teams = $manager->isAdmin()
+
+        $teams = $scope === 'all'
             ? \App\Models\Team::orderBy('name')->get()
             : $manager->managedTeams()->orderBy('name')->get();
 
         $employeesJson = $employees->map(function ($e) {
+            $careerModuleCount = $e->careerLevels->sum(fn ($l) => $l->modules()->count());
+
             return [
                 'id' => $e->id,
                 'name' => $e->name,
-                'initials' => mb_strtoupper(mb_substr($e->name, 0, 2)),
+                'email' => $e->email,
+                'initials' => $e->initials,
                 'team' => $e->team?->name,
                 'level' => $e->careerLevel?->title,
                 'path' => $e->careerLevel?->careerPath?->name,
-                'moduleCount' => $e->assignedModules->count() + ($e->careerLevel ? $e->careerLevel->modules()->count() - $e->disabledCareerModules->count() : 0),
+                'paths' => $e->careerLevels->map(fn ($l) => $l->careerPath->name . ' – ' . $l->title)->values()->all(),
+                'moduleCount' => $e->assignedModules->count() + $careerModuleCount - $e->disabledCareerModules->count(),
             ];
         })->values();
 
-        return view('manage.employees.index', compact('employees', 'teams', 'employeesJson'));
+        return view('manage.employees.index', compact('employees', 'teams', 'employeesJson', 'scope'));
     }
 
     public function show(User $user)
@@ -46,15 +68,18 @@ class EmployeeManagementController extends Controller
         $user->load([
             'team',
             'careerLevel.careerPath',
+            'careerLevels.careerPath',
             'assignedModules.careerLevel.careerPath',
             'assignedModules.skillCategory',
             'enrollments.module',
+            'enrollments.trainingSession',
             'disabledCareerModules',
+            'disabledMilestones',
         ]);
 
-        $careerModules = $user->careerLevel
-            ? $user->careerLevel->modules()->with(['skillCategory', 'careerLevel.careerPath'])->orderBy('sort_order')->get()
-            : collect();
+        $careerModules = $user->careerLevels
+            ->flatMap(fn ($level) => $level->modules()->with(['skillCategory', 'careerLevel.careerPath'])->orderBy('sort_order')->get())
+            ->unique('id');
 
         $disabledModuleIds = $user->disabledCareerModules->pluck('id')->toArray();
         $activeCareerModules = $careerModules->reject(fn ($m) => in_array($m->id, $disabledModuleIds));
@@ -82,6 +107,19 @@ class EmployeeManagementController extends Controller
             'level_title' => $m->careerLevel?->title,
         ]);
 
+        $pendingInterests = $user->moduleInterests()
+            ->with('module.careerLevel.careerPath')
+            ->whereNull('noted_at')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $disabledMilestoneIds = $user->disabledMilestones->pluck('id')->toArray();
+        $allMilestones = Milestone::forUser($user)
+            ->orderBy('category')->orderBy('sort_order')
+            ->get();
+        $activeMilestones = $allMilestones->reject(fn ($m) => in_array($m->id, $disabledMilestoneIds));
+        $disabledMilestonesList = $allMilestones->filter(fn ($m) => in_array($m->id, $disabledMilestoneIds));
+
         return view('manage.employees.show', compact(
             'user',
             'allModules',
@@ -93,6 +131,10 @@ class EmployeeManagementController extends Controller
             'careerPaths',
             'availableModules',
             'availableModulesJson',
+            'pendingInterests',
+            'activeMilestones',
+            'disabledMilestoneIds',
+            'disabledMilestonesList',
         ));
     }
 
@@ -114,6 +156,8 @@ class EmployeeManagementController extends Controller
         ]);
 
         $module = Module::find($validated['module_id']);
+        $user->notify(new ModuleAssigned($module, Auth::user()));
+
         $msg = "Modul \"{$module->title}\" wurde {$user->name} zugewiesen.";
 
         return redirect()->route('manage.employees.show', $user)->with('success', $msg);
@@ -137,15 +181,17 @@ class EmployeeManagementController extends Controller
             'career_level_id' => 'nullable|exists:career_levels,id',
         ]);
 
-        $user->update([
-            'career_level_id' => $validated['career_level_id'],
-        ]);
+        if ($validated['career_level_id']) {
+            $level = CareerLevel::find($validated['career_level_id']);
+            $user->addCareerLevel($level);
 
-        $levelTitle = $user->fresh('careerLevel.careerPath')->careerLevel
-            ? $user->careerLevel->careerPath->name.' – '.$user->careerLevel->title
-            : 'Keiner';
-
-        $msg = "Karrierepfad für {$user->name} aktualisiert: {$levelTitle}";
+            $label = $level->careerPath->name . ' – ' . $level->title;
+            $msg = "Karrierepfad für {$user->name} hinzugefügt: {$label}";
+        } else {
+            $user->careerLevels()->detach();
+            $user->syncPrimaryCareerLevel();
+            $msg = "Alle Karrierepfade für {$user->name} entfernt.";
+        }
 
         return redirect()->route('manage.employees.show', $user)->with('success', $msg);
     }
@@ -154,8 +200,19 @@ class EmployeeManagementController extends Controller
     {
         $this->authorizeEmployee($user);
 
-        $user->update(['career_level_id' => null]);
-        $msg = "Karrierepfad für {$user->name} entfernt.";
+        $validated = $request->validate([
+            'career_level_id' => 'nullable|exists:career_levels,id',
+        ]);
+
+        if ($validated['career_level_id']) {
+            $level = CareerLevel::find($validated['career_level_id']);
+            $user->removeCareerLevel($level);
+            $msg = "Karrierepfad \"{$level->careerPath->name} – {$level->title}\" für {$user->name} entfernt.";
+        } else {
+            $user->careerLevels()->detach();
+            $user->syncPrimaryCareerLevel();
+            $msg = "Alle Karrierepfade für {$user->name} entfernt.";
+        }
 
         return redirect()->route('manage.employees.show', $user)->with('success', $msg);
     }
@@ -188,11 +245,79 @@ class EmployeeManagementController extends Controller
         return redirect()->route('manage.employees.show', $user)->with('success', $msg);
     }
 
+    public function disableMilestone(Request $request, User $user, Milestone $milestone)
+    {
+        $this->authorizeEmployee($user);
+
+        DB::table('disabled_milestones')->insertOrIgnore([
+            'user_id' => $user->id,
+            'milestone_id' => $milestone->id,
+            'disabled_by' => Auth::id(),
+            'disabled_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $msg = "Milestone \"{$milestone->title}\" wurde für {$user->name} deaktiviert.";
+
+        return redirect()->route('manage.employees.show', $user)->with('success', $msg);
+    }
+
+    public function enableMilestone(Request $request, User $user, Milestone $milestone)
+    {
+        $this->authorizeEmployee($user);
+
+        $user->disabledMilestones()->detach($milestone->id);
+        $msg = "Milestone \"{$milestone->title}\" wurde für {$user->name} wieder aktiviert.";
+
+        return redirect()->route('manage.employees.show', $user)->with('success', $msg);
+    }
+
+    public function noteInterest(Request $request, User $user, ModuleInterest $interest)
+    {
+        $this->authorizeEmployee($user);
+
+        if ($interest->user_id !== $user->id) {
+            abort(403);
+        }
+
+        app(ModuleInterestService::class)->markAsNoted($interest, Auth::user());
+
+        return redirect()->route('manage.employees.show', $user)
+            ->with('success', "Interesse an \"{$interest->module->title}\" wurde zur Kenntnis genommen.");
+    }
+
+    public function assignFromInterest(Request $request, User $user, ModuleInterest $interest)
+    {
+        $this->authorizeEmployee($user);
+
+        if ($interest->user_id !== $user->id) {
+            abort(403);
+        }
+
+        DB::table('module_assignments')->insertOrIgnore([
+            'user_id' => $user->id,
+            'module_id' => $interest->module_id,
+            'assigned_by' => Auth::id(),
+            'assigned_at' => now(),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        app(ModuleInterestService::class)->markAsNoted($interest, Auth::user());
+
+        $module = $interest->module;
+        $user->notify(new ModuleAssigned($module, Auth::user()));
+
+        return redirect()->route('manage.employees.show', $user)
+            ->with('success', "Modul \"{$module->title}\" wurde {$user->name} zugewiesen.");
+    }
+
     protected function getSuggestions(User $user): array
     {
         $suggestions = [];
 
-        if (! $user->careerLevel) {
+        if ($user->careerLevels->isEmpty()) {
             $suggestions[] = [
                 'type' => 'career_path',
                 'message' => 'Kein Karrierepfad zugewiesen. Bitte einen Karrierepfad und eine Stufe zuweisen.',
@@ -201,39 +326,41 @@ class EmployeeManagementController extends Controller
             return $suggestions;
         }
 
-        $careerModules = $user->careerLevel->modules;
-        $assignedIds = $user->assignedModules->pluck('id')->toArray();
         $disabledIds = $user->disabledCareerModules->pluck('id')->toArray();
-
         $completedModuleIds = $user->enrollments
             ->where('status', 'completed')
             ->pluck('module_id')
             ->toArray();
 
-        $missingModules = $careerModules->filter(function ($module) use ($completedModuleIds, $disabledIds) {
-            return ! in_array($module->id, $completedModuleIds) && ! in_array($module->id, $disabledIds);
-        });
+        foreach ($user->careerLevels as $level) {
+            $careerModules = $level->modules;
+            $pathLabel = $level->careerPath->name . ' – ' . $level->title;
 
-        if ($missingModules->isNotEmpty()) {
-            $suggestions[] = [
-                'type' => 'missing_modules',
-                'message' => $missingModules->count().' Module der aktuellen Karrierestufe noch nicht abgeschlossen.',
-                'modules' => $missingModules->pluck('title', 'id')->toArray(),
-            ];
-        }
+            $missingModules = $careerModules->filter(function ($module) use ($completedModuleIds, $disabledIds) {
+                return ! in_array($module->id, $completedModuleIds) && ! in_array($module->id, $disabledIds);
+            });
 
-        if ($missingModules->isEmpty()) {
-            $nextLevel = CareerLevel::where('career_path_id', $user->careerLevel->career_path_id)
-                ->where('level_number', '>', $user->careerLevel->level_number)
-                ->orderBy('level_number')
-                ->first();
-
-            if ($nextLevel) {
+            if ($missingModules->isNotEmpty()) {
                 $suggestions[] = [
-                    'type' => 'next_level',
-                    'message' => "Alle Module abgeschlossen! Nächste Stufe: {$nextLevel->title}",
-                    'career_level_id' => $nextLevel->id,
+                    'type' => 'missing_modules',
+                    'message' => $missingModules->count() . " Module in {$pathLabel} noch nicht abgeschlossen.",
+                    'modules' => $missingModules->pluck('title', 'id')->toArray(),
                 ];
+            }
+
+            if ($missingModules->isEmpty()) {
+                $nextLevel = CareerLevel::where('career_path_id', $level->career_path_id)
+                    ->where('level_number', '>', $level->level_number)
+                    ->orderBy('level_number')
+                    ->first();
+
+                if ($nextLevel) {
+                    $suggestions[] = [
+                        'type' => 'next_level',
+                        'message' => "Alle Module in {$pathLabel} abgeschlossen! Nächste Stufe: {$nextLevel->title}",
+                        'career_level_id' => $nextLevel->id,
+                    ];
+                }
             }
         }
 

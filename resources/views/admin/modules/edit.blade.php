@@ -14,7 +14,15 @@
                 </svg>
                 Zurück zur Übersicht
             </a>
-            <h1 class="text-3xl font-bold text-brand-dark">Modul bearbeiten: {{ $module->title }}</h1>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <h1 class="text-3xl font-bold text-brand-dark">Modul bearbeiten: {{ $module->title }}</h1>
+                <a href="{{ route('trainer.schulungen.show', $module) }}" class="btn-secondary btn-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    </svg>
+                    Schulungsinhalte verwalten
+                </a>
+            </div>
         </div>
 
         {{-- Module Form --}}
@@ -97,6 +105,23 @@
                     </div>
                 </div>
 
+                @php $selectedTrainerIds = old('trainer_ids', $module->trainers->pluck('id')->toArray()); @endphp
+                <div>
+                    <label class="label">Trainerpool</label>
+                    <p class="text-xs text-surface-400 mb-2">Diese Trainer können Termine für dieses Modul erstellen.</p>
+                    <div class="border border-surface-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                        @foreach($teachers as $teacher)
+                        <label class="flex items-center gap-2 py-1 px-2 rounded hover:bg-surface-50 cursor-pointer">
+                            <input type="checkbox" name="trainer_ids[]" value="{{ $teacher->id }}"
+                                class="rounded border-surface-300 text-brand-primary focus:ring-brand-primary"
+                                {{ in_array($teacher->id, $selectedTrainerIds) ? 'checked' : '' }}>
+                            <span class="text-sm text-brand-dark">{{ $teacher->name }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('trainer_ids') <p class="error-text">{{ $message }}</p> @enderror
+                </div>
+
                 <div>
                     <label class="label">Sortierung</label>
                     <input type="number" name="sort_order" class="input-field w-32" min="0" value="{{ old('sort_order', $module->sort_order) }}">
@@ -115,83 +140,5 @@
             </form>
         </x-card>
 
-        {{-- Quiz Editor --}}
-        <x-card title="Quiz (Lernerfolgskontrolle)">
-            <form method="POST" action="{{ route('admin.modules.quiz.store', $module) }}"
-                  x-data="quizEditor(@js($module->quiz?->questions ?? []), {{ $module->quiz?->pass_percentage ?? 70 }})"
-                  class="space-y-4">
-                @csrf
-
-                <div>
-                    <label class="label">Bestehensgrenze (%)</label>
-                    <input type="number" name="pass_percentage" class="input-field w-32" min="1" max="100" x-model="passPercentage">
-                </div>
-
-                <template x-for="(q, qi) in questions" :key="qi">
-                    <div class="panel p-4 space-y-3">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm font-medium text-brand-dark" x-text="'Frage ' + (qi + 1)"></span>
-                            <button type="button" @click="removeQuestion(qi)" class="btn-danger btn-xs">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div>
-                            <input type="text" :name="'questions[' + qi + '][question]'" class="input-field" placeholder="Frage..."
-                                   x-model="q.question" required>
-                        </div>
-
-                        <template x-for="(opt, oi) in q.options" :key="oi">
-                            <div class="flex items-center gap-2">
-                                <input type="radio" :name="'questions[' + qi + '][correct]'" :value="oi" class="radio-field"
-                                       x-model.number="q.correct">
-                                <input type="text" :name="'questions[' + qi + '][options][' + oi + ']'" class="input-field flex-1"
-                                       placeholder="Antwort..." x-model="q.options[oi]" required>
-                                <button type="button" @click="q.options.splice(oi, 1); if (q.correct >= q.options.length) q.correct = 0"
-                                        class="btn-ghost btn-xs" x-show="q.options.length > 2">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </template>
-
-                        <button type="button" @click="q.options.push('')" class="btn-ghost btn-xs">
-                            + Antwort hinzufügen
-                        </button>
-                    </div>
-                </template>
-
-                <button type="button" @click="addQuestion()" class="btn-secondary w-full">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                    </svg>
-                    Frage hinzufügen
-                </button>
-
-                <div class="flex justify-end pt-4 border-t border-surface-200" x-show="questions.length > 0">
-                    <button type="submit" class="btn-primary">Quiz speichern</button>
-                </div>
-            </form>
-        </x-card>
     </div>
-
-    @push('scripts')
-    <script>
-    function quizEditor(initialQuestions, initialPass) {
-        return {
-            questions: initialQuestions.length ? initialQuestions : [],
-            passPercentage: initialPass,
-            addQuestion() {
-                this.questions.push({ question: '', options: ['', '', ''], correct: 0 });
-            },
-            removeQuestion(index) {
-                this.questions.splice(index, 1);
-            }
-        };
-    }
-    </script>
-    @endpush
 </x-app-layout>

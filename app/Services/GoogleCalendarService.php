@@ -6,8 +6,16 @@ use Google\Client as GoogleClient;
 use Google\Service\Calendar as GoogleCalendar;
 use Google\Service\Calendar\Event as GoogleCalendarEvent;
 use Google\Service\Calendar\EventAttendee;
+use Google\Service\Calendar\ConferenceData;
+use Google\Service\Calendar\ConferenceSolutionKey;
+use Google\Service\Calendar\CreateConferenceRequest;
 use Google\Service\Calendar\EventDateTime;
+use Google\Service\Calendar\FreeBusyRequest;
+use Google\Service\Calendar\FreeBusyRequestItem;
+use Google\Service\Directory as GoogleDirectory;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class GoogleCalendarService
@@ -31,6 +39,7 @@ class GoogleCalendarService
         $this->client->setAuthConfig($credentialsPath);
         $this->client->addScope(GoogleCalendar::CALENDAR);
         $this->client->addScope(GoogleCalendar::CALENDAR_EVENTS);
+        $this->client->addScope('https://www.googleapis.com/auth/admin.directory.resource.calendar.readonly');
 
         $impersonate = config('services.google.calendar_impersonate');
         if ($impersonate) {
@@ -67,6 +76,7 @@ class GoogleCalendarService
 
     /**
      * Create an event on a calendar (e.g. training session, exam deadline).
+     * Optionally books a Google Workspace resource (room) by adding it as attendee.
      */
     public function createEvent(
         string $calendarId,
@@ -75,12 +85,14 @@ class GoogleCalendarService
         Carbon $end,
         ?string $description = null,
         ?string $location = null,
+        bool $withGoogleMeet = false,
+        ?string $resourceEmail = null,
     ): ?GoogleCalendarEvent {
         if (! $this->configured) {
             return null;
         }
 
-        $event = new GoogleCalendarEvent([
+        $eventData = [
             'summary' => $title,
             'description' => $description,
             'location' => $location,
@@ -92,9 +104,31 @@ class GoogleCalendarService
                 'dateTime' => $end->toRfc3339String(),
                 'timeZone' => config('app.timezone', 'Europe/Berlin'),
             ],
-        ]);
+        ];
 
-        return $this->calendarService->events->insert($calendarId, $event);
+        if ($resourceEmail) {
+            $eventData['attendees'] = [
+                new EventAttendee(['email' => $resourceEmail, 'resource' => true]),
+            ];
+        }
+
+        if ($withGoogleMeet) {
+            $conferenceRequest = new CreateConferenceRequest();
+            $conferenceRequest->setRequestId(Str::uuid()->toString());
+            $solutionKey = new ConferenceSolutionKey();
+            $solutionKey->setType('hangoutsMeet');
+            $conferenceRequest->setConferenceSolutionKey($solutionKey);
+
+            $conferenceData = new ConferenceData();
+            $conferenceData->setCreateRequest($conferenceRequest);
+            $eventData['conferenceData'] = $conferenceData;
+        }
+
+        $event = new GoogleCalendarEvent($eventData);
+
+        $params = $withGoogleMeet ? ['conferenceDataVersion' => 1] : [];
+
+        return $this->calendarService->events->insert($calendarId, $event, $params);
     }
 
     /**
@@ -133,7 +167,13 @@ class GoogleCalendarService
             ]));
         }
 
-        return $this->calendarService->events->update($calendarId, $eventId, $event);
+        if (array_key_exists('location', $attributes)) {
+            $event->setLocation($attributes['location']);
+        }
+
+        return $this->calendarService->events->update($calendarId, $eventId, $event, [
+            'sendUpdates' => 'all',
+        ]);
     }
 
     /**
@@ -209,6 +249,89 @@ class GoogleCalendarService
             ]);
             return null;
         }
+    }
+
+    /**
+     * List all Google Workspace calendar resources (rooms/equipment).
+     * Results are cached for 1 hour to avoid repeated API calls.
+     *
+     * @return array<int, array{email: string, name: string, type: string, building: string|null, floor: string|null, capacity: int|null, description: string|null}>
+     */
+    public function listResources(): array
+    {
+        if (! $this->configured) {
+            return [];
+        }
+
+        return Cache::remember('google_workspace_resources', 3600, function () {
+            try {
+                $directoryService = new GoogleDirectory($this->client);
+                $customerId = config('services.google.customer_id', 'my_customer');
+
+                $resources = [];
+                $pageToken = null;
+
+                do {
+                    $params = ['customer' => $customerId];
+                    if ($pageToken) {
+                        $params['pageToken'] = $pageToken;
+                    }
+
+                    $result = $directoryService->resources_calendars->listResourcesCalendars($customerId, $params);
+
+                    foreach ($result->getItems() ?? [] as $item) {
+                        $resources[] = [
+                            'email' => $item->getResourceEmail(),
+                            'name' => $item->getResourceName() ?? $item->getGeneratedResourceName(),
+                            'type' => $item->getResourceType() ?? 'Raum',
+                            'building' => $item->getBuildingId(),
+                            'floor' => $item->getFloorName(),
+                            'capacity' => $item->getCapacity(),
+                            'description' => $item->getResourceDescription(),
+                        ];
+                    }
+
+                    $pageToken = $result->getNextPageToken();
+                } while ($pageToken);
+
+                usort($resources, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+
+                return $resources;
+            } catch (\Throwable $e) {
+                Log::warning('Google Directory: Could not list resources.', ['error' => $e->getMessage()]);
+                return [];
+            }
+        });
+    }
+
+    /**
+     * Check whether a resource calendar is free for the given time window.
+     */
+    public function checkResourceAvailability(string $resourceEmail, Carbon $start, Carbon $end): bool
+    {
+        if (! $this->configured) {
+            return false;
+        }
+
+        $requestItem = new FreeBusyRequestItem(['id' => $resourceEmail]);
+
+        $freeBusyRequest = new FreeBusyRequest([
+            'timeMin' => $start->toRfc3339String(),
+            'timeMax' => $end->toRfc3339String(),
+            'timeZone' => config('app.timezone', 'Europe/Berlin'),
+            'items' => [$requestItem],
+        ]);
+
+        $response = $this->calendarService->freebusy->query($freeBusyRequest);
+        $calendars = $response->getCalendars();
+
+        if (! isset($calendars[$resourceEmail])) {
+            return true;
+        }
+
+        $busySlots = $calendars[$resourceEmail]->getBusy();
+
+        return empty($busySlots);
     }
 
     /**

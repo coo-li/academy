@@ -96,6 +96,23 @@
                     </div>
                 </div>
 
+                @php $selectedTrainerIds = old('trainer_ids', []); @endphp
+                <div>
+                    <label class="label">Trainerpool</label>
+                    <p class="text-xs text-surface-400 mb-2">Diese Trainer können Termine für dieses Modul erstellen.</p>
+                    <div class="border border-surface-200 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                        @foreach($teachers as $teacher)
+                        <label class="flex items-center gap-2 py-1 px-2 rounded hover:bg-surface-50 cursor-pointer">
+                            <input type="checkbox" name="trainer_ids[]" value="{{ $teacher->id }}"
+                                class="rounded border-surface-300 text-brand-primary focus:ring-brand-primary"
+                                {{ in_array($teacher->id, $selectedTrainerIds) ? 'checked' : '' }}>
+                            <span class="text-sm text-brand-dark">{{ $teacher->name }}</span>
+                        </label>
+                        @endforeach
+                    </div>
+                    @error('trainer_ids') <p class="error-text">{{ $message }}</p> @enderror
+                </div>
+
                 <div>
                     <label class="label">Sortierung</label>
                     <input type="number" name="sort_order" class="input-field w-32" min="0" value="{{ old('sort_order', 0) }}">

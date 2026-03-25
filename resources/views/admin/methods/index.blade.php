@@ -55,7 +55,10 @@
                             @endif
                         </div>
                         <div class="flex items-center gap-3 shrink-0">
-                            <span class="badge-neutral">{{ $method->modules_count }} {{ $method->modules_count === 1 ? 'Modul' : 'Module' }}</span>
+                            <a href="{{ route('admin.modules.index', ['method_id' => $method->id]) }}" class="badge-neutral hover:bg-brand-primary hover:text-white transition-colors" title="Module dieser Methode anzeigen">
+                                {{ $method->modules_count }} {{ $method->modules_count === 1 ? 'Modul' : 'Module' }}
+                                <svg class="w-3 h-3 ml-0.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </a>
                             <div class="flex items-center gap-1">
                                 <button @click="editing = true" class="btn-secondary btn-xs" title="Bearbeiten">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

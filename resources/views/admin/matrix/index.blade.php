@@ -16,15 +16,26 @@
                 <h1 class="text-3xl font-bold text-brand-dark">Karriere-Matrix</h1>
                 <p class="text-surface-500 mt-1">Personio-Positionen den Academy-Karrierepfaden zuordnen</p>
             </div>
-            <form method="POST" action="{{ route('admin.matrix.sync') }}">
-                @csrf
-                <button type="submit" class="btn-primary" onclick="this.disabled=true; this.innerHTML='<span class=\'spinner-sm\'></span> Sync läuft...'; this.form.submit();">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    Personio Sync starten
-                </button>
-            </form>
+            <div class="flex items-center gap-2">
+                <form method="POST" action="{{ route('admin.matrix.autoMap') }}">
+                    @csrf
+                    <button type="submit" class="btn-secondary" onclick="this.disabled=true; this.innerHTML='<span class=\'spinner-sm\'></span> Mapping läuft...'; this.form.submit();">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                        </svg>
+                        Auto-Mapping
+                    </button>
+                </form>
+                <form method="POST" action="{{ route('admin.matrix.sync') }}">
+                    @csrf
+                    <button type="submit" class="btn-primary" onclick="this.disabled=true; this.innerHTML='<span class=\'spinner-sm\'></span> Sync läuft...'; this.form.submit();">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        Personio Sync starten
+                    </button>
+                </form>
+            </div>
         </div>
 
         {{-- Stats Row --}}
@@ -109,7 +120,7 @@
                             <tr>
                                 <th>Personio-Position</th>
                                 <th>Karrierestufe</th>
-                                <th>Career Path</th>
+                                <th>Karrierepfad</th>
                                 <th class="text-center">MA</th>
                                 <th>Academy-Zuordnung</th>
                                 <th>Status</th>
@@ -252,7 +263,7 @@
                                     <div class="text-surface-600" x-text="currentLevel || '—'"></div>
                                 </div>
                                 <div>
-                                    <label class="label">Career Path</label>
+                                    <label class="label">Karrierepfad</label>
                                     <div class="text-surface-600" x-text="currentPath || '—'"></div>
                                 </div>
                             </div>
@@ -270,7 +281,7 @@
                                         </optgroup>
                                     @endforeach
                                 </select>
-                                <p class="help-text">Gilt permanent für alle Mitarbeiter mit dieser exakten Kombination aus Position, Karrierestufe und Career Path.</p>
+                                <p class="help-text">Gilt permanent für alle Mitarbeiter mit dieser exakten Kombination aus Position, Karrierestufe und Karrierepfad.</p>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -297,7 +308,7 @@
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="badge-info">Automatisch</span>
-                        <span class="text-surface-600">Auto-Match über Career Path Name</span>
+                        <span class="text-surface-600">Auto-Match über Karrierepfad-Name</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <span class="badge-success">Manuell</span>

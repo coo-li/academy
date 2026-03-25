@@ -23,6 +23,8 @@ class StoreModuleRequest extends FormRequest
             'accountable_user_id' => ['nullable', 'required_if:accountable_type,user', 'exists:users,id'],
             'is_mandatory' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
+            'trainer_ids' => ['nullable', 'array'],
+            'trainer_ids.*' => ['exists:users,id'],
         ];
     }
 

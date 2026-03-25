@@ -19,16 +19,19 @@
                 </a>
                 <div class="flex items-center gap-3">
                     <div class="avatar-lg">
-                        <span>{{ mb_strtoupper(mb_substr($user->name, 0, 2)) }}</span>
+                        <span>{{ $user->initials }}</span>
                     </div>
                     <div>
                         <h1 class="text-2xl font-bold text-brand-dark">{{ $user->name }}</h1>
+                        <p class="text-sm text-surface-500">{{ $user->email }}</p>
                         <div class="flex items-center gap-2 mt-1">
                             @if($user->team)
                                 <span class="badge-info">{{ $user->team->name }}</span>
                             @endif
-                            @if($user->careerLevel)
-                                <span class="badge-primary">{{ $user->careerLevel->careerPath->name }} &ndash; {{ $user->careerLevel->title }}</span>
+                            @if($user->careerLevels->isNotEmpty())
+                                @foreach($user->careerLevels as $cl)
+                                    <span class="badge-primary">{{ $cl->careerPath->name }} &ndash; {{ $cl->title }}</span>
+                                @endforeach
                             @else
                                 <span class="badge-warning">Kein Karrierepfad</span>
                             @endif
@@ -72,37 +75,41 @@
         {{-- Two-column layout --}}
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            {{-- Left Column: Career Path + Add Module --}}
+            {{-- Left Column: Karrierepfad + Add Module --}}
             <div class="lg:col-span-1 space-y-6">
 
-                {{-- Career Path --}}
+                {{-- Karrierepfad --}}
                 <div class="card-tool">
                     <div class="card-tool-header">
                         <h3 class="card-tool-title">Karrierepfad</h3>
                     </div>
                     <div class="card-tool-body space-y-3">
-                        @if($user->careerLevel)
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="font-medium text-brand-dark">{{ $user->careerLevel->careerPath->name }}</span>
-                                    <span class="text-surface-500">&ndash; {{ $user->careerLevel->title }}</span>
+                        @if($user->careerLevels->isNotEmpty())
+                            <div class="space-y-2">
+                                @foreach($user->careerLevels as $cl)
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <span class="font-medium text-brand-dark">{{ $cl->careerPath->name }}</span>
+                                        <span class="text-surface-500">&ndash; {{ $cl->title }}</span>
+                                    </div>
+                                    <form method="POST" action="{{ route('manage.employees.removeCareerPath', $user) }}" class="inline"
+                                          onsubmit="return confirm('Karrierepfad &quot;{{ $cl->careerPath->name }}&quot; wirklich entfernen?')">
+                                        @csrf
+                                        @method('DELETE')
+                                        <input type="hidden" name="career_level_id" value="{{ $cl->id }}">
+                                        <button type="submit" class="btn-danger btn-xs">
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </form>
                                 </div>
-                                <form method="POST" action="{{ route('manage.employees.removeCareerPath', $user) }}" class="inline"
-                                      onsubmit="return confirm('Karrierepfad wirklich entfernen?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn-danger btn-xs">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                                        Entfernen
-                                    </button>
-                                </form>
+                                @endforeach
                             </div>
                         @endif
 
                         <form method="POST" action="{{ route('manage.employees.assignCareerLevel', $user) }}">
                             @csrf
                             @method('PATCH')
-                            <label class="input-label">{{ $user->careerLevel ? 'Karrierestufe &auml;ndern' : 'Karrierepfad zuweisen' }}</label>
+                            <label class="input-label">Karrierepfad hinzuf&uuml;gen</label>
                             <select name="career_level_id" class="input-field w-full mb-2">
                                 <option value="">Pfad &amp; Stufe w&auml;hlen&hellip;</option>
                                 @foreach($careerPaths as $path)
@@ -219,7 +226,7 @@
                                                 </svg>
                                             @endif
                                             <div class="min-w-0">
-                                                <div class="text-sm font-medium text-brand-dark truncate">{{ $module->title }}</div>
+                                                <a href="{{ route('trainer.schulungen.show', $module) }}" class="text-sm font-medium text-brand-dark truncate block hover:text-brand-primary transition-colors">{{ $module->title }}</a>
                                                 <div class="flex items-center gap-1.5 mt-0.5">
                                                     @if($isFromCareer && !$isDirectAssignment)
                                                         <span class="text-xs text-surface-400">Aus Karrierepfad</span>
@@ -231,6 +238,10 @@
                                                     @if($module->skillCategory)
                                                         <span class="text-xs text-surface-300">&middot;</span>
                                                         <span class="text-xs text-surface-400">{{ $module->skillCategory->name }}</span>
+                                                    @endif
+                                                    @if($enrollment?->trainingSession)
+                                                        <span class="text-xs text-surface-300">&middot;</span>
+                                                        <a href="{{ route('trainer.teilnehmer.index') }}" class="text-xs text-brand-primary hover:underline">Termin {{ $enrollment->trainingSession->start_at->format('d.m.Y') }}</a>
                                                     @endif
                                                 </div>
                                             </div>
@@ -272,6 +283,64 @@
                     </div>
                 </div>
 
+                {{-- Pending Interests --}}
+                @if($pendingInterests->isNotEmpty())
+                <div class="card-tool border-brand-accent border-t-4">
+                    <div class="card-tool-header flex items-center justify-between">
+                        <h3 class="card-tool-title">Schulungsinteressen ({{ $pendingInterests->count() }})</h3>
+                        <span class="badge-accent text-xs">Offen</span>
+                    </div>
+                    <div class="card-tool-body p-0">
+                        <div class="divide-y divide-surface-100">
+                            @foreach($pendingInterests as $interest)
+                                <div class="flex items-center justify-between px-4 py-3">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <svg class="w-5 h-5 text-brand-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+                                        </svg>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium text-brand-dark truncate">{{ $interest->module->title }}</div>
+                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                @if($interest->module->careerLevel?->careerPath)
+                                                    <span class="text-xs text-surface-400">{{ $interest->module->careerLevel->careerPath->name }}</span>
+                                                    <span class="text-xs text-surface-300">&middot;</span>
+                                                @endif
+                                                <span class="text-xs text-surface-400">Bekundet am {{ $interest->created_at->format('d.m.Y') }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                        @if($allModules->contains('id', $interest->module_id))
+                                            <span class="badge-success text-xs">Bereits zugewiesen</span>
+                                        @else
+                                            <form method="POST" action="{{ route('manage.employees.assignFromInterest', [$user, $interest]) }}">
+                                                @csrf
+                                                <button type="submit" class="btn-accent btn-xs">
+                                                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                                                    </svg>
+                                                    Modul zuweisen
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <form method="POST" action="{{ route('manage.employees.noteInterest', [$user, $interest]) }}">
+                                            @csrf
+                                            @method('PATCH')
+                                            <button type="submit" class="btn-outline btn-xs">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                                </svg>
+                                                Zur Kenntnis
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
                 {{-- Disabled Career Modules --}}
                 @php
                     $disabledModules = $careerModules->filter(fn ($m) => in_array($m->id, $disabledModuleIds));
@@ -305,6 +374,90 @@
                                             @csrf
                                             @method('DELETE')
                                             <button type="submit" class="btn-primary btn-xs" title="Modul wieder aktivieren">
+                                                <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                                                </svg>
+                                                Aktivieren
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Active Milestones --}}
+                @if($activeMilestones->isNotEmpty())
+                <div class="card-tool border-t-4 border-brand-accent">
+                    <div class="card-tool-header flex items-center justify-between">
+                        <h3 class="card-tool-title">Milestones ({{ $activeMilestones->count() }})</h3>
+                        <span class="badge-accent text-xs">On-the-job</span>
+                    </div>
+                    <div class="card-tool-body p-0">
+                        <div class="divide-y divide-surface-100">
+                            @foreach($activeMilestones->groupBy('category') as $category => $milestones)
+                                <div class="px-4 py-2 bg-surface-50">
+                                    <span class="text-xs font-semibold text-surface-500 uppercase tracking-wider">{{ \App\Models\Milestone::CATEGORIES[$category] ?? $category }}</span>
+                                </div>
+                                @foreach($milestones as $milestone)
+                                <div class="flex items-center justify-between px-4 py-3">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <div class="w-2 h-2 rounded-full flex-shrink-0 {{ $milestone->type === 'aktiv' ? 'bg-brand-accent' : 'bg-surface-300' }}"></div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium text-brand-dark truncate">{{ $milestone->title }}</div>
+                                            <div class="flex items-center gap-1.5 mt-0.5">
+                                                <span class="badge-{{ $milestone->type === 'aktiv' ? 'accent' : 'neutral' }} text-xs">{{ $milestone->typeLabel() }}</span>
+                                                @if($milestone->team)
+                                                <span class="text-xs text-surface-400">{{ $milestone->team->name }}</span>
+                                                @endif
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                        <form method="POST" action="{{ route('manage.employees.disableMilestone', [$user, $milestone]) }}" class="inline"
+                                              onsubmit="return confirm('Milestone für diesen Mitarbeiter deaktivieren?')">
+                                            @csrf
+                                            <button type="submit" class="btn-warning btn-xs" title="Milestone deaktivieren">
+                                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                                </svg>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                @endforeach
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                {{-- Disabled Milestones --}}
+                @if($disabledMilestonesList->isNotEmpty())
+                <div class="card-tool border-surface-200 bg-surface-50/50">
+                    <div class="card-tool-header flex items-center justify-between">
+                        <h3 class="card-tool-title text-surface-400">Deaktivierte Milestones ({{ $disabledMilestonesList->count() }})</h3>
+                    </div>
+                    <div class="card-tool-body p-0">
+                        <div class="divide-y divide-surface-100">
+                            @foreach($disabledMilestonesList as $milestone)
+                                <div class="flex items-center justify-between px-4 py-3 opacity-60">
+                                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                                        <svg class="w-5 h-5 text-surface-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                        </svg>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium text-surface-400 truncate line-through">{{ $milestone->title }}</div>
+                                            <span class="text-xs text-surface-400">Deaktiviert</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-2 flex-shrink-0 ml-2">
+                                        <form method="POST" action="{{ route('manage.employees.enableMilestone', [$user, $milestone]) }}" class="inline">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn-primary btn-xs" title="Milestone wieder aktivieren">
                                                 <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
                                                 </svg>

@@ -32,71 +32,78 @@
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Meine Academy</h1>
-                <p class="text-surface-500 mt-1">Willkommen zurück, {{ $user->name }}!</p>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine Academy</h1>
+                <p class="text-surface-500 mt-1.5 text-base">Willkommen zurück, {{ $user->name }}!</p>
             </div>
             @if($careerLevel)
             <div class="flex items-center gap-3">
-                <span class="badge-primary">{{ $careerPath?->name }}</span>
-                <span class="text-lg font-semibold text-brand-dark">{{ $careerLevel->title }}</span>
+                <span class="badge-primary text-sm px-3 py-1">{{ $careerPath?->name }}</span>
+                <span class="text-lg font-bold font-display text-brand-dark">{{ $careerLevel->title }}</span>
             </div>
             @endif
         </div>
 
         {{-- Career Level Overview --}}
         @if($careerLevel)
-        <div class="card-tool">
-            <div class="card-tool-body">
-                <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+        <div class="card-tool overflow-hidden">
+            <div class="bg-gradient-to-r from-brand-primary-light via-white to-brand-accent-light/30 p-6 lg:p-8">
+                <div class="flex flex-col lg:flex-row lg:items-center gap-8">
                     {{-- Level Info --}}
-                    <div class="flex items-center gap-4 flex-shrink-0">
-                        <div class="w-16 h-16 rounded-full bg-brand-primary-light flex items-center justify-center">
-                            <span class="text-2xl font-bold text-brand-primary">{{ $careerLevel->level_number }}</span>
+                    <div class="flex items-center gap-5 flex-shrink-0">
+                        <div class="w-20 h-20 rounded-2xl bg-white shadow-tool-md flex items-center justify-center">
+                            <span class="text-3xl font-extrabold font-display text-brand-primary">{{ $careerLevel->level_number }}</span>
                         </div>
                         <div>
-                            <div class="text-xs text-surface-500 uppercase tracking-wide">Deine Ziel-Karrierestufe</div>
-                            <div class="text-xl font-bold text-brand-dark">{{ $careerLevel->title }}</div>
-                            <div class="text-sm text-surface-500">{{ $careerPath?->name }}</div>
+                            <div class="text-xs text-surface-500 uppercase tracking-widest font-semibold mb-1">Dein Upskilling Plan</div>
+                            <div class="text-2xl font-extrabold font-display text-brand-dark">{{ $careerLevel->title }}</div>
+                            <div class="text-sm text-surface-500 mt-0.5">{{ $careerPath?->name }}</div>
                         </div>
                     </div>
 
                     {{-- Progress Stats --}}
                     <div class="flex-1 grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-brand-dark">{{ $stats['total'] }}</div>
-                            <div class="text-xs text-surface-500">Module gesamt</div>
+                        <div class="text-center p-3 rounded-xl bg-white/70">
+                            <div class="text-2xl font-extrabold font-display text-brand-dark">{{ $stats['total'] }}</div>
+                            <div class="text-xs text-surface-500 font-medium mt-0.5">Module gesamt</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-ui-success">{{ $stats['completed'] }}</div>
-                            <div class="text-xs text-surface-500">Abgeschlossen</div>
+                        <div class="text-center p-3 rounded-xl bg-white/70">
+                            <div class="text-2xl font-extrabold font-display text-ui-success">{{ $stats['completed'] }}</div>
+                            <div class="text-xs text-surface-500 font-medium mt-0.5">Abgeschlossen</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-brand-primary">{{ $stats['enrolled'] + $stats['attended'] }}</div>
-                            <div class="text-xs text-surface-500">Eingeschrieben</div>
+                        <div class="text-center p-3 rounded-xl bg-white/70">
+                            <div class="text-2xl font-extrabold font-display text-brand-primary">{{ $stats['enrolled'] + $stats['attended'] }}</div>
+                            <div class="text-xs text-surface-500 font-medium mt-0.5">Eingeschrieben</div>
                         </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-surface-400">{{ $stats['total'] - $stats['completed'] - $stats['enrolled'] - $stats['attended'] }}</div>
-                            <div class="text-xs text-surface-500">Offen</div>
+                        <div class="text-center p-3 rounded-xl bg-white/70">
+                            <div class="text-2xl font-extrabold font-display text-surface-400">{{ $stats['total'] - $stats['completed'] - $stats['enrolled'] - $stats['attended'] }}</div>
+                            <div class="text-xs text-surface-500 font-medium mt-0.5">Offen</div>
                         </div>
                     </div>
 
                     {{-- Progress Bar --}}
-                    <div class="lg:w-48 flex-shrink-0">
+                    <div class="lg:w-56 flex-shrink-0">
                         @php $pct = $stats['total'] > 0 ? round(($stats['completed'] / $stats['total']) * 100) : 0; @endphp
-                        <div class="text-sm font-medium text-brand-dark text-center mb-1">{{ $pct }}% abgeschlossen</div>
+                        <div class="text-sm font-bold font-display text-brand-dark text-center mb-2">{{ $pct }}% abgeschlossen</div>
                         <div class="progress-bar">
-                            <div class="progress-bar-fill progress-bar-success" style="width: {{ $pct }}%"></div>
+                            <div class="progress-bar-fill {{ $pct >= 80 ? 'bg-ui-success' : ($pct >= 40 ? 'bg-brand-accent' : 'bg-brand-primary') }}" style="width: {{ $pct }}%"></div>
                         </div>
                         @if($nextLevel)
-                        <div class="text-xs text-surface-500 text-center mt-1">Nächstes Level: {{ $nextLevel->title }}</div>
+                        <div class="text-xs text-surface-500 text-center mt-2 flex items-center justify-center gap-1.5">
+                            <svg class="w-3.5 h-3.5 text-brand-accent" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+                            <span>Nächstes Level: <strong class="text-brand-dark">{{ $nextLevel->title }}</strong></span>
+                        </div>
                         @endif
                     </div>
                 </div>
             </div>
         </div>
+        @elseif($modules->isNotEmpty())
+        <x-alert type="info" title="Kein Karrierepfad zugeordnet" :dismissible="true">
+            Dir wurde noch kein Karrierepfad zugeordnet. Deine individuell zugewiesenen Module findest du weiter unten.
+        </x-alert>
         @else
-        <x-alert type="info" title="Kein Karrierepfad zugewiesen">
-            Dein People Manager hat dir noch keine Karrierestufe zugewiesen. Bitte wende dich an deinen Vorgesetzten.
+        <x-alert type="warning" title="Noch keine Module zugewiesen">
+            Dir wurden noch keine Module zugewiesen. Bitte wende dich an deinen People Manager.
         </x-alert>
         @endif
 
@@ -113,21 +120,47 @@
         @endif
 
         {{-- Module List --}}
-        <div>
-            <h2 class="text-2xl font-bold text-brand-dark mb-4">Deine Module</h2>
+        <div x-data="{ filter: 'all' }">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+                <h2 class="text-2xl font-extrabold text-brand-dark">Deine Module</h2>
+
+                @if($modules->isNotEmpty())
+                @php
+                    $mandatoryCount = $modules->where('is_mandatory', true)->count();
+                    $electiveCount = $modules->where('is_mandatory', false)->count();
+                @endphp
+                <div class="flex items-center gap-2 flex-wrap">
+                    <button @click="filter = 'all'"
+                        :class="filter === 'all' ? 'bg-brand-primary text-white shadow-sm' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'"
+                        class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200">
+                        Alle <span class="ml-1 opacity-75">{{ $modules->count() }}</span>
+                    </button>
+                    <button @click="filter = 'pflicht'"
+                        :class="filter === 'pflicht' ? 'bg-brand-accent text-white shadow-sm' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'"
+                        class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200">
+                        Pflichtmodule <span class="ml-1 opacity-75">{{ $mandatoryCount }}</span>
+                    </button>
+                    <button @click="filter = 'wahl'"
+                        :class="filter === 'wahl' ? 'bg-brand-primary text-white shadow-sm' : 'bg-surface-100 text-surface-600 hover:bg-surface-200'"
+                        class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200">
+                        Wahlmodule <span class="ml-1 opacity-75">{{ $electiveCount }}</span>
+                    </button>
+                </div>
+                @endif
+            </div>
 
             @if($modules->isNotEmpty())
-            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 @foreach($modules as $module)
                 @php
                     $enrollment = $enrollmentsByModule->get($module->id);
                     $status = $enrollment?->status ?? 'open';
 
                     $statusConfig = match($status) {
-                        'completed' => ['icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'text-ui-success', 'bg' => 'bg-ui-success-light', 'label' => 'Abgeschlossen', 'badge' => 'badge-success'],
-                        'attended' => ['icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', 'color' => 'text-ui-warning', 'bg' => 'bg-ui-warning-light', 'label' => 'Quiz offen', 'badge' => 'badge-warning'],
-                        'enrolled' => ['icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'text-brand-primary', 'bg' => 'bg-brand-primary-light', 'label' => 'Gebucht', 'badge' => 'badge-primary'],
-                        default => ['icon' => 'M12 6v6m0 0v6m0-6h6m-6 0H6', 'color' => 'text-surface-400', 'bg' => 'bg-surface-100', 'label' => 'Offen', 'badge' => 'badge-neutral'],
+                        'completed' => ['icon' => 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'text-ui-success', 'bg' => 'bg-ui-success-light', 'label' => 'Abgeschlossen', 'badge' => 'badge-success', 'border' => 'border-ui-success'],
+                        'attended' => ['icon' => 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', 'color' => 'text-brand-accent', 'bg' => 'bg-brand-accent-light', 'label' => 'Quiz offen', 'badge' => 'badge-accent', 'border' => 'border-brand-accent'],
+                        'enrolled' => ['icon' => 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', 'color' => 'text-brand-primary', 'bg' => 'bg-brand-primary-light', 'label' => 'Gebucht', 'badge' => 'badge-primary', 'border' => 'border-brand-primary'],
+                        default => ['icon' => 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', 'color' => 'text-surface-400', 'bg' => 'bg-surface-100', 'label' => 'Offen', 'badge' => 'badge-neutral', 'border' => 'border-surface-200'],
                     };
 
                     $methodName = $module->method?->name;
@@ -146,192 +179,102 @@
                     };
                 @endphp
 
-                <div class="card-tool hover:shadow-tool-md transition-shadow">
+                <a href="{{ route('academy.module.show', $module) }}"
+                    x-show="filter === 'all' || (filter === 'pflicht' && {{ $module->is_mandatory ? 'true' : 'false' }}) || (filter === 'wahl' && {{ $module->is_mandatory ? 'false' : 'true' }})"
+                    x-transition:enter="transition ease-out duration-200"
+                    x-transition:enter-start="opacity-0 scale-95"
+                    x-transition:enter-end="opacity-100 scale-100"
+                    class="card-tool border-t-4 {{ $statusConfig['border'] }} hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 opacity-0 animate-card-enter block" style="animation-delay: {{ $loop->index * 60 }}ms">
                     <div class="card-tool-body">
                         {{-- Status Icon & Type --}}
-                        <div class="flex items-start justify-between mb-3">
-                            <div class="flex items-center gap-2">
-                                <div class="w-10 h-10 rounded-lg {{ $statusConfig['bg'] }} flex items-center justify-center flex-shrink-0">
-                                    <svg class="w-5 h-5 {{ $statusConfig['color'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $statusConfig['icon'] }}"></path>
-                                    </svg>
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-2.5">
+                                @php $pathEmoji = $module->careerLevel?->careerPath?->emoji; @endphp
+                                <div class="w-11 h-11 rounded-xl {{ $statusConfig['bg'] }} flex items-center justify-center flex-shrink-0">
+                                    @if($pathEmoji)
+                                        <span class="text-2xl leading-none">{{ $pathEmoji }}</span>
+                                    @else
+                                        <svg class="w-5.5 h-5.5 {{ $statusConfig['color'] }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $statusConfig['icon'] }}"></path>
+                                        </svg>
+                                    @endif
                                 </div>
                                 <span class="{{ $statusConfig['badge'] }}">{{ $statusConfig['label'] }}</span>
                             </div>
-                            <div class="flex items-center gap-1">
+                            <div class="flex items-center gap-1.5">
                                 @if($methodName)
                                 <span class="badge-primary">{{ $methodName }}</span>
                                 @endif
                                 @if($module->is_mandatory)
-                                <span class="badge-error">Pflicht</span>
+                                <span class="badge-accent">Pflicht</span>
+                                @else
+                                <span class="badge-neutral">Wahl</span>
                                 @endif
                             </div>
                         </div>
 
                         {{-- Title & Description --}}
-                        <h3 class="font-semibold text-brand-dark text-lg mb-1">{{ $module->title }}</h3>
+                        <h3 class="font-bold font-display text-brand-dark text-xl mb-1.5">{{ $module->title }}</h3>
                         @if($module->description)
-                        <p class="text-sm text-surface-500 mb-3 line-clamp-2">{{ $module->description }}</p>
+                        <p class="text-sm text-surface-500 mb-4 line-clamp-2 leading-relaxed">{{ $module->description }}</p>
                         @endif
 
-                        {{-- Next Session --}}
-                        @php $nextSession = $module->trainingSessions->where('start_at', '>', now())->sortBy('start_at')->first(); @endphp
-                        @if($nextSession)
-                        <div class="flex items-center gap-2 text-xs text-surface-500 mb-3">
-                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {{-- Next Session / Booked Session --}}
+                        @if($bookedSession && in_array($status, ['enrolled', 'attended']))
+                        <div class="flex items-center gap-2 text-xs text-surface-500 bg-surface-50 rounded-lg px-3 py-2">
+                            <svg class="w-3.5 h-3.5 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                             </svg>
-                            <span>{{ $nextSession->start_at->format('d.m.Y, H:i') }} Uhr</span>
-                            @if($nextSession->location)
-                            <span>&middot; {{ $nextSession->location }}</span>
+                            <span class="font-medium">{{ $bookedSession->start_at->format('d.m.Y, H:i') }} Uhr</span>
+                            @if($bookedSession->location)
+                            <span class="text-surface-400">&middot;</span>
+                            <span>{{ $bookedSession->location }}</span>
                             @endif
                         </div>
+                        @else
+                            @php $nextSession = $module->trainingSessions->where('start_at', '>', now())->sortBy('start_at')->first(); @endphp
+                            @if($nextSession && $status === 'open')
+                            <div class="flex items-center gap-2 text-xs text-surface-500 bg-surface-50 rounded-lg px-3 py-2">
+                                <svg class="w-3.5 h-3.5 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                </svg>
+                                <span class="font-medium">Nächster Termin: {{ $nextSession->start_at->format('d.m.Y, H:i') }} Uhr</span>
+                            </div>
+                            @endif
                         @endif
                     </div>
 
                     {{-- Stepper Footer --}}
-                    <div class="card-tool-footer" x-data="{ showCancel: false, showRebook: false }">
-                        {{-- Step Indicator --}}
-                        <div class="flex items-center gap-1 mb-3">
-                            @foreach([
-                                ['key' => 'booking', 'state' => $stepBooking, 'label' => 'Termin'],
-                                ['key' => 'attendance', 'state' => $stepAttendance, 'label' => 'Teilnahme'],
-                                ['key' => 'quiz', 'state' => $stepQuiz, 'label' => 'Quiz'],
-                            ] as $i => $step)
-                                @if($i > 0)
-                                <div class="flex-1 h-0.5 {{ $step['state'] === 'done' || ($i === 1 && $stepBooking === 'done') ? 'bg-ui-success' : 'bg-surface-200' }}"></div>
-                                @endif
-                                <div class="flex flex-col items-center gap-0.5">
-                                    <div class="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                                        {{ $step['state'] === 'done' ? 'bg-ui-success text-white' : ($step['state'] === 'active' ? 'bg-brand-primary text-white' : 'bg-surface-200 text-surface-400') }}">
-                                        @if($step['state'] === 'done')
-                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
-                                        @else
-                                            {{ $i + 1 }}
-                                        @endif
-                                    </div>
-                                    <span class="text-[10px] {{ $step['state'] === 'done' ? 'text-ui-success' : ($step['state'] === 'active' ? 'text-brand-primary' : 'text-surface-400') }} font-medium">{{ $step['label'] }}</span>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        {{-- Step Content --}}
-                        @if($status === 'open')
-                            @if($nextSession)
-                            <form method="POST" action="{{ route('enroll') }}">
-                                @csrf
-                                <input type="hidden" name="module_id" value="{{ $module->id }}">
-                                <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
-                                <button type="submit" class="btn-primary w-full btn-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                    Termin buchen &ndash; {{ $nextSession->start_at->format('d.m.Y, H:i') }}
-                                </button>
-                            </form>
-                            @else
-                            <div class="space-y-1.5">
-                                <p class="text-xs text-surface-500">Aktuell nicht buchbar &ndash; es sind noch keine Termine geplant.</p>
-                                @php $accountable = $module->getAccountableFor($user); @endphp
-                                @if($accountable)
-                                <p class="text-xs text-surface-500">
-                                    Ansprechpartner: <a href="mailto:{{ $accountable->email }}" class="font-medium text-brand-primary hover:underline">{{ $accountable->name }}</a>
-                                </p>
-                                @endif
-                            </div>
-                            @endif
-
-                        @elseif($status === 'enrolled')
-                            <div class="space-y-2">
-                                {{-- Booked Session Info --}}
-                                @if($bookedSession)
-                                <div class="flex items-center gap-2 text-xs bg-brand-primary-light rounded-lg px-3 py-2">
-                                    <svg class="w-3.5 h-3.5 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                    </svg>
-                                    <span class="text-brand-primary font-medium">
-                                        {{ $bookedSession->start_at->format('d.m.Y, H:i') }} Uhr
-                                        @if($bookedSession->location) &middot; {{ $bookedSession->location }} @endif
-                                    </span>
-                                </div>
-                                @endif
-                                <p class="text-xs text-surface-400">Warte auf Teilnahme-Bestätigung durch Trainer.</p>
-
-                                {{-- Actions: Cancel / Rebook --}}
-                                <div class="flex items-center gap-2">
-                                    @if($nextSession && $bookedSession && $nextSession->id !== $bookedSession->id)
-                                    <button x-show="!showRebook" @click="showRebook = true" class="btn-secondary btn-xs flex-1">Umbuchen</button>
-                                    <div x-show="showRebook" x-cloak x-transition class="flex items-center gap-1 flex-1">
-                                        <form method="POST" action="{{ route('enrollment.rebook', $enrollment) }}" class="flex-1">
-                                            @csrf
-                                            @method('PATCH')
-                                            <input type="hidden" name="module_id" value="{{ $module->id }}">
-                                            <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
-                                            <button type="submit" class="btn-primary btn-xs w-full">{{ $nextSession->start_at->format('d.m.') }}</button>
-                                        </form>
-                                        <button @click="showRebook = false" class="btn-secondary btn-xs">Nein</button>
-                                    </div>
+                    <div class="card-tool-footer">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-1.5">
+                                @foreach([
+                                    ['key' => 'booking', 'state' => $stepBooking, 'label' => 'Termin'],
+                                    ['key' => 'attendance', 'state' => $stepAttendance, 'label' => 'Teilnahme'],
+                                    ['key' => 'quiz', 'state' => $stepQuiz, 'label' => 'Quiz'],
+                                ] as $i => $step)
+                                    @if($i > 0)
+                                    <div class="w-6 h-0.5 rounded-full {{ $step['state'] === 'done' || ($i === 1 && $stepBooking === 'done') ? 'bg-ui-success' : 'bg-surface-200' }} transition-colors duration-500"></div>
                                     @endif
-
-                                    <button x-show="!showCancel" @click="showCancel = true" class="btn-danger btn-xs">Stornieren</button>
-                                    <div x-show="showCancel" x-cloak x-transition class="flex items-center gap-1">
-                                        <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
-                                            @csrf
-                                            @method('PATCH')
-                                            <button type="submit" class="btn-danger btn-xs">Ja, stornieren</button>
-                                        </form>
-                                        <button @click="showCancel = false" class="btn-secondary btn-xs">Nein</button>
+                                    <div class="flex flex-col items-center gap-1">
+                                        <div class="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
+                                            {{ $step['state'] === 'done' ? 'bg-ui-success text-white shadow-sm' : ($step['state'] === 'active' ? 'bg-brand-primary text-white shadow-sm shadow-brand-primary/30' : 'bg-surface-100 text-surface-400') }}">
+                                            @if($step['state'] === 'done')
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                                            @else
+                                                {{ $i + 1 }}
+                                            @endif
+                                        </div>
+                                        <span class="text-[10px] {{ $step['state'] === 'done' ? 'text-ui-success font-semibold' : ($step['state'] === 'active' ? 'text-brand-primary font-semibold' : 'text-surface-400') }}">{{ $step['label'] }}</span>
                                     </div>
-                                </div>
+                                @endforeach
                             </div>
-
-                        @elseif($status === 'attended')
-                            <div class="space-y-2">
-                                <div class="flex items-center gap-2 text-xs bg-ui-success-light rounded-lg px-3 py-2">
-                                    <svg class="w-3.5 h-3.5 text-ui-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    <span class="text-ui-success font-medium">Teilnahme bestätigt{{ $enrollment->attendance_confirmed_at ? ' am ' . $enrollment->attendance_confirmed_at->format('d.m.Y') : '' }}</span>
-                                </div>
-                                @if($module->quiz)
-                                <a href="{{ route('quiz.show', $module->quiz) }}" class="btn-primary w-full btn-sm">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                    </svg>
-                                    Quiz starten
-                                </a>
-                                @else
-                                <p class="text-xs text-surface-400">Kein Quiz fuer dieses Modul hinterlegt.</p>
-                                @endif
-                            </div>
-
-                        @elseif($status === 'completed')
-                            <div class="flex items-center gap-2 text-sm text-ui-success font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Abgeschlossen
-                                @if($enrollment?->completed_at)
-                                <span class="text-xs text-surface-400">{{ $enrollment->completed_at->format('d.m.Y') }}</span>
-                                @endif
-                            </div>
-
-                        @elseif($status === 'cancelled')
-                            <div class="flex items-center gap-2 text-sm text-ui-error font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Storniert
-                                @if($enrollment?->cancelled_at)
-                                <span class="text-xs text-surface-400">{{ $enrollment->cancelled_at->format('d.m.Y') }}</span>
-                                @endif
-                            </div>
-
-                        @else
-                            <p class="text-xs text-surface-400">Status: {{ $status }}</p>
-                        @endif
+                            <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
                     </div>
-                </div>
+                </a>
                 @endforeach
             </div>
             @else
@@ -342,11 +285,122 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                         </svg>
                         <div class="empty-state-title">Keine Module verfügbar</div>
-                        <div class="empty-state-description">Für deinen aktuellen Karrierepfad sind noch keine Module hinterlegt.</div>
+                        <div class="empty-state-description">Es sind noch keine Module für dich hinterlegt.</div>
                     </div>
                 </div>
             </div>
             @endif
         </div>
+
+        {{-- Interested Modules --}}
+        @if($interestedModules->isNotEmpty())
+        <div>
+            <div class="flex items-center gap-3 mb-5">
+                <h2 class="text-2xl font-extrabold text-brand-dark">Interesse bekundet</h2>
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full bg-pink-100 text-pink-600 text-sm font-bold">{{ $interestedModules->count() }}</span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                @foreach($interestedModules as $module)
+                @php
+                    $interest = $interestsByModule->get($module->id);
+                    $methodName = $module->method?->name;
+                @endphp
+
+                <a href="{{ route('academy.module.show', $module) }}" class="card-tool border-t-4 border-pink-400 hover:shadow-card-hover hover:-translate-y-1 transition-all duration-300 opacity-0 animate-card-enter block" style="animation-delay: {{ $loop->index * 60 }}ms">
+                    <div class="card-tool-body">
+                        {{-- Status Icon & Type --}}
+                        <div class="flex items-start justify-between mb-4">
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-11 h-11 rounded-xl bg-pink-50 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-5.5 h-5.5 text-pink-500" fill="currentColor" viewBox="0 0 24 24">
+                                        <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0112 5.052 5.5 5.5 0 0116.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z"/>
+                                    </svg>
+                                </div>
+                                <span class="inline-flex items-center rounded-md bg-pink-50 px-2 py-1 text-xs font-medium text-pink-700 ring-1 ring-inset ring-pink-600/20">Interesse bekundet</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                @if($methodName)
+                                <span class="badge-primary">{{ $methodName }}</span>
+                                @endif
+                                @if($module->is_mandatory)
+                                <span class="badge-accent">Pflicht</span>
+                                @else
+                                <span class="badge-neutral">Wahl</span>
+                                @endif
+                            </div>
+                        </div>
+
+                        {{-- Title & Description --}}
+                        <h3 class="font-bold font-display text-brand-dark text-xl mb-1.5">{{ $module->title }}</h3>
+                        @if($module->description)
+                        <p class="text-sm text-surface-500 mb-4 line-clamp-2 leading-relaxed">{{ $module->description }}</p>
+                        @endif
+
+                        {{-- Career Path Info --}}
+                        @if($module->careerLevel?->careerPath)
+                        <div class="flex items-center gap-2 text-xs text-surface-500 bg-surface-50 rounded-lg px-3 py-2">
+                            @if($module->careerLevel->careerPath->emoji)
+                            <span class="text-base leading-none">{{ $module->careerLevel->careerPath->emoji }}</span>
+                            @endif
+                            <span class="font-medium">{{ $module->careerLevel->careerPath->name }}</span>
+                            <span class="text-surface-400">&middot;</span>
+                            <span>{{ $module->careerLevel->title }}</span>
+                        </div>
+                        @endif
+                    </div>
+
+                    {{-- Footer --}}
+                    <div class="card-tool-footer">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2 text-xs">
+                                @if($interest?->isNoted())
+                                <span class="inline-flex items-center gap-1 text-ui-success font-medium">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                    Von deinem People Manager zur Kenntnis genommen
+                                </span>
+                                @else
+                                <span class="inline-flex items-center gap-1 text-surface-400 font-medium">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    Warte auf Rückmeldung
+                                </span>
+                                @endif
+                            </div>
+                            <svg class="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </div>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Milestones --}}
+        @if($milestonesByCategory->isNotEmpty())
+        @php $allMilestones = $milestonesByCategory->flatten(); @endphp
+        <div>
+            <h2 class="text-2xl font-extrabold text-brand-dark mb-2">Deine Milestones</h2>
+            <p class="text-sm text-surface-500 mb-4">Anforderungen, die in deiner aktuellen Karrierestufe on-the-job erwartet werden.</p>
+
+            <div class="card-tool overflow-hidden">
+                <div class="divide-y divide-surface-100">
+                    @foreach($allMilestones as $milestone)
+                    <div class="px-5 py-3 flex items-start gap-3">
+                        <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0 {{ $milestone->type === 'aktiv' ? 'bg-brand-accent' : 'bg-surface-300' }}"></div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-sm font-medium text-brand-dark">{{ $milestone->title }}</div>
+                            @if($milestone->description)
+                            <p class="text-xs text-surface-500 mt-0.5 line-clamp-3">{{ $milestone->description }}</p>
+                            @endif
+                        </div>
+                        <span class="badge-{{ $milestone->type === 'aktiv' ? 'accent' : 'neutral' }} text-xs flex-shrink-0">{{ $milestone->typeLabel() }}</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+        </div>
+        @endif
     </div>
 </x-app-layout>

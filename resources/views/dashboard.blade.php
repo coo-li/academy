@@ -130,7 +130,7 @@
                 <div class="card-tool p-4">
                     <div class="flex items-center gap-3">
                         <div class="avatar-lg">
-                            <span>{{ strtoupper(substr(Auth::user()->name, 0, 2)) }}</span>
+                            <span>{{ Auth::user()->initials }}</span>
                         </div>
                         <div>
                             <div class="font-semibold text-brand-dark">{{ Auth::user()->name }}</div>

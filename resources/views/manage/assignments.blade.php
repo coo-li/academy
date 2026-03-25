@@ -65,8 +65,10 @@
                                        x-cloak>
                                     <input type="checkbox" name="user_ids[]" value="{{ $user->id }}" class="rounded border-surface-300 text-brand-primary focus:ring-brand-primary">
                                     <span class="text-sm text-brand-dark">{{ $user->name }}</span>
-                                    @if($user->careerLevel)
-                                        <span class="text-xs text-surface-400">{{ $user->careerLevel->careerPath->name }} &ndash; {{ $user->careerLevel->title }}</span>
+                                    @if($user->careerLevels->isNotEmpty())
+                                        @foreach($user->careerLevels as $cl)
+                                            <span class="text-xs text-surface-400">{{ $cl->careerPath->name }} &ndash; {{ $cl->title }}</span>
+                                        @endforeach
                                     @else
                                         <span class="text-xs text-surface-400">Kein Karrierepfad</span>
                                     @endif
@@ -120,8 +122,10 @@
                                 <tr>
                                     <td class="font-medium text-brand-dark">{{ $user->name }}</td>
                                     <td class="text-sm text-surface-500">
-                                        @if($user->careerLevel)
-                                            {{ $user->careerLevel->careerPath->name }} &ndash; {{ $user->careerLevel->title }}
+                                        @if($user->careerLevels->isNotEmpty())
+                                            @foreach($user->careerLevels as $cl)
+                                                <span class="badge-primary text-xs">{{ $cl->careerPath->name }} &ndash; {{ $cl->title }}</span>
+                                            @endforeach
                                         @else
                                             <span class="text-surface-400">&ndash;</span>
                                         @endif

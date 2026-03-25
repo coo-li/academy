@@ -25,6 +25,13 @@
                 </div>
 
                 <div>
+                    <label class="label">Emoji</label>
+                    <input type="text" name="emoji" class="input-field w-20 text-center text-2xl" maxlength="4" placeholder="🚀" value="{{ old('emoji') }}">
+                    <p class="help-text mt-1">Ein Emoji als Icon für diesen Pfad (z.B. ✨ 🚀 🤝 🩵)</p>
+                    @error('emoji') <p class="error-text">{{ $message }}</p> @enderror
+                </div>
+
+                <div>
                     <label class="label">Beschreibung</label>
                     <textarea name="description" class="input-field" rows="2" placeholder="Kurze Beschreibung des Karrierepfades...">{{ old('description') }}</textarea>
                 </div>

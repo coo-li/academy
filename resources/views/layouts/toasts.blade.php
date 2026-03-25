@@ -56,7 +56,7 @@
 @if(session('success'))
 <script>
     document.addEventListener('alpine:init', () => {
-        setTimeout(() => notify('{{ session('success') }}', 'success'), 100);
+        setTimeout(() => notify({!! json_encode(session('success')) !!}, 'success'), 100);
     });
 </script>
 @endif
@@ -64,7 +64,7 @@
 @if(session('error'))
 <script>
     document.addEventListener('alpine:init', () => {
-        setTimeout(() => notify('{{ session('error') }}', 'error'), 100);
+        setTimeout(() => notify({!! json_encode(session('error')) !!}, 'error'), 100);
     });
 </script>
 @endif
@@ -72,7 +72,7 @@
 @if(session('warning'))
 <script>
     document.addEventListener('alpine:init', () => {
-        setTimeout(() => notify('{{ session('warning') }}', 'warning'), 100);
+        setTimeout(() => notify({!! json_encode(session('warning')) !!}, 'warning'), 100);
     });
 </script>
 @endif
@@ -80,7 +80,7 @@
 @if(session('info'))
 <script>
     document.addEventListener('alpine:init', () => {
-        setTimeout(() => notify('{{ session('info') }}', 'info'), 100);
+        setTimeout(() => notify({!! json_encode(session('info')) !!}, 'info'), 100);
     });
 </script>
 @endif

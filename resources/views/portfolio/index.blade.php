@@ -14,7 +14,7 @@
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
                 <h1 class="text-3xl font-bold text-brand-dark">Digitale Mappe</h1>
-                <p class="text-surface-500 mt-1">Lade Bilder und Scans deiner Arbeiten hoch.</p>
+                <p class="text-surface-500 mt-1">Hier kannst du deine persönlichen Unterlagen und Notizen zu Schulungen sicher ablegen. Diese Dateien sind nur für dich sichtbar.</p>
             </div>
         </div>
 
@@ -40,13 +40,13 @@
                         </div>
 
                         <div>
-                            <label class="label label-required">Datei</label>
+                            <label class="label">Datei <span class="text-xs text-surface-400 font-normal">(optional bei Notiz)</span></label>
                             <div class="file-upload"
                                  :class="{ 'file-upload-active': dragover }"
                                  @dragover.prevent="dragover = true"
                                  @dragleave.prevent="dragover = false"
                                  @drop.prevent="dragover = false; $refs.fileInput.files = $event.dataTransfer.files; fileName = $event.dataTransfer.files[0]?.name || ''">
-                                <input type="file" name="file" required accept="image/*,.pdf" class="hidden" x-ref="fileInput"
+                                <input type="file" name="file" accept="image/*,.pdf" class="hidden" x-ref="fileInput"
                                        @change="fileName = $event.target.files[0]?.name || ''">
                                 <div @click="$refs.fileInput.click()" class="cursor-pointer text-center">
                                     <svg class="file-upload-icon mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,8 +61,8 @@
                         </div>
 
                         <div>
-                            <label class="label">Notizen</label>
-                            <textarea name="notes" class="input-field" rows="3" placeholder="Optionale Beschreibung..." maxlength="500">{{ old('notes') }}</textarea>
+                            <label class="label">Notizen <span class="text-xs text-surface-400 font-normal">(Pflicht ohne Datei)</span></label>
+                            <textarea name="notes" class="input-field" rows="3" placeholder="Persönliche Notizen zur Schulung..." maxlength="500">{{ old('notes') }}</textarea>
                             @error('notes') <p class="error-text">{{ $message }}</p> @enderror
                         </div>
 
@@ -70,7 +70,7 @@
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path>
                             </svg>
-                            Hochladen
+                            Speichern
                         </button>
                     </form>
                 </x-card>
@@ -114,6 +114,15 @@
 
                 {{-- Training Materials (from attended modules) --}}
                 @if($groupedMaterials->isNotEmpty())
+                    <div class="flex items-center gap-3 pt-2">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                            </svg>
+                            <h2 class="text-lg font-bold text-brand-dark">Schulungsunterlagen vom Trainer</h2>
+                        </div>
+                        <div class="flex-1 border-t border-surface-200"></div>
+                    </div>
                     @foreach($groupedMaterials as $moduleId => $moduleMaterials)
                         @php $matModule = $modules->firstWhere('id', $moduleId); @endphp
                         <div class="card-tool" x-data="{ collapsed: false }">
@@ -134,10 +143,10 @@
                                     <table class="table-tool">
                                         <thead>
                                             <tr>
-                                                <th>Datei</th>
+                                                <th>Name</th>
                                                 <th>Größe</th>
                                                 <th>Datum</th>
-                                                <th class="text-right">Download</th>
+                                                <th class="text-right">Aktion</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -145,7 +154,11 @@
                                             <tr>
                                                 <td>
                                                     <div class="flex items-center gap-2">
-                                                        @if(str_starts_with($material->mime_type, 'image/'))
+                                                        @if($material->isLink())
+                                                        <svg class="w-5 h-5 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                                        </svg>
+                                                        @elseif(str_starts_with($material->mime_type ?? '', 'image/'))
                                                         <svg class="w-5 h-5 text-ui-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                         </svg>
@@ -155,18 +168,39 @@
                                                         </svg>
                                                         @endif
                                                         <div>
-                                                            <span class="font-medium text-brand-dark text-sm truncate max-w-[250px] block">{{ $material->original_filename }}</span>
+                                                            @if($material->isLink())
+                                                                <a href="{{ $material->url }}" target="_blank" rel="noopener noreferrer"
+                                                                   class="font-medium text-brand-primary hover:text-brand-primary-hover text-sm truncate max-w-[250px] block hover:underline">
+                                                                    {{ $material->displayName() }}
+                                                                </a>
+                                                            @else
+                                                                <span class="font-medium text-brand-dark text-sm truncate max-w-[250px] block">{{ $material->displayName() }}</span>
+                                                            @endif
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-sm text-surface-500">{{ number_format($material->file_size / 1024, 0) }} KB</td>
+                                                <td class="text-sm text-surface-500">
+                                                    @if($material->isFile())
+                                                        {{ number_format($material->file_size / 1024, 0) }} KB
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
                                                 <td class="text-sm text-surface-500">{{ $material->created_at->format('d.m.Y H:i') }}</td>
                                                 <td class="text-right">
-                                                    <a href="{{ route('portfolio.material.download', $material) }}" class="btn-secondary btn-xs" title="Herunterladen">
-                                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                                        </svg>
-                                                    </a>
+                                                    @if($material->isLink())
+                                                        <a href="{{ $material->url }}" target="_blank" rel="noopener noreferrer" class="btn-secondary btn-xs" title="Öffnen">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                                                            </svg>
+                                                        </a>
+                                                    @else
+                                                        <a href="{{ route('portfolio.material.download', $material) }}" class="btn-secondary btn-xs" title="Herunterladen">
+                                                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                                            </svg>
+                                                        </a>
+                                                    @endif
                                                 </td>
                                             </tr>
                                             @endforeach
@@ -180,6 +214,15 @@
 
                 {{-- Own Uploads grouped by Module --}}
                 @if($groupedUploads->isNotEmpty())
+                    <div class="flex items-center gap-3 pt-2">
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5 text-brand-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                            </svg>
+                            <h2 class="text-lg font-bold text-brand-dark">Persönliche Dateien & Notizen</h2>
+                        </div>
+                        <div class="flex-1 border-t border-surface-200"></div>
+                    </div>
                     @foreach($groupedUploads as $moduleId => $moduleUploads)
                         @php $module = $modules->firstWhere('id', $moduleId); @endphp
                         <div class="card-tool" x-data="{ collapsed: false }">
@@ -211,7 +254,11 @@
                                             <tr>
                                                 <td>
                                                     <div class="flex items-center gap-2">
-                                                        @if(str_starts_with($upload->mime_type, 'image/'))
+                                                        @if($upload->storage_path === '')
+                                                        <svg class="w-5 h-5 text-brand-accent flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                                        </svg>
+                                                        @elseif(str_starts_with($upload->mime_type, 'image/'))
                                                         <svg class="w-5 h-5 text-ui-info flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                                         </svg>
@@ -221,29 +268,41 @@
                                                         </svg>
                                                         @endif
                                                         <div>
+                                                            @if($upload->storage_path === '')
+                                                                <span class="font-medium text-brand-dark text-sm">Notiz</span>
+                                                            @else
                                                             <button
                                                                 @click="openPreview('{{ route('portfolio.preview', $upload) }}', '{{ $upload->mime_type }}', '{{ route('portfolio.download', $upload) }}')"
                                                                 class="font-medium text-brand-primary hover:text-brand-primary-hover text-sm truncate max-w-[250px] text-left cursor-pointer hover:underline block"
                                                             >
                                                                 {{ $upload->original_filename }}
                                                             </button>
+                                                            @endif
                                                             @if($upload->notes)
                                                             <div class="text-xs text-surface-500 truncate max-w-[250px]">{{ $upload->notes }}</div>
                                                             @endif
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-sm text-surface-500">{{ $upload->fileSizeFormatted() }}</td>
+                                                <td class="text-sm text-surface-500">
+                                                    @if($upload->storage_path !== '')
+                                                        {{ $upload->fileSizeFormatted() }}
+                                                    @else
+                                                        &mdash;
+                                                    @endif
+                                                </td>
                                                 <td class="text-sm text-surface-500">{{ $upload->created_at->format('d.m.Y H:i') }}</td>
                                                 <td class="text-right">
                                                     <div class="flex items-center justify-end gap-1">
+                                                        @if($upload->storage_path !== '')
                                                         <a href="{{ route('portfolio.download', $upload) }}" class="btn-secondary btn-xs" title="Herunterladen">
                                                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
                                                             </svg>
                                                         </a>
+                                                        @endif
                                                         <form method="POST" action="{{ route('portfolio.destroy', $upload) }}" class="inline"
-                                                              onsubmit="return confirm('Datei wirklich löschen?')">
+                                                              onsubmit="return confirm('{{ $upload->storage_path !== '' ? 'Datei' : 'Notiz' }} wirklich löschen?')">
                                                             @csrf
                                                             @method('DELETE')
                                                             <button type="submit" class="btn-danger btn-xs" title="Löschen">

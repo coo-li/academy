@@ -7,24 +7,50 @@ use App\Models\CareerLevel;
 use App\Models\CareerPath;
 use App\Models\Method;
 use App\Models\Module;
-use App\Models\Quiz;
 use App\Models\SkillCategory;
 use App\Models\User;
 use Illuminate\Http\Request;
 
 class AdminModuleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $paths = CareerPath::with(['levels.modules' => fn ($q) => $q->with(['skillCategory', 'accountableUser', 'method'])->orderBy('sort_order')])
+        $methodFilter = null;
+        $filteredModules = null;
+
+        if ($request->filled('method_id')) {
+            $methodFilter = Method::find($request->method_id);
+            if ($methodFilter) {
+                $filteredModules = Module::where('method_id', $methodFilter->id)
+                    ->with(['careerLevel.careerPath', 'skillCategory', 'method'])
+                    ->orderBy('sort_order')
+                    ->get();
+            }
+        }
+
+        $paths = CareerPath::withCount(['levels', 'modules'])
+            ->orderBy('name')
             ->get();
 
-        $globalModules = Module::whereNull('career_level_id')
-            ->with(['skillCategory', 'accountableUser', 'method'])
+        $skillGroups = SkillCategory::withCount('modules')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
+
+        $unassignedModules = Module::whereNull('career_level_id')
+            ->whereNull('skill_category_id')
+            ->with(['method'])
             ->orderBy('sort_order')
             ->get();
 
-        return view('admin.modules.index', compact('paths', 'globalModules'));
+        return view('admin.modules.index', compact('paths', 'skillGroups', 'unassignedModules', 'methodFilter', 'filteredModules'));
+    }
+
+    public function showPath(CareerPath $path)
+    {
+        $path->load(['levels.modules' => fn ($q) => $q->with(['skillCategory', 'accountableUser', 'method', 'quiz'])->orderBy('sort_order')]);
+
+        return view('admin.modules.show-path', compact('path'));
     }
 
     public function create()
@@ -44,6 +70,20 @@ class AdminModuleController extends Controller
     public function store(StoreModuleRequest $request)
     {
         $module = Module::create($request->validated());
+        $module->trainers()->sync($request->input('trainer_ids', []));
+
+        if ($module->career_level_id) {
+            $careerLevel = CareerLevel::find($module->career_level_id);
+            return redirect()
+                ->route('admin.paths.show', $careerLevel->career_path_id)
+                ->with('success', "Modul \"{$module->title}\" wurde erstellt!");
+        }
+
+        if ($module->skill_category_id) {
+            return redirect()
+                ->route('admin.skill-categories.show', $module->skill_category_id)
+                ->with('success', "Modul \"{$module->title}\" wurde erstellt!");
+        }
 
         return redirect()
             ->route('admin.modules.index')
@@ -52,7 +92,7 @@ class AdminModuleController extends Controller
 
     public function edit(Module $module)
     {
-        $module->load('quiz');
+        $module->load('quiz', 'trainers');
         $levels = CareerLevel::with('careerPath')->get()
             ->groupBy('careerPath.name');
         $skillCategories = SkillCategory::orderBy('name')->get();
@@ -68,42 +108,55 @@ class AdminModuleController extends Controller
     public function update(StoreModuleRequest $request, Module $module)
     {
         $module->update($request->validated());
+        $module->trainers()->sync($request->input('trainer_ids', []));
 
-        return redirect()
-            ->route('admin.modules.index')
-            ->with('success', "Modul \"{$module->title}\" wurde aktualisiert!");
+        return $this->redirectToModuleContainer($module, "Modul \"{$module->title}\" wurde aktualisiert!");
     }
 
     public function destroy(Module $module)
     {
         $title = $module->title;
+        $careerLevelId = $module->career_level_id;
+        $skillCategoryId = $module->skill_category_id;
         $module->delete();
+
+        if ($careerLevelId) {
+            $careerLevel = CareerLevel::find($careerLevelId);
+            if ($careerLevel) {
+                return redirect()
+                    ->route('admin.paths.show', $careerLevel->career_path_id)
+                    ->with('success', "Modul \"{$title}\" wurde gelöscht.");
+            }
+        }
+
+        if ($skillCategoryId) {
+            return redirect()
+                ->route('admin.skill-categories.show', $skillCategoryId)
+                ->with('success', "Modul \"{$title}\" wurde gelöscht.");
+        }
 
         return redirect()
             ->route('admin.modules.index')
             ->with('success', "Modul \"{$title}\" wurde gelöscht.");
     }
 
-    public function storeQuiz(Request $request, Module $module)
+    private function redirectToModuleContainer(Module $module, string $message)
     {
-        $request->validate([
-            'questions' => ['required', 'array', 'min:1'],
-            'questions.*.question' => ['required', 'string'],
-            'questions.*.options' => ['required', 'array', 'min:2'],
-            'questions.*.options.*' => ['required', 'string'],
-            'questions.*.correct' => ['required', 'integer', 'min:0'],
-            'pass_percentage' => ['required', 'integer', 'min:1', 'max:100'],
-        ]);
+        if ($module->career_level_id) {
+            return redirect()
+                ->route('admin.paths.show', $module->careerLevel->career_path_id)
+                ->with('success', $message);
+        }
 
-        $module->quiz()->updateOrCreate(
-            ['module_id' => $module->id],
-            [
-                'questions' => $request->questions,
-                'pass_percentage' => $request->pass_percentage,
-            ]
-        );
+        if ($module->skill_category_id) {
+            return redirect()
+                ->route('admin.skill-categories.show', $module->skill_category_id)
+                ->with('success', $message);
+        }
 
-        return back()->with('success', 'Quiz gespeichert!');
+        return redirect()
+            ->route('admin.modules.index')
+            ->with('success', $message);
     }
 
     public function destroyPath(CareerPath $path)
@@ -133,6 +186,7 @@ class AdminModuleController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'emoji' => ['nullable', 'string', 'max:8'],
             'description' => ['nullable', 'string', 'max:2000'],
             'levels' => ['required', 'array', 'min:1'],
             'levels.*.id' => ['nullable', 'integer'],
@@ -142,6 +196,7 @@ class AdminModuleController extends Controller
 
         $path->update([
             'name' => $request->name,
+            'emoji' => $request->emoji,
             'description' => $request->description,
         ]);
 
@@ -182,7 +237,7 @@ class AdminModuleController extends Controller
         }
 
         return redirect()
-            ->route('admin.modules.index')
+            ->route('admin.paths.show', $path)
             ->with('success', "Karrierepfad \"{$path->name}\" wurde aktualisiert!");
     }
 
@@ -190,6 +245,7 @@ class AdminModuleController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
+            'emoji' => ['nullable', 'string', 'max:8'],
             'description' => ['nullable', 'string', 'max:2000'],
             'levels' => ['required', 'array', 'min:1'],
             'levels.*.title' => ['required', 'string', 'max:255'],
@@ -198,6 +254,7 @@ class AdminModuleController extends Controller
 
         $path = CareerPath::create([
             'name' => $request->name,
+            'emoji' => $request->emoji,
             'description' => $request->description,
         ]);
 
@@ -210,7 +267,7 @@ class AdminModuleController extends Controller
         }
 
         return redirect()
-            ->route('admin.modules.index')
+            ->route('admin.paths.show', $path)
             ->with('success', "Karrierepfad \"{$path->name}\" mit " . count($request->levels) . " Stufen erstellt!");
     }
 }

@@ -9,7 +9,9 @@ use App\Models\PersonioSyncLog;
 use App\Models\Role;
 use App\Models\Team;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -114,7 +116,8 @@ class PersonioService
                         continue;
                     }
 
-                    $employees[] = [
+                    $pathRaw = $this->extractCustomField($attrs, self::CUSTOM_FIELD_CAREER_PATH);
+                    $empData = [
                         'personio_id' => (string) ($employee['attributes']['id']['value'] ?? null),
                         'first_name' => $this->extractAttribute($attrs, 'first_name'),
                         'last_name' => $this->extractAttribute($attrs, 'last_name'),
@@ -122,9 +125,11 @@ class PersonioService
                         'position' => $this->extractAttribute($attrs, 'position'),
                         'department' => $this->extractDepartment($attrs),
                         'level_raw' => $this->extractCustomField($attrs, self::CUSTOM_FIELD_CAREER_LEVEL),
-                        'path_raw' => $this->extractCustomField($attrs, self::CUSTOM_FIELD_CAREER_PATH),
+                        'path_raw' => $pathRaw,
                         'supervisor_personio_id' => $this->extractSupervisorId($attrs),
                     ];
+
+                    $employees[] = $empData;
                 }
 
                 $offset += $limit;
@@ -277,6 +282,7 @@ class PersonioService
                 } else {
                     $user->update([
                         'name' => trim(($emp['first_name'] ?? '') . ' ' . ($emp['last_name'] ?? '')),
+                        'email' => $emp['email'],
                         'personio_id' => $emp['personio_id'],
                         'personio_position' => $emp['position'],
                         'personio_department' => $emp['department'],
@@ -288,8 +294,6 @@ class PersonioService
                 }
 
                 $this->syncTeamForUser($user, $emp['department']);
-                $this->applyCareerMapping($user);
-                $this->tryAutoMatch($user);
 
             } catch (\Throwable $e) {
                 $errors[] = "Fehler bei {$emp['email']}: {$e->getMessage()}";
@@ -300,7 +304,49 @@ class PersonioService
             }
         }
 
+        $activePersonioIds = collect($employees)->pluck('personio_id')->filter()->toArray();
+
+        $archived = 0;
+        $reactivated = 0;
+        $archivedNames = [];
+
+        $usersToArchive = User::whereNotNull('personio_id')
+            ->whereNotIn('personio_id', $activePersonioIds)
+            ->whereNull('archived_at')
+            ->get();
+
+        foreach ($usersToArchive as $userToArchive) {
+            $userToArchive->update(['archived_at' => now()]);
+            DB::table('sessions')->where('user_id', $userToArchive->id)->delete();
+            $archivedNames[] = $userToArchive->name;
+            $archived++;
+        }
+
+        $usersToReactivate = User::whereNotNull('personio_id')
+            ->whereIn('personio_id', $activePersonioIds)
+            ->whereNotNull('archived_at')
+            ->get();
+
+        foreach ($usersToReactivate as $userToReactivate) {
+            $userToReactivate->update(['archived_at' => null]);
+            $reactivated++;
+        }
+
         $this->syncHeadOfRelationships($employees);
+        $this->ensurePositionMappingsExist($employees);
+        $autoMapped = $this->autoMapUnmappedPositions();
+
+        $usersAssigned = 0;
+        $usersWithPersonio = User::whereNotNull('personio_id')
+            ->whereNull('archived_at')
+            ->with('careerLevels')
+            ->get();
+        foreach ($usersWithPersonio as $user) {
+            if ($this->applyCareerMapping($user)) {
+                $usersAssigned++;
+            }
+            $this->tryAutoMatch($user);
+        }
 
         $status = empty($errors) ? 'success' : (($created + $updated > 0) ? 'partial' : 'error');
 
@@ -314,11 +360,14 @@ class PersonioService
             'details' => [
                 'errors' => $errors,
                 'positions_found' => collect($employees)->pluck('position')->filter()->unique()->values()->all(),
+                'mappings_auto_matched' => $autoMapped,
+                'users_career_assigned' => $usersAssigned,
+                'users_archived' => $archived,
+                'users_reactivated' => $reactivated,
+                'archived_names' => $archivedNames,
             ],
             'finished_at' => now(),
         ]);
-
-        $this->ensurePositionMappingsExist($employees);
 
         return $log;
     }
@@ -375,110 +424,138 @@ class PersonioService
     }
 
     /**
-     * Find the mapping for a user based on position + level + path combination.
+     * Find all mappings for a user, splitting comma-separated paths into
+     * individual lookups. Returns one mapping per individual path.
      */
-    protected function findMappingForUser(User $user): ?PersonioPositionMapping
+    protected function findMappingsForUser(User $user): Collection
     {
         if (! $user->personio_position) {
-            return null;
+            return collect();
         }
 
-        return PersonioPositionMapping::where('personio_position', $user->personio_position)
-            ->where('personio_level_raw', $user->personio_level_raw)
-            ->where('personio_path_raw', $user->personio_path_raw)
-            ->first();
+        $paths = $user->personio_path_raw
+            ? array_map('trim', explode(',', $user->personio_path_raw))
+            : [null];
+
+        return collect($paths)->map(fn (?string $path) =>
+            PersonioPositionMapping::where('personio_position', $user->personio_position)
+                ->where('personio_level_raw', $user->personio_level_raw)
+                ->where('personio_path_raw', $path)
+                ->first()
+        )->filter()->values();
     }
 
     /**
-     * Apply career path mapping based on position + level + path combination.
+     * Apply all Karrierepfad mappings to user via pivot table.
+     * Only adds NEW levels -- never removes or overwrites existing ones.
      */
     public function applyCareerMapping(User $user): bool
     {
-        $mapping = $this->findMappingForUser($user);
-
-        if (! $mapping || ! $mapping->isMapped()) {
+        if (in_array(Str::lower(trim($user->personio_level_raw ?? '')), ['overhead', 'head of'])) {
             return false;
         }
 
-        if ($user->career_level_id !== $mapping->career_level_id) {
-            $user->update(['career_level_id' => $mapping->career_level_id]);
-            return true;
+        $mappings = $this->findMappingsForUser($user);
+        $applied = false;
+
+        foreach ($mappings as $mapping) {
+            if (! $mapping->isMapped()) {
+                continue;
+            }
+
+            if ($user->careerLevels->contains('id', $mapping->career_level_id)) {
+                continue;
+            }
+
+            $user->addCareerLevel($mapping->careerLevel);
+            $applied = true;
         }
 
-        return false;
+        return $applied;
     }
 
     /**
-     * Attempt to auto-match a user to a CareerPath based on personio_path_raw.
-     * Handles comma-separated path values (e.g. "Expert Path,Leadership Path")
-     * by using the first matching CareerPath.
+     * Fallback auto-match: for each individual path in personio_path_raw,
+     * find a matching CareerPath/Level and add to user's pivot.
+     * Only adds paths the user doesn't already have.
      */
     public function tryAutoMatch(User $user): bool
     {
-        if ($user->career_level_id) {
-            return false;
-        }
-
         if (! $user->personio_path_raw) {
             return false;
         }
 
+        if (in_array(Str::lower(trim($user->personio_level_raw ?? '')), ['overhead', 'head of'])) {
+            return false;
+        }
+
         $pathNames = array_map('trim', explode(',', $user->personio_path_raw));
-        $careerPath = null;
+        $existingPathIds = $user->careerLevels->pluck('career_path_id')->toArray();
+        $matched = false;
 
         foreach ($pathNames as $pathName) {
-            $careerPath = CareerPath::whereRaw('LOWER(name) = ?', [Str::lower($pathName)])->first();
-            if ($careerPath) {
-                break;
+            $careerPath = $this->findCareerPathByPersonioName($pathName);
+
+            if (! $careerPath || in_array($careerPath->id, $existingPathIds)) {
+                continue;
+            }
+
+            $level = null;
+
+            if ($user->personio_level_raw) {
+                $level = $careerPath->levels()
+                    ->whereRaw('LOWER(title) = ?', [Str::lower($user->personio_level_raw)])
+                    ->first();
+            }
+
+            if (! $level) {
+                $level = $careerPath->levels()->orderBy('level_number')->first();
+            }
+
+            if (! $level) {
+                continue;
+            }
+
+            $user->addCareerLevel($level);
+            $existingPathIds[] = $careerPath->id;
+            $matched = true;
+
+            $mapping = PersonioPositionMapping::where('personio_position', $user->personio_position)
+                ->where('personio_level_raw', $user->personio_level_raw)
+                ->where('personio_path_raw', $pathName)
+                ->first();
+
+            if ($mapping && ! $mapping->isMapped()) {
+                $mapping->update([
+                    'career_path_id' => $careerPath->id,
+                    'career_level_id' => $level->id,
+                    'is_auto_matched' => true,
+                ]);
             }
         }
 
-        if (! $careerPath) {
-            return false;
-        }
-
-        $level = null;
-
-        if ($user->personio_level_raw) {
-            $level = $careerPath->levels()
-                ->whereRaw('LOWER(title) = ?', [Str::lower($user->personio_level_raw)])
-                ->first();
-        }
-
-        if (! $level) {
-            $level = $careerPath->levels()->orderBy('level_number')->first();
-        }
-
-        if (! $level) {
-            return false;
-        }
-
-        $user->update(['career_level_id' => $level->id]);
-
-        $mapping = $this->findMappingForUser($user);
-        if ($mapping && ! $mapping->isMapped()) {
-            $mapping->update([
-                'career_path_id' => $careerPath->id,
-                'career_level_id' => $level->id,
-                'is_auto_matched' => true,
-            ]);
-        }
-
-        return true;
+        return $matched;
     }
 
     /**
      * Ensure all unique position+level+path combinations exist in the mapping table.
+     * Splits comma-separated paths into individual rows.
      */
     protected function ensurePositionMappingsExist(array $employees): void
     {
         $combos = collect($employees)
             ->filter(fn ($emp) => filled($emp['position']))
-            ->map(fn ($emp) => [
-                'position' => $emp['position'],
-                'level' => $emp['level_raw'],
-                'path' => $emp['path_raw'],
-            ])
+            ->flatMap(function ($emp) {
+                $paths = filled($emp['path_raw'])
+                    ? array_map('trim', explode(',', $emp['path_raw']))
+                    : [null];
+
+                return collect($paths)->map(fn (?string $path) => [
+                    'position' => $emp['position'],
+                    'level' => $emp['level_raw'],
+                    'path' => $path,
+                ]);
+            })
             ->unique(fn ($c) => $c['position'] . '|' . $c['level'] . '|' . $c['path']);
 
         foreach ($combos as $combo) {
@@ -493,6 +570,143 @@ class PersonioService
         }
     }
 
+    /**
+     * Auto-map all unmapped PersonioPositionMapping rows by matching
+     * personio_path_raw to CareerPath.name and personio_level_raw to CareerLevel.title.
+     * Skips "Overhead" and "Head of". Splits any remaining comma-separated rows first.
+     * Returns the number of newly mapped rows.
+     */
+    public function autoMapUnmappedPositions(): int
+    {
+        $this->splitCommaSeparatedMappings();
+
+        $unmapped = PersonioPositionMapping::whereNull('career_path_id')
+            ->whereNull('career_level_id')
+            ->whereNotNull('personio_path_raw')
+            ->get();
+
+        $count = 0;
+
+        foreach ($unmapped as $mapping) {
+            if (in_array(Str::lower(trim($mapping->personio_level_raw ?? '')), ['overhead', 'head of'])) {
+                continue;
+            }
+
+            $careerPath = $this->findCareerPathByPersonioName($mapping->personio_path_raw);
+
+            if (! $careerPath) {
+                continue;
+            }
+
+            $level = null;
+
+            if ($mapping->personio_level_raw) {
+                $level = $careerPath->levels()
+                    ->whereRaw('LOWER(title) = ?', [Str::lower($mapping->personio_level_raw)])
+                    ->first();
+            }
+
+            if (! $level) {
+                $level = $careerPath->levels()->orderBy('level_number')->first();
+            }
+
+            if (! $level) {
+                continue;
+            }
+
+            $mapping->update([
+                'career_path_id' => $careerPath->id,
+                'career_level_id' => $level->id,
+                'is_auto_matched' => true,
+            ]);
+
+            $count++;
+        }
+
+        return $count;
+    }
+
+    /**
+     * Split any remaining comma-separated personio_path_raw values into
+     * individual mapping rows. Idempotent -- safe to call repeatedly.
+     */
+    protected function splitCommaSeparatedMappings(): void
+    {
+        $commaRows = PersonioPositionMapping::where('personio_path_raw', 'LIKE', '%,%')->get();
+
+        foreach ($commaRows as $mapping) {
+            $paths = array_map('trim', explode(',', $mapping->personio_path_raw));
+
+            foreach ($paths as $path) {
+                PersonioPositionMapping::firstOrCreate(
+                    [
+                        'personio_position' => $mapping->personio_position,
+                        'personio_level_raw' => $mapping->personio_level_raw,
+                        'personio_path_raw' => $path,
+                    ],
+                    ['career_path_id' => null, 'career_level_id' => null]
+                );
+            }
+
+            $mapping->delete();
+        }
+    }
+
+    /**
+     * Find a CareerPath by a Personio path name using fuzzy matching.
+     * Handles naming differences like "Expert Path" → "Expert (Digitalstrategie)",
+     * "Accountmanagement Path" → "Account Management", "Leadership Path" → "Leadership".
+     */
+    protected function findCareerPathByPersonioName(string $personioPath): ?CareerPath
+    {
+        $lower = Str::lower(trim($personioPath));
+
+        $exact = CareerPath::whereRaw('LOWER(name) = ?', [$lower])->first();
+        if ($exact) {
+            return $exact;
+        }
+
+        $normalized = preg_replace('/\s*path$/i', '', $lower);
+        $normalized = preg_replace('/\s+/', '', $normalized);
+
+        $allPaths = CareerPath::all();
+
+        foreach ($allPaths as $path) {
+            $dbNormalized = preg_replace('/\s+/', '', Str::lower($path->name));
+
+            if ($dbNormalized === $normalized) {
+                return $path;
+            }
+
+            if (Str::startsWith($dbNormalized, $normalized)) {
+                return $path;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Run auto-mapping and then apply mappings to all users without full career coverage.
+     * Returns [mappings_matched, users_assigned].
+     */
+    public function runAutoMapAndAssign(): array
+    {
+        $mapped = $this->autoMapUnmappedPositions();
+
+        $assigned = 0;
+        $users = User::whereNotNull('personio_id')->with('careerLevels')->get();
+
+        foreach ($users as $user) {
+            if ($this->applyCareerMapping($user)) {
+                $assigned++;
+            }
+            $this->tryAutoMatch($user);
+        }
+
+        return ['mappings_matched' => $mapped, 'users_assigned' => $assigned];
+    }
+
     public static function getLastSync(): ?PersonioSyncLog
     {
         return PersonioSyncLog::latest('started_at')->first();
@@ -502,6 +716,7 @@ class PersonioService
     {
         return User::whereNotNull('personio_id')
             ->whereNull('career_level_id')
+            ->whereNotIn('personio_level_raw', ['Overhead', 'Head of'])
             ->count();
     }
 }

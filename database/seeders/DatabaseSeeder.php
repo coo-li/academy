@@ -7,6 +7,7 @@ use App\Models\CareerPath;
 use App\Models\Module;
 use App\Models\Quiz;
 use App\Models\Role;
+use App\Models\SkillCategory;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -78,6 +79,28 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // --- Skill-Kategorien ---
+        $fachexpertise = SkillCategory::firstOrCreate(
+            ['name' => 'Fachexpertise'],
+            ['emoji' => '🔍', 'description' => 'Channel- & Daten-Know-how', 'sort_order' => 1]
+        );
+        SkillCategory::firstOrCreate(
+            ['name' => 'Strategie & Business'],
+            ['emoji' => '💡', 'description' => 'Strategisches Denken & Geschäftsverständnis', 'sort_order' => 2]
+        );
+        SkillCategory::firstOrCreate(
+            ['name' => 'Kommunikation & Beziehungen'],
+            ['emoji' => '🤝', 'description' => 'Kunden- & Stakeholder-Kompetenz', 'sort_order' => 3]
+        );
+        SkillCategory::firstOrCreate(
+            ['name' => 'Führung & People Development'],
+            ['emoji' => '⭐', 'description' => 'Menschenführung & Teamentwicklung', 'sort_order' => 4]
+        );
+        SkillCategory::firstOrCreate(
+            ['name' => 'Methodik & Organisation'],
+            ['emoji' => '⚙️', 'description' => 'Arbeitsweisen, Tools & Selbstmanagement', 'sort_order' => 5]
+        );
+
         // --- Module für Junior SEO ---
         $kwModule = Module::updateOrCreate(
             ['career_level_id' => $juniorLevel->id, 'title' => 'Keyword-Recherche Grundlagen'],
@@ -86,6 +109,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'workshop',
                 'is_mandatory' => true,
                 'sort_order' => 1,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 
@@ -96,6 +120,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'self_study',
                 'is_mandatory' => true,
                 'sort_order' => 2,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 
@@ -106,6 +131,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'video',
                 'is_mandatory' => true,
                 'sort_order' => 3,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 
@@ -116,6 +142,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'one_on_one',
                 'is_mandatory' => true,
                 'sort_order' => 4,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 
@@ -127,6 +154,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'workshop',
                 'is_mandatory' => true,
                 'sort_order' => 1,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 
@@ -137,6 +165,7 @@ class DatabaseSeeder extends Seeder
                 'type' => 'self_study',
                 'is_mandatory' => true,
                 'sort_order' => 2,
+                'skill_category_id' => $fachexpertise->id,
             ]
         );
 

@@ -10,6 +10,7 @@ class CareerPath extends Model
 {
     protected $fillable = [
         'name',
+        'emoji',
         'description',
     ];
 

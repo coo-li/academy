@@ -22,4 +22,9 @@ class Team extends Model
     {
         return $this->belongsToMany(User::class, 'manager_team')->withTimestamps();
     }
+
+    public function milestones(): HasMany
+    {
+        return $this->hasMany(Milestone::class);
+    }
 }

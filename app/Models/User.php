@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Collection;
 
 class User extends Authenticatable
 {
@@ -118,9 +119,78 @@ class User extends Authenticatable
         return $this->career_level_id !== null;
     }
 
+    /**
+     * Primary career level (auto-synced from pivot, kept for backward compat).
+     */
     public function careerLevel(): BelongsTo
     {
         return $this->belongsTo(CareerLevel::class);
+    }
+
+    /**
+     * All career levels (source of truth). A user can be on multiple paths.
+     */
+    public function careerLevels(): BelongsToMany
+    {
+        return $this->belongsToMany(CareerLevel::class)->withTimestamps();
+    }
+
+    /**
+     * Modules from all assigned career levels, deduplicated.
+     */
+    public function allCareerModules(): Collection
+    {
+        return $this->careerLevels->load('modules')
+            ->flatMap(fn (CareerLevel $level) => $level->modules)
+            ->unique('id')
+            ->values();
+    }
+
+    /**
+     * Add a career level to the pivot and sync the primary FK.
+     */
+    public function addCareerLevel(CareerLevel $level): void
+    {
+        // #region agent log
+        @file_put_contents('/root/.cursor/debug-562df2.log', json_encode(['sessionId' => '562df2', 'hypothesisId' => 'D', 'location' => 'User:addCareerLevel', 'message' => 'career_level_being_added', 'data' => ['user' => $this->name, 'user_id' => $this->id, 'level_id' => $level->id, 'level_title' => $level->title, 'path_name' => $level->careerPath?->name, 'personio_level_raw' => $this->personio_level_raw, 'trace' => collect(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 5))->map(fn($f) => ($f['class'] ?? '') . '::' . ($f['function'] ?? '') . ':' . ($f['line'] ?? ''))->toArray()], 'timestamp' => round(microtime(true) * 1000)]) . "\n", FILE_APPEND);
+        // #endregion
+
+        $this->careerLevels()->syncWithoutDetaching([$level->id]);
+        $this->load('careerLevels');
+        $this->syncPrimaryCareerLevel();
+    }
+
+    /**
+     * Remove a career level from the pivot and sync the primary FK.
+     */
+    public function removeCareerLevel(CareerLevel $level): void
+    {
+        $this->careerLevels()->detach($level->id);
+        $this->load('careerLevels');
+        $this->syncPrimaryCareerLevel();
+    }
+
+    /**
+     * Replace one career level with another in the pivot (e.g. level advancement).
+     */
+    public function replaceCareerLevel(CareerLevel $old, CareerLevel $new): void
+    {
+        $this->careerLevels()->detach($old->id);
+        $this->careerLevels()->syncWithoutDetaching([$new->id]);
+        $this->load('careerLevels');
+        $this->syncPrimaryCareerLevel();
+    }
+
+    /**
+     * Keep users.career_level_id in sync with the oldest pivot entry.
+     */
+    public function syncPrimaryCareerLevel(): void
+    {
+        $firstLevel = $this->careerLevels()
+            ->orderBy('career_level_user.created_at')
+            ->first();
+
+        $this->updateQuietly(['career_level_id' => $firstLevel?->id]);
     }
 
     public function headOf(): BelongsTo
@@ -144,6 +214,22 @@ class User extends Authenticatable
     }
 
     /**
+     * Resolve the People Manager responsible for this user via team assignment.
+     * Only considers users with the 'people_manager' role (not head_of).
+     * Includes the user themselves if they are their own People Manager.
+     */
+    public function getPeopleManager(): ?User
+    {
+        if (! $this->team) {
+            return null;
+        }
+
+        return $this->team->managers()
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'people_manager'))
+            ->first();
+    }
+
+    /**
      * All active employees in teams managed by this user.
      * Admins see everyone.
      */
@@ -158,6 +244,29 @@ class User extends Authenticatable
         return User::active()
             ->whereIn('team_id', $teamIds)
             ->whereKeyNot($this->id);
+    }
+
+    /**
+     * Only employees from explicitly managed teams (ignores admin override).
+     */
+    public function teamEmployees(): Builder
+    {
+        $teamIds = $this->managedTeams()->pluck('teams.id');
+
+        return User::active()
+            ->whereIn('team_id', $teamIds)
+            ->whereKeyNot($this->id);
+    }
+
+    public function isPeopleManagerOrHeadOf(): bool
+    {
+        return $this->hasRole(['people_manager', 'head_of']);
+    }
+
+    public function trainableModules(): BelongsToMany
+    {
+        return $this->belongsToMany(Module::class, 'module_trainer')
+            ->withTimestamps();
     }
 
     public function assignedModules(): BelongsToMany
@@ -179,9 +288,21 @@ class User extends Authenticatable
         return $this->disabledCareerModules->contains('id', $moduleId);
     }
 
+    public function disabledMilestones(): BelongsToMany
+    {
+        return $this->belongsToMany(Milestone::class, 'disabled_milestones')
+            ->withPivot('disabled_by', 'disabled_at')
+            ->withTimestamps();
+    }
+
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function moduleInterests(): HasMany
+    {
+        return $this->hasMany(ModuleInterest::class);
     }
 
     public function portfolioUploads(): HasMany
@@ -192,5 +313,16 @@ class User extends Authenticatable
     public function quizAttempts(): HasMany
     {
         return $this->hasMany(QuizAttempt::class);
+    }
+
+    public function getInitialsAttribute(): string
+    {
+        $name = trim($this->name ?? '');
+
+        if ($name === '') {
+            return '??';
+        }
+
+        return mb_strtoupper(mb_substr($name, 0, 2, 'UTF-8'), 'UTF-8');
     }
 }

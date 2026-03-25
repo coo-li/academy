@@ -28,20 +28,23 @@ class AsanaService
     /**
      * Create an Asana task for a course booking with full context.
      */
-    public function createBookingTask(User $user, Module $module, ?TrainingSession $session = null): ?array
+    public function createBookingTask(User $user, Module $module, ?TrainingSession $session = null, ?string $assigneeEmail = null): ?array
     {
-        $profileUrl = url("/profile/{$user->id}");
+        $profileUrl = route('manage.employees.show', $user);
         $workshopDate = $session?->start_at?->format('d.m.Y, H:i') ?? 'Kein Termin';
         $location = $session?->location ?? '–';
         $bookingDate = now()->format('d.m.Y, H:i');
+        $peopleManager = $user->getPeopleManager();
 
         $name = "Akademie-Buchung: {$module->title} - {$user->name}";
 
-        $notes = implode("\n", [
+        $noteLines = [
             "=== Akademie Kursbuchung ===",
             "",
             "Mitarbeiter: {$user->name}",
             "E-Mail: {$user->email}",
+            "Team: " . ($user->team?->name ?? '–'),
+            "People Manager: " . ($peopleManager ? "{$peopleManager->name} ({$peopleManager->email})" : 'Nicht zugewiesen'),
             "Buchungsdatum: {$bookingDate}",
             "",
             "Modul: {$module->title}",
@@ -52,11 +55,50 @@ class AsanaService
             "Profil-Link: {$profileUrl}",
             "",
             "Diese Task wurde automatisch von der td Academy erstellt.",
-        ]);
+        ];
 
+        $notes = implode("\n", $noteLines);
         $dueDate = $session?->start_at?->format('Y-m-d');
 
-        return $this->createTask($name, $notes, dueOn: $dueDate);
+        return $this->createTask($name, $notes, assignee: $assigneeEmail, dueOn: $dueDate);
+    }
+
+    /**
+     * Create an Asana task when an employee expresses interest in a module.
+     */
+    public function createInterestTask(User $user, Module $module, ?string $assigneeEmail = null): ?array
+    {
+        $profileUrl = route('manage.employees.show', $user);
+        $interestDate = now()->format('d.m.Y, H:i');
+        $careerPath = $module->careerLevel?->careerPath?->name ?? 'Allgemein';
+        $level = $module->careerLevel?->title ?? '–';
+        $peopleManager = $user->getPeopleManager();
+
+        $name = "Schulungsinteresse: {$module->title} - {$user->name}";
+
+        $notes = implode("\n", [
+            "=== Schulungsinteresse ===",
+            "",
+            "Mitarbeiter: {$user->name}",
+            "E-Mail: {$user->email}",
+            "Team: " . ($user->team?->name ?? '–'),
+            "People Manager: " . ($peopleManager ? "{$peopleManager->name} ({$peopleManager->email})" : 'Nicht zugewiesen'),
+            "Datum: {$interestDate}",
+            "",
+            "Modul: {$module->title}",
+            "Karrierepfad: {$careerPath}",
+            "Level: {$level}",
+            "Methode: {$module->methodLabel()}",
+            "",
+            "Der Mitarbeiter hat Interesse an dieser Schulung bekundet.",
+            "Bitte prüfen und ggf. eine Buchung veranlassen.",
+            "",
+            "Profil-Link: {$profileUrl}",
+            "",
+            "Diese Task wurde automatisch von der td Academy erstellt.",
+        ]);
+
+        return $this->createTask($name, $notes, assignee: $assigneeEmail);
     }
 
     /**

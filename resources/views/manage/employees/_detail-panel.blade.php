@@ -6,7 +6,7 @@
         <div class="flex items-start justify-between">
             <div class="flex items-center gap-4">
                 <div class="avatar-lg">
-                    <span>{{ mb_strtoupper(mb_substr($user->name, 0, 2)) }}</span>
+                    <span>{{ $user->initials }}</span>
                 </div>
                 <div>
                     <h2 class="text-xl font-bold text-brand-dark">{{ $user->name }}</h2>
@@ -14,8 +14,10 @@
                         @if($user->team)
                             <span class="badge-info">{{ $user->team->name }}</span>
                         @endif
-                        @if($user->careerLevel)
-                            <span class="badge-primary">{{ $user->careerLevel->careerPath->name }} &ndash; {{ $user->careerLevel->title }}</span>
+                        @if($user->careerLevels->isNotEmpty())
+                            @foreach($user->careerLevels as $cl)
+                                <span class="badge-primary">{{ $cl->careerPath->name }} &ndash; {{ $cl->title }}</span>
+                            @endforeach
                         @else
                             <span class="badge-warning">Kein Karrierepfad</span>
                         @endif
@@ -57,31 +59,34 @@
     </div>
     @endif
 
-    {{-- Career Path Section --}}
+    {{-- Karrierepfad Section --}}
     <div class="px-6 pt-4">
         <div class="card-tool">
             <div class="card-tool-header flex items-center justify-between">
                 <h3 class="card-tool-title">Karrierepfad</h3>
             </div>
             <div class="card-tool-body space-y-3">
-                @if($user->careerLevel)
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <span class="font-medium text-brand-dark">{{ $user->careerLevel->careerPath->name }}</span>
-                            <span class="text-surface-500">&ndash; {{ $user->careerLevel->title }}</span>
+                @if($user->careerLevels->isNotEmpty())
+                    <div class="space-y-2">
+                        @foreach($user->careerLevels as $cl)
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="font-medium text-brand-dark">{{ $cl->careerPath->name }}</span>
+                                <span class="text-surface-500">&ndash; {{ $cl->title }}</span>
+                            </div>
+                            <button type="button"
+                                    class="btn-danger btn-xs"
+                                    onclick="if(confirm('Karrierepfad &quot;{{ $cl->careerPath->name }}&quot; wirklich entfernen?')) empDetailAction('{{ route('manage.employees.removeCareerPath', $user) }}', 'DELETE', {career_level_id: '{{ $cl->id }}'})">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                            </button>
                         </div>
-                        <button type="button"
-                                class="btn-danger btn-xs"
-                                onclick="if(confirm('Karrierepfad wirklich entfernen?')) empDetailAction('{{ route('manage.employees.removeCareerPath', $user) }}', 'DELETE')">
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-                            Entfernen
-                        </button>
+                        @endforeach
                     </div>
                 @endif
 
                 <div class="flex items-end gap-2">
                     <div class="flex-1">
-                        <label class="input-label">{{ $user->careerLevel ? 'Karrierestufe &auml;ndern' : 'Karrierepfad zuweisen' }}</label>
+                        <label class="input-label">Karrierepfad hinzuf&uuml;gen</label>
                         <select id="career-level-select" class="input-field w-full">
                             <option value="">Pfad &amp; Stufe w&auml;hlen&hellip;</option>
                             @foreach($careerPaths as $path)

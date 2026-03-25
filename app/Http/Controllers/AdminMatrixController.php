@@ -40,7 +40,7 @@ class AdminMatrixController extends Controller
         $stats = [
             'total_combinations' => $mappings->count(),
             'mapped' => $mappings->filter->isMapped()->count(),
-            'unmapped' => $mappings->reject->isMapped()->count(),
+            'unmapped' => $mappings->reject->isMapped()->reject(fn ($m) => in_array(strtolower($m->personio_level_raw ?? ''), ['overhead', 'head of']))->count(),
             'auto_matched' => $mappings->where('is_auto_matched', true)->count(),
             'users_without_path' => PersonioService::getUsersWithoutCareerPath(),
             'total_personio_users' => User::whereNotNull('personio_id')->count(),
@@ -74,11 +74,21 @@ class AdminMatrixController extends Controller
         ]);
 
         if ($careerLevel) {
-            $affected = User::where('personio_position', $mapping->personio_position)
+            $users = User::where(function ($q) use ($mapping) {
+                    $q->where('personio_path_raw', $mapping->personio_path_raw)
+                      ->orWhere('personio_path_raw', 'LIKE', '%' . $mapping->personio_path_raw . '%');
+                })
+                ->where('personio_position', $mapping->personio_position)
                 ->where('personio_level_raw', $mapping->personio_level_raw)
-                ->where('personio_path_raw', $mapping->personio_path_raw)
-                ->whereNull('career_level_id')
-                ->update(['career_level_id' => $careerLevel->id]);
+                ->get();
+
+            $affected = 0;
+            foreach ($users as $user) {
+                if (! $user->careerLevels->contains('id', $careerLevel->id)) {
+                    $user->addCareerLevel($careerLevel);
+                    $affected++;
+                }
+            }
 
             $label = $careerLevel->careerPath?->name . ' – ' . $careerLevel->title;
 
@@ -86,6 +96,15 @@ class AdminMatrixController extends Controller
         }
 
         return back()->with('success', "Mapping für \"{$mapping->personio_position}\" ({$mapping->personio_level_raw}) entfernt.");
+    }
+
+    public function autoMap(PersonioService $personio)
+    {
+        $result = $personio->runAutoMapAndAssign();
+
+        $msg = "{$result['mappings_matched']} Mappings automatisch zugeordnet, {$result['users_assigned']} User Karrierepfade zugewiesen.";
+
+        return back()->with('success', $msg);
     }
 
     public function sync(PersonioService $personio)
@@ -97,7 +116,16 @@ class AdminMatrixController extends Controller
         $log = $personio->syncEmployees();
 
         if ($log->isSuccess()) {
-            return back()->with('success', "Sync erfolgreich: {$log->employees_fetched} Mitarbeiter abgerufen, {$log->users_created} neu, {$log->users_updated} aktualisiert.");
+            $details = $log->details ?? [];
+            $autoMapped = $details['mappings_auto_matched'] ?? 0;
+            $assigned = $details['users_career_assigned'] ?? 0;
+
+            $msg = "Sync erfolgreich: {$log->employees_fetched} Mitarbeiter abgerufen, {$log->users_created} neu, {$log->users_updated} aktualisiert.";
+            if ($autoMapped > 0 || $assigned > 0) {
+                $msg .= " Auto-Mapping: {$autoMapped} Zuordnungen, {$assigned} User zugewiesen.";
+            }
+
+            return back()->with('success', $msg);
         }
 
         return back()->with('error', 'Sync fehlgeschlagen: ' . ($log->error_message ?? 'Unbekannter Fehler'));

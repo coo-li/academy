@@ -14,6 +14,7 @@ class Module extends Model
         'career_level_id',
         'title',
         'description',
+        'calendar_description',
         'skill_category_id',
         'accountable_type',
         'accountable_user_id',
@@ -72,6 +73,12 @@ class Module extends Model
         };
     }
 
+    public function trainers(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'module_trainer')
+            ->withTimestamps();
+    }
+
     public function trainingSessions(): HasMany
     {
         return $this->hasMany(TrainingSession::class);
@@ -92,6 +99,11 @@ class Module extends Model
     public function enrollments(): HasMany
     {
         return $this->hasMany(Enrollment::class);
+    }
+
+    public function interests(): HasMany
+    {
+        return $this->hasMany(ModuleInterest::class);
     }
 
     public function quiz(): HasOne

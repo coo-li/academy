@@ -13,7 +13,7 @@ class ModuleAssignmentController extends Controller
     public function index(Request $request)
     {
         $users = User::active()
-            ->with(['assignedModules', 'careerLevel.careerPath'])
+            ->with(['assignedModules', 'careerLevel.careerPath', 'careerLevels.careerPath'])
             ->orderBy('name')
             ->get();
 

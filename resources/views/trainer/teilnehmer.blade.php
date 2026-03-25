@@ -25,9 +25,9 @@
             @endphp
             <div x-data="{ open: false, selectedAttendees: [] }" class="card-tool">
                 <div class="card-tool-body">
-                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex items-center justify-between gap-4">
                         <div class="flex-1 min-w-0">
-                            <div class="font-medium text-brand-dark">{{ $session->module->title }}</div>
+                            <a href="{{ route('trainer.schulungen.show', $session->module) }}" class="font-medium text-brand-dark hover:text-brand-primary transition-colors">{{ $session->module->title }}</a>
                             <div class="text-xs text-surface-500">
                                 {{ $session->start_at->format('d.m.Y, H:i') }} – {{ $session->end_at->format('H:i') }} Uhr
                                 @if($session->location)
@@ -80,8 +80,10 @@
                                                 @endif
                                             </td>
                                             <td>
-                                                <div class="font-medium text-brand-dark">{{ $enrollment->user->name }}</div>
-                                                <div class="text-xs text-surface-500">{{ $enrollment->user->email }}</div>
+                                                <a href="{{ route('manage.employees.show', $enrollment->user) }}" class="group">
+                                                    <div class="font-medium text-brand-dark group-hover:text-brand-primary transition-colors">{{ $enrollment->user->name }}</div>
+                                                    <div class="text-xs text-surface-500">{{ $enrollment->user->email }}</div>
+                                                </a>
                                             </td>
                                             <td>
                                                 @if($enrollment->status === 'enrolled')
