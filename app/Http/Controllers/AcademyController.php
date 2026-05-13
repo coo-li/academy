@@ -89,10 +89,25 @@ class AcademyController extends Controller
             ->reject(fn ($m) => in_array($m->id, $disabledMilestoneIds))
             ->groupBy('category');
 
+        $upcomingTermine = $user->enrollments
+            ->filter(fn ($e) => $e->isActive() && $e->trainingSession && $e->trainingSession->start_at->isFuture())
+            ->sortBy(fn ($e) => $e->trainingSession->start_at)
+            ->take(10)
+            ->values();
+
+        $assignedModuleIds = $assignedModules->pluck('id')->toArray();
+
+        $userPaths = $careerLevels
+            ->map(fn ($level) => $level->careerPath)
+            ->filter()
+            ->unique('id')
+            ->values();
+
         return view('academy.dashboard', compact(
             'user', 'careerLevel', 'careerPath', 'careerLevels', 'modules',
             'enrollmentsByModule', 'interestedModules', 'interestsByModule',
-            'stats', 'nextLevel', 'personioStats', 'milestonesByCategory'
+            'stats', 'nextLevel', 'personioStats', 'milestonesByCategory',
+            'upcomingTermine', 'assignedModuleIds', 'userPaths'
         ));
     }
 
@@ -102,6 +117,7 @@ class AcademyController extends Controller
 
         $module->load([
             'trainingSessions.enrollments.user',
+            'trainingSessions.trainer',
             'quiz',
             'method',
             'skillCategory',
@@ -116,11 +132,14 @@ class AcademyController extends Controller
             ->first();
 
         $status = $enrollment?->status ?? 'open';
+        $schedulingType = $module->method?->scheduling_type ?? 'scheduled';
 
-        $upcomingSessions = $module->trainingSessions
-            ->where('start_at', '>', now())
-            ->sortBy('start_at')
-            ->values();
+        $upcomingSessions = $schedulingType === 'scheduled'
+            ? $module->trainingSessions
+                ->where('start_at', '>', now())
+                ->sortBy('start_at')
+                ->values()
+            : collect();
 
         $bookedSession = $enrollment?->trainingSession;
 
@@ -132,12 +151,14 @@ class AcademyController extends Controller
                 ->pluck('user')
             : collect();
 
-        $canViewMaterials = in_array($status, ['attended', 'completed']);
+        $canViewMaterials = $schedulingType === 'self_study'
+            ? in_array($status, ['enrolled', 'attended', 'completed'])
+            : in_array($status, ['attended', 'completed']);
 
         $accountable = $module->getAccountableFor($user);
 
         return view('academy.module-show', compact(
-            'module', 'user', 'enrollment', 'status',
+            'module', 'user', 'enrollment', 'status', 'schedulingType',
             'upcomingSessions', 'bookedSession', 'sessionParticipants',
             'canViewMaterials', 'accountable'
         ));

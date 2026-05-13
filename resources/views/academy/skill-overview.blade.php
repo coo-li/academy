@@ -99,7 +99,7 @@
                     'completed' => 'border-ui-success',
                     'attended' => 'border-brand-accent',
                     'enrolled' => 'border-brand-primary',
-                    default => $interest ? 'border-brand-accent' : 'border-surface-200',
+                    default => $interest ? 'border-brand-accent' : ($allAssignedModuleIds->contains($module->id) ? 'border-brand-primary' : 'border-surface-200'),
                 } }}" style="animation-delay: {{ $loop->index * 50 }}ms">
                     <div class="card-tool-body">
                         {{-- Header: Path + Badges --}}
@@ -184,6 +184,9 @@
                                     @method('DELETE')
                                     <button type="submit" class="btn-secondary btn-xs">Zur&uuml;ckziehen</button>
                                 </form>
+                            @elseif($allAssignedModuleIds->contains($module->id))
+                                <span class="badge-primary">Bereits zugewiesen</span>
+                                <a href="{{ route('academy.module.show', $module) }}" class="btn-secondary btn-xs">Details</a>
                             @else
                                 <span class="text-xs text-surface-400">Noch nicht eingeschrieben</span>
                                 <form method="POST" action="{{ route('academy.interest.store', $module) }}" class="inline">

@@ -65,11 +65,24 @@ class Enrollment extends Model
 
     public function isQuizUnlocked(): bool
     {
-        return $this->status === 'attended';
+        if ($this->status === 'attended') {
+            return true;
+        }
+
+        if ($this->status === 'enrolled' && $this->module?->method?->isSelfStudy()) {
+            return true;
+        }
+
+        return false;
     }
 
     public function isActive(): bool
     {
         return in_array($this->status, ['enrolled', 'attended']);
+    }
+
+    public function isRequested(): bool
+    {
+        return $this->status === 'requested';
     }
 }

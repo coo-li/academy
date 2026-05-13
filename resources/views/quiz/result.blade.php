@@ -58,6 +58,131 @@
         </x-alert>
         @endif
 
+        {{-- Per-Question Details --}}
+        @if(!empty($details))
+        <x-card title="Auswertung pro Frage">
+            <div class="space-y-3">
+                @foreach($quiz->questions as $idx => $question)
+                @php
+                    $detail = $details[$idx] ?? null;
+                    $isCorrect = $detail['correct'] ?? false;
+                    $type = $question['type'] ?? 'single_choice';
+                @endphp
+                <div class="p-3 rounded-lg border {{ $isCorrect ? 'border-ui-success bg-ui-success-light' : 'border-ui-error bg-ui-error-light' }}">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="text-xs font-medium {{ $isCorrect ? 'text-ui-success' : 'text-ui-error' }}">
+                                    Frage {{ $idx + 1 }}
+                                </span>
+                                <span class="badge-neutral text-xs">
+                                    @switch($type)
+                                        @case('single_choice') Single Choice @break
+                                        @case('multiple_choice') Multiple Choice @break
+                                        @case('true_false') Wahr / Falsch @break
+                                        @case('short_answer') Kurzantwort @break
+                                        @case('ordering') Reihenfolge @break
+                                        @case('matching') Zuordnung @break
+                                        @case('cloze') Lückentext @break
+                                    @endswitch
+                                </span>
+                            </div>
+                            <p class="text-sm font-medium text-brand-dark">{{ $question['question'] }}</p>
+
+                            {{-- Show user's answer vs expected --}}
+                            <div class="mt-2 text-xs text-surface-600 space-y-1">
+                                @switch($type)
+                                    @case('single_choice')
+                                        @php
+                                            $userIdx = $detail['user_answer'] ?? null;
+                                            $correctIdx = $question['correct'];
+                                        @endphp
+                                        <p>Deine Antwort: <span class="font-medium">{{ $question['options'][$userIdx] ?? '–' }}</span></p>
+                                        @if(!$isCorrect)
+                                        <p>Richtig: <span class="font-medium text-ui-success">{{ $question['options'][$correctIdx] ?? '' }}</span></p>
+                                        @endif
+                                        @break
+
+                                    @case('multiple_choice')
+                                        @php
+                                            $userIdxs = (array) ($detail['user_answer'] ?? []);
+                                            $correctIdxs = $question['correct'];
+                                        @endphp
+                                        <p>Deine Auswahl: <span class="font-medium">{{ collect($userIdxs)->map(fn($i) => $question['options'][(int)$i] ?? '?')->implode(', ') ?: '–' }}</span></p>
+                                        @if(!$isCorrect)
+                                        <p>Richtig: <span class="font-medium text-ui-success">{{ collect($correctIdxs)->map(fn($i) => $question['options'][$i] ?? '?')->implode(', ') }}</span></p>
+                                        @endif
+                                        @break
+
+                                    @case('true_false')
+                                        @php
+                                            $userVal = $detail['user_answer'] ?? null;
+                                            $correctVal = $question['correct'];
+                                        @endphp
+                                        <p>Deine Antwort: <span class="font-medium">{{ $userVal === 'true' || $userVal === '1' ? 'Wahr' : 'Falsch' }}</span></p>
+                                        @if(!$isCorrect)
+                                        <p>Richtig: <span class="font-medium text-ui-success">{{ $correctVal ? 'Wahr' : 'Falsch' }}</span></p>
+                                        @endif
+                                        @break
+
+                                    @case('short_answer')
+                                        <p>Deine Antwort: <span class="font-medium">{{ $detail['user_answer'] ?? '–' }}</span></p>
+                                        @if(!$isCorrect)
+                                        <p>Akzeptiert: <span class="font-medium text-ui-success">{{ implode(', ', $question['accepted_answers'] ?? []) }}</span></p>
+                                        @endif
+                                        @break
+
+                                    @case('ordering')
+                                        @php
+                                            $userOrder = (array) ($detail['user_answer'] ?? []);
+                                            $correctOrder = $question['correct_order'] ?? [];
+                                        @endphp
+                                        <p>Deine Reihenfolge: <span class="font-medium">{{ collect($userOrder)->map(fn($i) => $question['items'][(int)$i] ?? '?')->implode(' → ') ?: '–' }}</span></p>
+                                        @if(!$isCorrect)
+                                        <p>Richtig: <span class="font-medium text-ui-success">{{ collect($correctOrder)->map(fn($i) => $question['items'][$i] ?? '?')->implode(' → ') }}</span></p>
+                                        @endif
+                                        @break
+
+                                    @case('matching')
+                                        @if(!$isCorrect)
+                                        <p>Richtige Zuordnung:</p>
+                                        @foreach($question['correct_pairs'] ?? [] as $leftIdx => $rightIdx)
+                                        <p class="font-medium text-ui-success">{{ $question['left'][$leftIdx] ?? '?' }} → {{ $question['right'][$rightIdx] ?? '?' }}</p>
+                                        @endforeach
+                                        @endif
+                                        @break
+
+                                    @case('cloze')
+                                        @php $userBlanks = (array) ($detail['user_answer'] ?? []); @endphp
+                                        @foreach($question['blanks'] ?? [] as $bi => $blank)
+                                        <p>Lücke {{ $bi + 1 }}: <span class="font-medium">{{ $userBlanks[$bi] ?? '–' }}</span>
+                                            @if(!$isCorrect)
+                                            (Akzeptiert: <span class="text-ui-success">{{ implode(', ', $blank['accepted_answers'] ?? []) }}</span>)
+                                            @endif
+                                        </p>
+                                        @endforeach
+                                        @break
+                                @endswitch
+                            </div>
+                        </div>
+                        <div class="flex-shrink-0">
+                            @if($isCorrect)
+                            <svg class="w-6 h-6 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                            </svg>
+                            @else
+                            <svg class="w-6 h-6 text-ui-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                            </svg>
+                            @endif
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </x-card>
+        @endif
+
         {{-- Actions --}}
         <div class="flex items-center justify-center gap-4">
             <a href="{{ route('dashboard') }}" class="btn-secondary">

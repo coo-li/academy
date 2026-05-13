@@ -121,6 +121,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/termine/{session}/sync-calendar', [TrainerTerminController::class, 'syncCalendar'])->name('termine.sync-calendar');
         Route::put('/termine/{session}', [TrainerTerminController::class, 'update'])->name('termine.update');
         Route::delete('/termine/{session}', [TrainerTerminController::class, 'destroy'])->name('termine.destroy');
+        Route::post('/termine/anfrage/{enrollment}/assign', [TrainerTerminController::class, 'assignRequest'])->name('termine.assign-request');
+        Route::post('/termine/anfrage/{enrollment}/decline', [TrainerTerminController::class, 'declineRequest'])->name('termine.decline-request');
 
         Route::get('/schulungen', [TrainerSchulungController::class, 'index'])->name('schulungen.index');
         Route::get('/schulungen/{module}', [TrainerSchulungController::class, 'show'])->name('schulungen.show');
@@ -152,7 +154,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
 require __DIR__.'/auth.php';

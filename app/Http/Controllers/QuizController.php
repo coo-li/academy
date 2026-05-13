@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Enrollment;
 use App\Models\CareerLevel;
+use App\Models\Enrollment;
 use App\Models\Quiz;
 use App\Models\QuizAttempt;
+use App\Services\QuizEvaluationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class QuizController extends Controller
 {
+    public function __construct(
+        protected QuizEvaluationService $evaluator
+    ) {}
+
     public function show(Quiz $quiz)
     {
         $quiz->load(['module.careerLevel', 'module.method']);
@@ -19,9 +24,14 @@ class QuizController extends Controller
             ->where('module_id', $quiz->module_id)
             ->first();
 
-        if (! $enrollment || ! $enrollment->isQuizUnlocked()) {
+        if (! $enrollment) {
             return redirect()->route('dashboard')
-                ->with('error', 'Das Quiz ist erst nach bestätigter Teilnahme am Workshop freigeschaltet.');
+                ->with('error', 'Du musst dich zuerst für dieses Modul einschreiben.');
+        }
+
+        if (! $enrollment->isQuizUnlocked()) {
+            return redirect()->route('dashboard')
+                ->with('error', 'Das Quiz ist erst nach bestätigter Teilnahme freigeschaltet.');
         }
 
         $previousAttempts = QuizAttempt::where('user_id', Auth::id())
@@ -41,41 +51,36 @@ class QuizController extends Controller
 
         if (! $enrollment || ! $enrollment->isQuizUnlocked()) {
             return redirect()->route('dashboard')
-                ->with('error', 'Das Quiz ist erst nach bestätigter Teilnahme am Workshop freigeschaltet.');
+                ->with('error', 'Das Quiz ist erst nach bestätigter Teilnahme freigeschaltet.');
         }
 
         $request->validate([
             'answers' => ['required', 'array'],
         ]);
 
-        $questions = $quiz->questions;
-        $answers = $request->answers;
-        $correct = 0;
-        $total = count($questions);
-
-        foreach ($questions as $index => $question) {
-            $userAnswer = $answers[$index] ?? null;
-            if ($userAnswer !== null && (int) $userAnswer === (int) $question['correct']) {
-                $correct++;
-            }
-        }
-
-        $score = $total > 0 ? round(($correct / $total) * 100) : 0;
-        $passed = $score >= $quiz->pass_percentage;
+        $result = $this->evaluator->evaluate($quiz, $request->answers);
 
         $attempt = QuizAttempt::create([
             'user_id' => Auth::id(),
             'quiz_id' => $quiz->id,
-            'answers' => $answers,
-            'score' => $score,
-            'passed' => $passed,
+            'answers' => $request->answers,
+            'score' => $result['score'],
+            'passed' => $result['passed'],
         ]);
 
-        if ($passed) {
+        if ($result['passed']) {
             $this->completeModuleAndCheckLevel($quiz);
         }
 
-        return view('quiz.result', compact('quiz', 'attempt', 'score', 'passed', 'correct', 'total'));
+        return view('quiz.result', [
+            'quiz' => $quiz,
+            'attempt' => $attempt,
+            'score' => $result['score'],
+            'passed' => $result['passed'],
+            'correct' => $result['correct'],
+            'total' => $result['total'],
+            'details' => $result['details'],
+        ]);
     }
 
     protected function completeModuleAndCheckLevel(Quiz $quiz): void

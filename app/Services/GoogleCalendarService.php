@@ -263,45 +263,50 @@ class GoogleCalendarService
             return [];
         }
 
-        return Cache::remember('google_workspace_resources', 3600, function () {
-            try {
-                $directoryService = new GoogleDirectory($this->client);
-                $customerId = config('services.google.customer_id', 'my_customer');
+        $cached = Cache::get('google_workspace_resources');
+        if ($cached !== null) {
+            return $cached;
+        }
 
-                $resources = [];
-                $pageToken = null;
+        try {
+            $directoryService = new GoogleDirectory($this->client);
+            $customerId = config('services.google.customer_id', 'my_customer');
 
-                do {
-                    $params = ['customer' => $customerId];
-                    if ($pageToken) {
-                        $params['pageToken'] = $pageToken;
-                    }
+            $resources = [];
+            $pageToken = null;
 
-                    $result = $directoryService->resources_calendars->listResourcesCalendars($customerId, $params);
+            do {
+                $params = ['customer' => $customerId];
+                if ($pageToken) {
+                    $params['pageToken'] = $pageToken;
+                }
 
-                    foreach ($result->getItems() ?? [] as $item) {
-                        $resources[] = [
-                            'email' => $item->getResourceEmail(),
-                            'name' => $item->getResourceName() ?? $item->getGeneratedResourceName(),
-                            'type' => $item->getResourceType() ?? 'Raum',
-                            'building' => $item->getBuildingId(),
-                            'floor' => $item->getFloorName(),
-                            'capacity' => $item->getCapacity(),
-                            'description' => $item->getResourceDescription(),
-                        ];
-                    }
+                $result = $directoryService->resources_calendars->listResourcesCalendars($customerId, $params);
 
-                    $pageToken = $result->getNextPageToken();
-                } while ($pageToken);
+                foreach ($result->getItems() ?? [] as $item) {
+                    $resources[] = [
+                        'email' => $item->getResourceEmail(),
+                        'name' => $item->getResourceName() ?? $item->getGeneratedResourceName(),
+                        'type' => $item->getResourceType() ?? 'Raum',
+                        'building' => $item->getBuildingId(),
+                        'floor' => $item->getFloorName(),
+                        'capacity' => $item->getCapacity(),
+                        'description' => $item->getResourceDescription(),
+                    ];
+                }
 
-                usort($resources, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+                $pageToken = $result->getNextPageToken();
+            } while ($pageToken);
 
-                return $resources;
-            } catch (\Throwable $e) {
-                Log::warning('Google Directory: Could not list resources.', ['error' => $e->getMessage()]);
-                return [];
-            }
-        });
+            usort($resources, fn ($a, $b) => strcasecmp($a['name'], $b['name']));
+
+            Cache::put('google_workspace_resources', $resources, 3600);
+
+            return $resources;
+        } catch (\Throwable $e) {
+            Log::warning('Google Directory: Could not list resources.', ['error' => $e->getMessage()]);
+            return [];
+        }
     }
 
     /**

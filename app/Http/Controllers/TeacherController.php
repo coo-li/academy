@@ -57,6 +57,10 @@ class TeacherController extends Controller
 
     public function confirmAttendance(TrainingSession $session, Request $request)
     {
+        if ($session->end_at->isFuture()) {
+            return back()->with('error', 'Die Anwesenheit kann erst nach Ende des Termins bestätigt werden.');
+        }
+
         $request->validate([
             'attendees' => ['required', 'array', 'min:1'],
             'attendees.*' => ['integer', 'exists:users,id'],

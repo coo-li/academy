@@ -288,6 +288,26 @@ class User extends Authenticatable
         return $this->disabledCareerModules->contains('id', $moduleId);
     }
 
+    /**
+     * Active career modules (minus disabled) + individually assigned modules, deduplicated.
+     */
+    public function effectiveModules(): Collection
+    {
+        $this->loadMissing(['careerLevels.modules', 'disabledCareerModules', 'assignedModules']);
+
+        $disabledIds = $this->disabledCareerModules->pluck('id')->toArray();
+
+        $careerModules = $this->careerLevels
+            ->flatMap(fn (CareerLevel $level) => $level->modules)
+            ->unique('id')
+            ->reject(fn (Module $m) => in_array($m->id, $disabledIds));
+
+        return $careerModules
+            ->merge($this->assignedModules)
+            ->unique('id')
+            ->values();
+    }
+
     public function disabledMilestones(): BelongsToMany
     {
         return $this->belongsToMany(Milestone::class, 'disabled_milestones')

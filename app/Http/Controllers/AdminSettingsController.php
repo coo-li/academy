@@ -44,7 +44,10 @@ class AdminSettingsController extends Controller
                 'name' => 'Google Calendar',
                 'description' => 'Workshop-Termine mit Google Calendar synchronisieren',
                 'configured' => $calendar->isConfigured(),
-                'env_keys' => ['GOOGLE_CALENDAR_ID', 'GCS_KEY_FILEPATH'],
+                'env_keys' => [
+                    'GOOGLE_CALENDAR_ID',
+                    ['label' => 'GCS Credentials', 'ok' => file_exists(storage_path('app/google-auth.json'))],
+                ],
                 'last_sync' => null,
                 'stats' => [],
                 'admin_url' => null,

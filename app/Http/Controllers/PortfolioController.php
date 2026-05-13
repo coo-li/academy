@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PortfolioUploadRequest;
-use App\Models\Module;
 use App\Models\PortfolioUpload;
 use App\Models\TrainingMaterial;
 use Illuminate\Support\Facades\Auth;
@@ -27,7 +26,7 @@ class PortfolioController extends Controller
 
         $uploads = $query->orderBy('created_at', 'desc')->get();
         $groupedUploads = $uploads->groupBy('module_id');
-        $modules = Module::orderBy('title')->get();
+        $modules = $user->effectiveModules()->sortBy('title')->values();
 
         $attendedModuleIds = $user->enrollments()
             ->whereIn('status', ['attended', 'completed'])

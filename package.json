@@ -19,6 +19,7 @@
         "vite": "^7.0.7"
     },
     "dependencies": {
-        "apexcharts": "^5.3.6"
+        "apexcharts": "^5.3.6",
+        "sortablejs": "^1.15.7"
     }
 }

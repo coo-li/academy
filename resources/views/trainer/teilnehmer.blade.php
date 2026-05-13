@@ -16,12 +16,85 @@
             </div>
         </div>
 
+        {{-- Self-Study Enrollments --}}
+        @if($selfStudyModules->isNotEmpty())
+        <x-card>
+            <x-slot:header>
+                <h2 class="font-semibold text-brand-dark">Selbststudium</h2>
+                <span class="badge-info">{{ $selfStudyEnrollments->flatten()->count() }} Teilnehmer</span>
+            </x-slot:header>
+
+            <div class="space-y-4">
+                @foreach($selfStudyModules as $mod)
+                @php $enrollments = $selfStudyEnrollments[$mod->id] ?? collect(); @endphp
+                <div x-data="{ open: false }">
+                    <div class="flex items-center justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <a href="{{ route('trainer.schulungen.show', $mod) }}" class="font-medium text-brand-dark hover:text-brand-primary transition-colors">{{ $mod->title }}</a>
+                            <div class="text-xs text-surface-500">{{ $mod->method?->name ?? '–' }}</div>
+                        </div>
+                        <div class="flex items-center gap-2 flex-shrink-0">
+                            @php
+                                $activeCount = $enrollments->where('status', 'enrolled')->count();
+                                $completedCount = $enrollments->where('status', 'completed')->count();
+                            @endphp
+                            @if($activeCount > 0)
+                                <span class="badge-primary text-xs">{{ $activeCount }} aktiv</span>
+                            @endif
+                            @if($completedCount > 0)
+                                <span class="badge-success text-xs">{{ $completedCount }} abgeschlossen</span>
+                            @endif
+                            <button @click="open = !open" class="btn-secondary btn-xs">
+                                <span x-text="open ? 'Zuklappen' : 'Details'"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="open" x-cloak x-transition class="mt-3 border border-surface-200 rounded-lg overflow-hidden">
+                        <table class="table-tool">
+                            <thead>
+                                <tr>
+                                    <th>Teilnehmer</th>
+                                    <th>Status</th>
+                                    <th>Eingeschrieben am</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($enrollments->sortBy('user.name') as $enrollment)
+                                <tr>
+                                    <td>
+                                        <div class="font-medium text-brand-dark">{{ $enrollment->user->name }}</div>
+                                        <div class="text-xs text-surface-500">{{ $enrollment->user->email }}</div>
+                                    </td>
+                                    <td>
+                                        @if($enrollment->status === 'enrolled')
+                                            <span class="badge-primary">Aktiv</span>
+                                        @elseif($enrollment->status === 'completed')
+                                            <span class="badge-success">Abgeschlossen</span>
+                                        @endif
+                                    </td>
+                                    <td class="text-xs text-surface-500">
+                                        {{ $enrollment->created_at->format('d.m.Y, H:i') }}
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </x-card>
+        @endif
+
+        {{-- Session-based Enrollments --}}
         @if($sessions->isNotEmpty())
         <div class="space-y-4">
             @foreach($sessions as $session)
             @php
                 $enrolledUsers = $session->enrollments->where('status', 'enrolled');
                 $attendedUsers = $session->enrollments->whereIn('status', ['attended', 'completed']);
+                $isPast = $session->end_at->isPast();
             @endphp
             <div x-data="{ open: false, selectedAttendees: [] }" class="card-tool">
                 <div class="card-tool-body">
@@ -70,10 +143,10 @@
                                         @foreach($session->enrollments->sortBy('user.name') as $enrollment)
                                         <tr>
                                             <td>
-                                                @if($enrollment->status === 'enrolled')
+                                                @if($enrollment->status === 'enrolled' && $isPast)
                                                 <input type="checkbox" name="attendees[]" value="{{ $enrollment->user_id }}"
                                                        class="checkbox-field" x-model="selectedAttendees">
-                                                @else
+                                                @elseif($enrollment->status !== 'enrolled')
                                                 <svg class="w-5 h-5 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                                 </svg>
@@ -110,13 +183,17 @@
 
                                 @if($enrolledUsers->isNotEmpty())
                                 <div class="px-4 py-3 bg-surface-50 border-t border-surface-200 flex items-center justify-between">
-                                    <span class="text-xs text-surface-500" x-text="selectedAttendees.length + ' Teilnehmer ausgewählt'"></span>
-                                    <button type="submit" class="btn-primary btn-sm" :disabled="selectedAttendees.length === 0">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                        Anwesenheit bestätigen
-                                    </button>
+                                    @if($isPast)
+                                        <span class="text-xs text-surface-500" x-text="selectedAttendees.length + ' Teilnehmer ausgewählt'"></span>
+                                        <button type="submit" class="btn-primary btn-sm" :disabled="selectedAttendees.length === 0">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Anwesenheit bestätigen
+                                        </button>
+                                    @else
+                                        <span class="text-xs text-surface-500">Bestätigung erst nach Ende des Termins möglich.</span>
+                                    @endif
                                 </div>
                                 @endif
                             </form>

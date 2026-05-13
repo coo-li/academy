@@ -102,6 +102,42 @@ class AsanaService
     }
 
     /**
+     * Create an Asana task when a participant requests a session (e.g. One-on-One).
+     */
+    public function createRequestTask(User $user, Module $module, ?string $assigneeEmail = null): ?array
+    {
+        $termineUrl = route('trainer.termine.index');
+        $requestDate = now()->format('d.m.Y, H:i');
+        $peopleManager = $user->getPeopleManager();
+        $trainer = $module->accountableUser;
+
+        $name = "Terminanfrage: {$module->title} - {$user->name}";
+
+        $notes = implode("\n", [
+            "=== Terminanfrage ===",
+            "",
+            "Mitarbeiter: {$user->name}",
+            "E-Mail: {$user->email}",
+            "Team: " . ($user->team?->name ?? '–'),
+            "People Manager: " . ($peopleManager ? "{$peopleManager->name} ({$peopleManager->email})" : 'Nicht zugewiesen'),
+            "Anfragedatum: {$requestDate}",
+            "",
+            "Modul: {$module->title}",
+            "Methode: {$module->methodLabel()}",
+            "Trainer: " . ($trainer ? "{$trainer->name} ({$trainer->email})" : 'Nicht zugewiesen'),
+            "",
+            "Der Mitarbeiter möchte einen Termin für dieses Modul vereinbaren.",
+            "Bitte erstelle einen Termin und weise den Teilnehmenden zu.",
+            "",
+            "Terminplanung: {$termineUrl}",
+            "",
+            "Diese Task wurde automatisch von der td Academy erstellt.",
+        ]);
+
+        return $this->createTask($name, $notes, assignee: $assigneeEmail);
+    }
+
+    /**
      * Create a generic task in the configured Asana project.
      */
     public function createTask(string $name, string $notes = '', ?string $assignee = null, ?string $dueOn = null): ?array

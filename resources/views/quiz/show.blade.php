@@ -64,35 +64,79 @@
         @endif
 
         {{-- Quiz Form --}}
-        <form method="POST" action="{{ route('quiz.submit', $quiz) }}" x-data="{ currentQuestion: 0, answers: {} }">
+        <form method="POST" action="{{ route('quiz.submit', $quiz) }}"
+              x-data="quizPlayer({{ Js::from($quiz->questions) }})">
             @csrf
+
+            {{-- Question Navigation Dots --}}
+            <div class="flex items-center justify-center gap-2 mb-4">
+                @foreach($quiz->questions as $qIdx => $q)
+                <button type="button"
+                        @click="goTo({{ $qIdx }})"
+                        class="w-8 h-8 rounded-full text-xs font-medium transition-colors border"
+                        :class="{
+                            'bg-brand-primary text-white border-brand-primary': currentQuestion === {{ $qIdx }},
+                            'bg-ui-success-light text-ui-success border-ui-success': currentQuestion !== {{ $qIdx }} && isAnswered({{ $qIdx }}),
+                            'bg-surface-100 text-surface-500 border-surface-200': currentQuestion !== {{ $qIdx }} && !isAnswered({{ $qIdx }})
+                        }">
+                    {{ $qIdx + 1 }}
+                </button>
+                @endforeach
+            </div>
 
             <div class="space-y-4">
                 @foreach($quiz->questions as $index => $question)
+                @php $type = $question['type'] ?? 'single_choice'; @endphp
                 <div class="card-tool" x-show="currentQuestion === {{ $index }}" x-transition>
                     <div class="card-tool-header">
-                        <span class="text-sm text-surface-500">Frage {{ $index + 1 }} von {{ count($quiz->questions) }}</span>
+                        <div class="flex items-center gap-3">
+                            <span class="text-sm text-surface-500">Frage {{ $index + 1 }} von {{ count($quiz->questions) }}</span>
+                            <span class="badge-neutral text-xs">
+                                @switch($type)
+                                    @case('single_choice') Single Choice @break
+                                    @case('multiple_choice') Multiple Choice @break
+                                    @case('true_false') Wahr / Falsch @break
+                                    @case('short_answer') Kurzantwort @break
+                                    @case('ordering') Reihenfolge @break
+                                    @case('matching') Zuordnung @break
+                                    @case('cloze') Lückentext @break
+                                @endswitch
+                            </span>
+                        </div>
                         <div class="progress-bar w-32">
-                            <div class="progress-bar-fill" style="width: {{ (($index + 1) / count($quiz->questions)) * 100 }}%"></div>
+                            <div class="progress-bar-fill" :style="'width: ' + progress + '%'"></div>
                         </div>
                     </div>
                     <div class="card-tool-body">
                         <h3 class="text-lg font-semibold text-brand-dark mb-4">{{ $question['question'] }}</h3>
 
-                        <div class="space-y-2">
-                            @foreach($question['options'] as $optIndex => $option)
-                            <label class="flex items-center gap-3 p-3 rounded-lg border border-surface-200 hover:border-brand-primary hover:bg-brand-primary-light cursor-pointer transition-colors"
-                                   :class="{ 'border-brand-primary bg-brand-primary-light': answers[{{ $index }}] == {{ $optIndex }} }">
-                                <input type="radio" name="answers[{{ $index }}]" value="{{ $optIndex }}" class="radio-field"
-                                       x-model="answers[{{ $index }}]">
-                                <span class="text-sm text-brand-dark">{{ $option }}</span>
-                            </label>
-                            @endforeach
-                        </div>
+                        @switch($type)
+                            @case('single_choice')
+                                <x-quiz.single-choice :question="$question" :index="$index" />
+                                @break
+                            @case('multiple_choice')
+                                <x-quiz.multiple-choice :question="$question" :index="$index" />
+                                @break
+                            @case('true_false')
+                                <x-quiz.true-false :question="$question" :index="$index" />
+                                @break
+                            @case('short_answer')
+                                <x-quiz.short-answer :question="$question" :index="$index" />
+                                @break
+                            @case('ordering')
+                                <x-quiz.ordering :question="$question" :index="$index" />
+                                @break
+                            @case('matching')
+                                <x-quiz.matching :question="$question" :index="$index" />
+                                @break
+                            @case('cloze')
+                                <x-quiz.cloze :question="$question" :index="$index" />
+                                @break
+                        @endswitch
                     </div>
                     <div class="card-tool-footer">
                         <div class="flex items-center justify-between">
-                            <button type="button" @click="currentQuestion--"
+                            <button type="button" @click="prev()"
                                     class="btn-secondary btn-sm" x-show="currentQuestion > 0">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -102,8 +146,8 @@
                             <div x-show="currentQuestion === 0"></div>
 
                             @if($index < count($quiz->questions) - 1)
-                            <button type="button" @click="currentQuestion++"
-                                    class="btn-primary btn-sm" :disabled="answers[{{ $index }}] === undefined">
+                            <button type="button" @click="next()"
+                                    class="btn-primary btn-sm" :disabled="!canProceed">
                                 Weiter
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
@@ -111,7 +155,7 @@
                             </button>
                             @else
                             <button type="submit" class="btn-success"
-                                    :disabled="Object.keys(answers).length < {{ count($quiz->questions) }}">
+                                    :disabled="!allAnswered">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                                 </svg>

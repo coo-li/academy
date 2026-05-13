@@ -86,15 +86,28 @@
                             <div class="text-xs text-surface-400 uppercase tracking-wide font-medium">Konfiguration</div>
                             @foreach($integration['env_keys'] as $envKey)
                             <div class="flex items-center justify-between">
-                                <code class="text-xs bg-surface-100 px-2 py-0.5 rounded font-mono">{{ $envKey }}</code>
-                                @if(filled(env($envKey)) && env($envKey) !== 'DEIN_CLIENT_ID_HIER' && env($envKey) !== 'DEIN_CLIENT_SECRET_HIER')
-                                    <svg class="w-4 h-4 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                                    </svg>
+                                @if(is_array($envKey))
+                                    <code class="text-xs bg-surface-100 px-2 py-0.5 rounded font-mono">{{ $envKey['label'] }}</code>
+                                    @if($envKey['ok'])
+                                        <svg class="w-4 h-4 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-ui-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    @endif
                                 @else
-                                    <svg class="w-4 h-4 text-ui-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                                    </svg>
+                                    <code class="text-xs bg-surface-100 px-2 py-0.5 rounded font-mono">{{ $envKey }}</code>
+                                    @if(filled(env($envKey)) && env($envKey) !== 'DEIN_CLIENT_ID_HIER' && env($envKey) !== 'DEIN_CLIENT_SECRET_HIER')
+                                        <svg class="w-4 h-4 text-ui-success" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    @else
+                                        <svg class="w-4 h-4 text-ui-error" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    @endif
                                 @endif
                             </div>
                             @endforeach

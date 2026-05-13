@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Support\Facades\Auth;
 
 class PortfolioUploadRequest extends FormRequest
 {
@@ -16,7 +17,13 @@ class PortfolioUploadRequest extends FormRequest
         $hasNotes = filled($this->input('notes'));
 
         return [
-            'module_id' => ['required', 'exists:modules,id'],
+            'module_id' => ['required', 'exists:modules,id', function ($attribute, $value, $fail) {
+                $effectiveIds = Auth::user()->effectiveModules()->pluck('id')->all();
+
+                if (! in_array((int) $value, $effectiveIds)) {
+                    $fail('Du bist diesem Modul nicht zugewiesen.');
+                }
+            }],
             'file' => [$hasNotes ? 'nullable' : 'required', 'file', 'max:10240', 'mimes:jpg,jpeg,png,gif,webp,pdf'],
             'notes' => [$this->hasFile('file') ? 'nullable' : 'required', 'string', 'max:500'],
         ];

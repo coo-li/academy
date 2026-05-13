@@ -17,17 +17,34 @@ class TrainerTeilnehmerController extends Controller
 
         $moduleIds = $this->trainerModuleIds($user);
 
-        $sessions = TrainingSession::with(['module', 'enrollments.user'])
+        $sessions = TrainingSession::with(['module.method', 'enrollments.user'])
             ->whereIn('module_id', $moduleIds)
             ->orderBy('start_at', 'desc')
             ->paginate(20);
 
-        return view('trainer.teilnehmer', compact('sessions'));
+        $selfStudyEnrollments = Enrollment::with(['user', 'module.method'])
+            ->whereIn('module_id', $moduleIds)
+            ->whereHas('module.method', fn ($q) => $q->where('scheduling_type', 'self_study'))
+            ->whereIn('status', ['enrolled', 'attended', 'completed'])
+            ->orderByDesc('created_at')
+            ->get()
+            ->groupBy('module_id');
+
+        $selfStudyModules = Module::with('method')
+            ->whereIn('id', $selfStudyEnrollments->keys())
+            ->orderBy('title')
+            ->get();
+
+        return view('trainer.teilnehmer', compact('sessions', 'selfStudyEnrollments', 'selfStudyModules'));
     }
 
     public function confirmAttendance(TrainingSession $session, Request $request)
     {
         $this->authorizeSession($session);
+
+        if ($session->end_at->isFuture()) {
+            return back()->with('error', 'Die Anwesenheit kann erst nach Ende des Termins bestätigt werden.');
+        }
 
         $request->validate([
             'attendees' => ['required', 'array', 'min:1'],

@@ -105,22 +105,67 @@ class TrainerSchulungController extends Controller
 
         $request->validate([
             'questions' => ['required', 'array', 'min:1'],
+            'questions.*.type' => ['required', 'string', 'in:single_choice,multiple_choice,true_false,short_answer,ordering,matching,cloze'],
             'questions.*.question' => ['required', 'string'],
-            'questions.*.options' => ['required', 'array', 'min:2'],
-            'questions.*.options.*' => ['required', 'string'],
-            'questions.*.correct' => ['required', 'integer', 'min:0'],
             'pass_percentage' => ['required', 'integer', 'min:1', 'max:100'],
         ]);
+
+        $sanitized = collect($request->questions)->map(fn ($q) => $this->sanitizeQuestion($q))->all();
 
         $module->quiz()->updateOrCreate(
             ['module_id' => $module->id],
             [
-                'questions' => $request->questions,
+                'questions' => $sanitized,
                 'pass_percentage' => $request->pass_percentage,
             ]
         );
 
         return back()->with('success', 'Quiz gespeichert!');
+    }
+
+    private function sanitizeQuestion(array $q): array
+    {
+        $base = [
+            'type' => $q['type'],
+            'question' => $q['question'],
+        ];
+
+        return match ($q['type']) {
+            'single_choice' => array_merge($base, [
+                'options' => array_values($q['options'] ?? []),
+                'correct' => (int) ($q['correct'] ?? 0),
+            ]),
+            'multiple_choice' => array_merge($base, [
+                'options' => array_values($q['options'] ?? []),
+                'correct' => array_map('intval', $q['correct'] ?? []),
+            ]),
+            'true_false' => array_merge($base, [
+                'correct' => filter_var($q['correct'] ?? false, FILTER_VALIDATE_BOOLEAN),
+            ]),
+            'short_answer' => array_merge($base, [
+                'accepted_answers' => array_values(array_filter(
+                    array_map('trim', $q['accepted_answers'] ?? [])
+                )),
+            ]),
+            'ordering' => array_merge($base, [
+                'items' => array_values($q['items'] ?? []),
+                'correct_order' => array_map('intval', $q['correct_order'] ?? []),
+            ]),
+            'matching' => array_merge($base, [
+                'left' => array_values($q['left'] ?? []),
+                'right' => array_values($q['right'] ?? []),
+                'correct_pairs' => array_map('intval', $q['correct_pairs'] ?? []),
+            ]),
+            'cloze' => array_merge($base, [
+                'text_template' => $q['text_template'] ?? '',
+                'blanks' => collect($q['blanks'] ?? [])->map(fn ($b) => [
+                    'accepted_answers' => array_values(array_filter(
+                        array_map('trim', $b['accepted_answers'] ?? [])
+                    )),
+                ])->all(),
+            ]),
+            default => $base,
+        };
     }
 
     public function storeLink(Request $request, Module $module)

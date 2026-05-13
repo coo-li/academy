@@ -73,6 +73,14 @@ class SkillOverviewController extends Controller
             ->get()
             ->keyBy('module_id');
 
+        $assignedModuleIds = $user->assignedModules()->pluck('modules.id');
+        $careerModuleIds = $user->allCareerModules()->pluck('id');
+        $disabledModuleIds = $user->disabledCareerModules()->pluck('modules.id');
+        $allAssignedModuleIds = $assignedModuleIds
+            ->merge($careerModuleIds)
+            ->diff($disabledModuleIds)
+            ->unique();
+
         $careerPaths = CareerPath::orderBy('name')->get();
         $skillCategories = SkillCategory::orderBy('name')->get();
         $methods = Method::orderBy('name')->get();
@@ -81,6 +89,7 @@ class SkillOverviewController extends Controller
             'modules',
             'enrollmentsByModule',
             'interestsByModule',
+            'allAssignedModuleIds',
             'careerPaths',
             'skillCategories',
             'methods',
@@ -90,6 +99,15 @@ class SkillOverviewController extends Controller
     public function expressInterest(Module $module)
     {
         $user = Auth::user();
+
+        $assignedIds = $user->assignedModules()->pluck('modules.id');
+        $careerIds = $user->allCareerModules()->pluck('id');
+        $disabledIds = $user->disabledCareerModules()->pluck('modules.id');
+        $allAssigned = $assignedIds->merge($careerIds)->diff($disabledIds);
+
+        if ($allAssigned->contains($module->id)) {
+            return back()->with('error', 'Dieses Modul wurde dir bereits zugewiesen.');
+        }
 
         $existing = $user->enrollments()
             ->where('module_id', $module->id)

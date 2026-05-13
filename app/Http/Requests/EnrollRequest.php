@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Method;
+use App\Models\Module;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EnrollRequest extends FormRequest
@@ -13,10 +15,18 @@ class EnrollRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $module = Module::with('method')->find($this->module_id);
+        $schedulingType = $module?->method?->scheduling_type ?? Method::TYPE_SCHEDULED;
+
+        $rules = [
             'module_id' => ['required', 'exists:modules,id'],
-            'training_session_id' => ['required', 'exists:training_sessions,id'],
         ];
+
+        if ($schedulingType === Method::TYPE_SCHEDULED) {
+            $rules['training_session_id'] = ['required', 'exists:training_sessions,id'];
+        }
+
+        return $rules;
     }
 
     public function messages(): array

@@ -241,7 +241,7 @@
                                                     @endif
                                                     @if($enrollment?->trainingSession)
                                                         <span class="text-xs text-surface-300">&middot;</span>
-                                                        <a href="{{ route('trainer.teilnehmer.index') }}" class="text-xs text-brand-primary hover:underline">Termin {{ $enrollment->trainingSession->start_at->format('d.m.Y') }}</a>
+                                                        <span class="text-xs text-surface-400">Termin {{ $enrollment->trainingSession->start_at->format('d.m.Y') }}</span>
                                                     @endif
                                                 </div>
                                             </div>

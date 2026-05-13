@@ -23,6 +23,14 @@
                     @error('name') <p class="error-text">{{ $message }}</p> @enderror
                 </div>
                 <div class="flex-1">
+                    <select name="scheduling_type" class="input-field" required>
+                        @foreach($schedulingTypes as $value => $label)
+                            <option value="{{ $value }}" {{ old('scheduling_type', 'scheduled') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('scheduling_type') <p class="error-text">{{ $message }}</p> @enderror
+                </div>
+                <div class="flex-1">
                     <input type="text" name="description" class="input-field"
                            placeholder="Beschreibung (optional)" value="{{ old('description') }}">
                 </div>
@@ -49,7 +57,10 @@
                     {{-- Display Mode --}}
                     <div x-show="!editing" class="flex items-center justify-between gap-4">
                         <div class="flex-1 min-w-0">
-                            <div class="font-medium text-brand-dark">{{ $method->name }}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-medium text-brand-dark">{{ $method->name }}</span>
+                                <span class="badge-neutral text-xs">{{ $method->schedulingLabel() }}</span>
+                            </div>
                             @if($method->description)
                             <div class="text-sm text-surface-500">{{ $method->description }}</div>
                             @endif
@@ -88,6 +99,13 @@
                         <div class="flex-1">
                             <input type="text" name="name" class="input-field" required
                                    value="{{ $method->name }}" placeholder="Name">
+                        </div>
+                        <div class="flex-1">
+                            <select name="scheduling_type" class="input-field" required>
+                                @foreach($schedulingTypes as $value => $label)
+                                    <option value="{{ $value }}" {{ $method->scheduling_type === $value ? 'selected' : '' }}>{{ $label }}</option>
+                                @endforeach
+                            </select>
                         </div>
                         <div class="flex-1">
                             <input type="text" name="description" class="input-field"

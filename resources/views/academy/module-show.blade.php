@@ -30,7 +30,8 @@
                             $statusConfig = match($status) {
                                 'completed' => ['label' => 'Abgeschlossen', 'badge' => 'badge-success'],
                                 'attended' => ['label' => 'Quiz offen', 'badge' => 'badge-accent'],
-                                'enrolled' => ['label' => 'Gebucht', 'badge' => 'badge-primary'],
+                                'enrolled' => ['label' => $schedulingType === 'self_study' ? 'Eingeschrieben' : 'Gebucht', 'badge' => 'badge-primary'],
+                                'requested' => ['label' => 'Termin angefragt', 'badge' => 'badge-warning'],
                                 'cancelled' => ['label' => 'Storniert', 'badge' => 'badge-danger'],
                                 default => ['label' => 'Offen', 'badge' => 'badge-neutral'],
                             };
@@ -52,28 +53,66 @@
 
         {{-- Stepper --}}
         @php
-            $stepBooking = in_array($status, ['enrolled', 'attended', 'completed']) ? 'done' : 'active';
-            $stepAttendance = match(true) {
-                in_array($status, ['attended', 'completed']) => 'done',
-                $status === 'enrolled' => 'active',
-                default => 'pending',
-            };
-            $stepQuiz = match(true) {
-                $status === 'completed' => 'done',
-                $status === 'attended' => 'active',
-                default => 'pending',
-            };
+            if ($schedulingType === 'self_study') {
+                $stepEnroll = in_array($status, ['enrolled', 'attended', 'completed']) ? 'done' : 'active';
+                $stepQuiz = match(true) {
+                    $status === 'completed' => 'done',
+                    in_array($status, ['enrolled', 'attended']) => 'active',
+                    default => 'pending',
+                };
+                $steps = [
+                    ['state' => $stepEnroll, 'label' => 'Einschreiben'],
+                    ['state' => $stepQuiz, 'label' => 'Quiz absolvieren'],
+                ];
+            } elseif ($schedulingType === 'request') {
+                $stepRequest = in_array($status, ['requested', 'enrolled', 'attended', 'completed']) ? 'done' : 'active';
+                $stepAssigned = match(true) {
+                    in_array($status, ['enrolled', 'attended', 'completed']) => 'done',
+                    $status === 'requested' => 'active',
+                    default => 'pending',
+                };
+                $stepAttendance = match(true) {
+                    in_array($status, ['attended', 'completed']) => 'done',
+                    $status === 'enrolled' => 'active',
+                    default => 'pending',
+                };
+                $stepQuiz = match(true) {
+                    $status === 'completed' => 'done',
+                    $status === 'attended' => 'active',
+                    default => 'pending',
+                };
+                $steps = [
+                    ['state' => $stepRequest, 'label' => 'Termin anfragen'],
+                    ['state' => $stepAssigned, 'label' => 'Termin zugewiesen'],
+                    ['state' => $stepAttendance, 'label' => 'Teilnahme bestätigen'],
+                    ['state' => $stepQuiz, 'label' => 'Quiz absolvieren'],
+                ];
+            } else {
+                $stepBooking = in_array($status, ['enrolled', 'attended', 'completed']) ? 'done' : 'active';
+                $stepAttendance = match(true) {
+                    in_array($status, ['attended', 'completed']) => 'done',
+                    $status === 'enrolled' => 'active',
+                    default => 'pending',
+                };
+                $stepQuiz = match(true) {
+                    $status === 'completed' => 'done',
+                    $status === 'attended' => 'active',
+                    default => 'pending',
+                };
+                $steps = [
+                    ['state' => $stepBooking, 'label' => 'Termin buchen'],
+                    ['state' => $stepAttendance, 'label' => 'Teilnahme bestätigen'],
+                    ['state' => $stepQuiz, 'label' => 'Quiz absolvieren'],
+                ];
+            }
         @endphp
         <div class="card-tool">
             <div class="card-tool-body">
                 <div class="flex items-center justify-center gap-2 py-2">
-                    @foreach([
-                        ['key' => 'booking', 'state' => $stepBooking, 'label' => 'Termin buchen'],
-                        ['key' => 'attendance', 'state' => $stepAttendance, 'label' => 'Teilnahme bestätigen'],
-                        ['key' => 'quiz', 'state' => $stepQuiz, 'label' => 'Quiz absolvieren'],
-                    ] as $i => $step)
+                    @foreach($steps as $i => $step)
                         @if($i > 0)
-                        <div class="flex-1 max-w-24 h-0.5 rounded-full {{ $step['state'] === 'done' || ($i === 1 && $stepBooking === 'done') ? 'bg-ui-success' : 'bg-surface-200' }} transition-colors duration-500"></div>
+                        @php $prevDone = $steps[$i - 1]['state'] === 'done'; @endphp
+                        <div class="flex-1 max-w-24 h-0.5 rounded-full {{ $prevDone ? 'bg-ui-success' : 'bg-surface-200' }} transition-colors duration-500"></div>
                         @endif
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300
@@ -103,7 +142,8 @@
                 </x-card>
                 @endif
 
-                {{-- Upcoming Sessions --}}
+                {{-- Upcoming Sessions (only for scheduled) --}}
+                @if($schedulingType === 'scheduled')
                 <x-card title="Termine">
                     @if($upcomingSessions->isNotEmpty())
                     <div class="divide-y divide-surface-200">
@@ -122,6 +162,9 @@
                                 <div>
                                     <div class="font-medium text-brand-dark">{{ $session->start_at->format('d.m.Y') }}</div>
                                     <div class="text-xs text-surface-500">{{ $session->start_at->format('H:i') }} – {{ $session->end_at->format('H:i') }} Uhr</div>
+                                    @if($session->trainer)
+                                    <div class="text-xs text-surface-400 mt-0.5">Trainer: {{ $session->trainer->name }}</div>
+                                    @endif
                                     @if($session->location)
                                     <div class="text-xs text-surface-400 mt-0.5">{{ $session->location }}</div>
                                     @endif
@@ -151,8 +194,28 @@
                     </div>
                     @endif
                 </x-card>
+                @endif
 
-                {{-- Participants (only when enrolled) --}}
+                {{-- Assigned session info for request type --}}
+                @if($schedulingType === 'request' && $bookedSession)
+                <x-card title="Dein Termin">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-xl bg-brand-primary-light flex flex-col items-center justify-center flex-shrink-0">
+                            <span class="text-xs font-bold text-brand-primary leading-none">{{ $bookedSession->start_at->format('d') }}</span>
+                            <span class="text-[10px] text-brand-primary uppercase">{{ $bookedSession->start_at->translatedFormat('M') }}</span>
+                        </div>
+                        <div>
+                            <div class="font-medium text-brand-dark">{{ $bookedSession->start_at->format('d.m.Y') }}</div>
+                            <div class="text-xs text-surface-500">{{ $bookedSession->start_at->format('H:i') }} – {{ $bookedSession->end_at->format('H:i') }} Uhr</div>
+                            @if($bookedSession->location)
+                            <div class="text-xs text-surface-400 mt-0.5">{{ $bookedSession->location }}</div>
+                            @endif
+                        </div>
+                    </div>
+                </x-card>
+                @endif
+
+                {{-- Participants (only when enrolled in a session) --}}
                 @if($bookedSession && $sessionParticipants->isNotEmpty())
                 <x-card title="Teilnehmende deines Termins">
                     <div class="flex flex-wrap gap-2">
@@ -168,7 +231,7 @@
                 </x-card>
                 @endif
 
-                {{-- Training Materials (only after attendance confirmed) --}}
+                {{-- Training Materials --}}
                 @if($canViewMaterials)
                 <x-card title="Schulungsunterlagen">
                     @if($module->trainingMaterials->isNotEmpty())
@@ -230,113 +293,281 @@
                 {{-- Actions --}}
                 <x-card title="Aktionen">
                     <div class="space-y-3" x-data="{ showCancel: false, showRebook: false }">
-                        @if($status === 'open')
-                            @php $nextSession = $upcomingSessions->first(); @endphp
-                            @if($nextSession)
-                            <form method="POST" action="{{ route('enroll') }}">
-                                @csrf
-                                <input type="hidden" name="module_id" value="{{ $module->id }}">
-                                <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
-                                <button type="submit" class="btn-primary w-full">
+
+                        {{-- ======================== SELF-STUDY ======================== --}}
+                        @if($schedulingType === 'self_study')
+
+                            @if($status === 'open' || $status === 'cancelled')
+                                <form method="POST" action="{{ route('enroll') }}">
+                                    @csrf
+                                    <input type="hidden" name="module_id" value="{{ $module->id }}">
+                                    <button type="submit" class="btn-primary w-full">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                        </svg>
+                                        Selbststudium starten
+                                    </button>
+                                </form>
+                                <p class="text-xs text-surface-400 text-center">Materialien und Quiz werden sofort freigeschaltet.</p>
+
+                            @elseif($status === 'enrolled' || $status === 'attended')
+                                <div class="flex items-center gap-2 text-sm bg-brand-primary-light rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                                    </svg>
+                                    <span class="text-brand-primary font-medium">Selbststudium aktiv</span>
+                                </div>
+                                @if($module->quiz)
+                                <a href="{{ route('quiz.show', $module->quiz) }}" class="btn-primary w-full">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    Quiz starten
+                                </a>
+                                @else
+                                <p class="text-xs text-surface-400">Kein Quiz für dieses Modul hinterlegt.</p>
+                                @endif
+
+                                <button x-show="!showCancel" @click="showCancel = true" class="btn-danger w-full">Abmelden</button>
+                                <div x-show="showCancel" x-cloak x-transition class="space-y-2">
+                                    <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn-danger w-full btn-sm">Ja, abmelden</button>
+                                    </form>
+                                    <button @click="showCancel = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
+                                </div>
+
+                            @elseif($status === 'completed')
+                                <div class="flex items-center gap-2 text-sm text-ui-success font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Abgeschlossen
+                                    @if($enrollment?->completed_at)
+                                    <span class="text-xs text-surface-400">{{ $enrollment->completed_at->format('d.m.Y') }}</span>
+                                    @endif
+                                </div>
+                            @endif
+
+                        {{-- ======================== REQUEST ======================== --}}
+                        @elseif($schedulingType === 'request')
+
+                            @if($status === 'open' || $status === 'cancelled')
+                                <form method="POST" action="{{ route('enroll') }}">
+                                    @csrf
+                                    <input type="hidden" name="module_id" value="{{ $module->id }}">
+                                    <button type="submit" class="btn-primary w-full">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Termin anfragen
+                                    </button>
+                                </form>
+                                <p class="text-xs text-surface-400 text-center">Der Trainer wird dir einen Terminvorschlag machen.</p>
+
+                            @elseif($status === 'requested')
+                                <div class="flex items-center gap-2 text-sm bg-amber-50 rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-amber-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-amber-700 font-medium">Terminanfrage gesendet</span>
+                                </div>
+                                <p class="text-xs text-surface-400">Der Trainer wird sich mit einem Terminvorschlag bei dir melden.</p>
+
+                                <button x-show="!showCancel" @click="showCancel = true" class="btn-danger w-full">Anfrage zurückziehen</button>
+                                <div x-show="showCancel" x-cloak x-transition class="space-y-2">
+                                    <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn-danger w-full btn-sm">Ja, zurückziehen</button>
+                                    </form>
+                                    <button @click="showCancel = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
+                                </div>
+
+                            @elseif($status === 'enrolled')
+                                @if($bookedSession)
+                                <div class="flex items-center gap-2 text-sm bg-brand-primary-light rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                                     </svg>
-                                    Nächsten Termin buchen
-                                </button>
-                            </form>
-                            <p class="text-xs text-surface-400 text-center">{{ $nextSession->start_at->format('d.m.Y, H:i') }} Uhr</p>
-                            @else
-                            <p class="text-sm text-surface-500">Aktuell nicht buchbar &ndash; es sind noch keine Termine geplant.</p>
+                                    <span class="text-brand-primary font-medium">
+                                        {{ $bookedSession->start_at->format('d.m.Y, H:i') }} Uhr
+                                        @if($bookedSession->location) &middot; {{ $bookedSession->location }} @endif
+                                    </span>
+                                </div>
+                                @endif
+                                <p class="text-xs text-surface-400">Warte auf Teilnahme-Bestätigung durch Trainer.</p>
+
+                                <button x-show="!showCancel" @click="showCancel = true" class="btn-danger w-full">Stornieren</button>
+                                <div x-show="showCancel" x-cloak x-transition class="space-y-2">
+                                    <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn-danger w-full btn-sm">Ja, stornieren</button>
+                                    </form>
+                                    <button @click="showCancel = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
+                                </div>
+
+                            @elseif($status === 'attended')
+                                <div class="flex items-center gap-2 text-sm bg-ui-success-light rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-ui-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-ui-success font-medium">Teilnahme bestätigt{{ $enrollment->attendance_confirmed_at ? ' am ' . $enrollment->attendance_confirmed_at->format('d.m.Y') : '' }}</span>
+                                </div>
+                                @if($module->quiz)
+                                <a href="{{ route('quiz.show', $module->quiz) }}" class="btn-primary w-full">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    Quiz starten
+                                </a>
+                                @else
+                                <p class="text-xs text-surface-400">Kein Quiz für dieses Modul hinterlegt.</p>
+                                @endif
+
+                            @elseif($status === 'completed')
+                                <div class="flex items-center gap-2 text-sm text-ui-success font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Abgeschlossen
+                                    @if($enrollment?->completed_at)
+                                    <span class="text-xs text-surface-400">{{ $enrollment->completed_at->format('d.m.Y') }}</span>
+                                    @endif
+                                </div>
                             @endif
 
-                        @elseif($status === 'enrolled')
-                            @if($bookedSession)
-                            <div class="flex items-center gap-2 text-sm bg-brand-primary-light rounded-lg px-3 py-2.5">
-                                <svg class="w-4 h-4 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                                </svg>
-                                <span class="text-brand-primary font-medium">
-                                    {{ $bookedSession->start_at->format('d.m.Y, H:i') }} Uhr
-                                    @if($bookedSession->location) &middot; {{ $bookedSession->location }} @endif
-                                </span>
-                            </div>
-                            @endif
-                            <p class="text-xs text-surface-400">Warte auf Teilnahme-Bestätigung durch Trainer.</p>
+                        {{-- ======================== SCHEDULED (default) ======================== --}}
+                        @else
 
-                            @php $nextSession = $upcomingSessions->first(); @endphp
-                            @if($nextSession && $bookedSession && $nextSession->id !== $bookedSession->id)
-                            <button x-show="!showRebook" @click="showRebook = true" class="btn-secondary w-full">Umbuchen</button>
-                            <div x-show="showRebook" x-cloak x-transition class="space-y-2">
-                                <form method="POST" action="{{ route('enrollment.rebook', $enrollment) }}">
+                            @if($status === 'open')
+                                @php
+                                    $nextSession = $upcomingSessions->first(function ($s) {
+                                        $count = $s->enrollments->whereIn('status', ['enrolled', 'attended', 'completed'])->count();
+                                        return !$s->max_participants || $count < $s->max_participants;
+                                    });
+                                @endphp
+                                @if($nextSession)
+                                <form method="POST" action="{{ route('enroll') }}">
                                     @csrf
-                                    @method('PATCH')
                                     <input type="hidden" name="module_id" value="{{ $module->id }}">
                                     <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
-                                    <button type="submit" class="btn-primary w-full btn-sm">Umbuchen auf {{ $nextSession->start_at->format('d.m.Y, H:i') }}</button>
+                                    <button type="submit" class="btn-primary w-full">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                        </svg>
+                                        Nächsten Termin buchen
+                                    </button>
                                 </form>
-                                <button @click="showRebook = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
-                            </div>
-                            @endif
+                                <p class="text-xs text-surface-400 text-center">{{ $nextSession->start_at->format('d.m.Y, H:i') }} Uhr</p>
+                                @elseif($upcomingSessions->isNotEmpty())
+                                <p class="text-sm text-surface-500">Alle Termine sind aktuell ausgebucht.</p>
+                                @else
+                                <p class="text-sm text-surface-500">Aktuell nicht buchbar &ndash; es sind noch keine Termine geplant.</p>
+                                @endif
 
-                            <button x-show="!showCancel" @click="showCancel = true" class="btn-danger w-full">Stornieren</button>
-                            <div x-show="showCancel" x-cloak x-transition class="space-y-2">
-                                <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
+                            @elseif($status === 'enrolled')
+                                @if($bookedSession)
+                                <div class="flex items-center gap-2 text-sm bg-brand-primary-light rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-brand-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                    </svg>
+                                    <span class="text-brand-primary font-medium">
+                                        {{ $bookedSession->start_at->format('d.m.Y, H:i') }} Uhr
+                                        @if($bookedSession->location) &middot; {{ $bookedSession->location }} @endif
+                                    </span>
+                                </div>
+                                @endif
+                                <p class="text-xs text-surface-400">Warte auf Teilnahme-Bestätigung durch Trainer.</p>
+
+                                @php
+                                    $nextSession = $upcomingSessions->first(function ($s) use ($bookedSession) {
+                                        if ($bookedSession && $s->id === $bookedSession->id) return false;
+                                        $count = $s->enrollments->whereIn('status', ['enrolled', 'attended', 'completed'])->count();
+                                        return !$s->max_participants || $count < $s->max_participants;
+                                    });
+                                @endphp
+                                @if($nextSession && $bookedSession)
+                                <button x-show="!showRebook" @click="showRebook = true" class="btn-secondary w-full">Umbuchen</button>
+                                <div x-show="showRebook" x-cloak x-transition class="space-y-2">
+                                    <form method="POST" action="{{ route('enrollment.rebook', $enrollment) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <input type="hidden" name="module_id" value="{{ $module->id }}">
+                                        <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
+                                        <button type="submit" class="btn-primary w-full btn-sm">Umbuchen auf {{ $nextSession->start_at->format('d.m.Y, H:i') }}</button>
+                                    </form>
+                                    <button @click="showRebook = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
+                                </div>
+                                @endif
+
+                                <button x-show="!showCancel" @click="showCancel = true" class="btn-danger w-full">Stornieren</button>
+                                <div x-show="showCancel" x-cloak x-transition class="space-y-2">
+                                    <form method="POST" action="{{ route('enrollment.cancel', $enrollment) }}">
+                                        @csrf
+                                        @method('PATCH')
+                                        <button type="submit" class="btn-danger w-full btn-sm">Ja, stornieren</button>
+                                    </form>
+                                    <button @click="showCancel = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
+                                </div>
+
+                            @elseif($status === 'attended')
+                                <div class="flex items-center gap-2 text-sm bg-ui-success-light rounded-lg px-3 py-2.5">
+                                    <svg class="w-4 h-4 text-ui-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    <span class="text-ui-success font-medium">Teilnahme bestätigt{{ $enrollment->attendance_confirmed_at ? ' am ' . $enrollment->attendance_confirmed_at->format('d.m.Y') : '' }}</span>
+                                </div>
+                                @if($module->quiz)
+                                <a href="{{ route('quiz.show', $module->quiz) }}" class="btn-primary w-full">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                                    </svg>
+                                    Quiz starten
+                                </a>
+                                @else
+                                <p class="text-xs text-surface-400">Kein Quiz für dieses Modul hinterlegt.</p>
+                                @endif
+
+                            @elseif($status === 'completed')
+                                <div class="flex items-center gap-2 text-sm text-ui-success font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Abgeschlossen
+                                    @if($enrollment?->completed_at)
+                                    <span class="text-xs text-surface-400">{{ $enrollment->completed_at->format('d.m.Y') }}</span>
+                                    @endif
+                                </div>
+
+                            @elseif($status === 'cancelled')
+                                <div class="flex items-center gap-2 text-sm text-ui-error font-medium">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    Storniert
+                                    @if($enrollment?->cancelled_at)
+                                    <span class="text-xs text-surface-400">{{ $enrollment->cancelled_at->format('d.m.Y') }}</span>
+                                    @endif
+                                </div>
+                                @php
+                                    $nextSession = $upcomingSessions->first(function ($s) {
+                                        $count = $s->enrollments->whereIn('status', ['enrolled', 'attended', 'completed'])->count();
+                                        return !$s->max_participants || $count < $s->max_participants;
+                                    });
+                                @endphp
+                                @if($nextSession)
+                                <form method="POST" action="{{ route('enroll') }}">
                                     @csrf
-                                    @method('PATCH')
-                                    <button type="submit" class="btn-danger w-full btn-sm">Ja, stornieren</button>
+                                    <input type="hidden" name="module_id" value="{{ $module->id }}">
+                                    <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
+                                    <button type="submit" class="btn-primary w-full">
+                                        Erneut buchen
+                                    </button>
                                 </form>
-                                <button @click="showCancel = false" class="btn-secondary w-full btn-sm">Abbrechen</button>
-                            </div>
-
-                        @elseif($status === 'attended')
-                            <div class="flex items-center gap-2 text-sm bg-ui-success-light rounded-lg px-3 py-2.5">
-                                <svg class="w-4 h-4 text-ui-success flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                <span class="text-ui-success font-medium">Teilnahme bestätigt{{ $enrollment->attendance_confirmed_at ? ' am ' . $enrollment->attendance_confirmed_at->format('d.m.Y') : '' }}</span>
-                            </div>
-                            @if($module->quiz)
-                            <a href="{{ route('quiz.show', $module->quiz) }}" class="btn-primary w-full">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                                </svg>
-                                Quiz starten
-                            </a>
-                            @else
-                            <p class="text-xs text-surface-400">Kein Quiz für dieses Modul hinterlegt.</p>
-                            @endif
-
-                        @elseif($status === 'completed')
-                            <div class="flex items-center gap-2 text-sm text-ui-success font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Abgeschlossen
-                                @if($enrollment?->completed_at)
-                                <span class="text-xs text-surface-400">{{ $enrollment->completed_at->format('d.m.Y') }}</span>
                                 @endif
-                            </div>
-
-                        @elseif($status === 'cancelled')
-                            <div class="flex items-center gap-2 text-sm text-ui-error font-medium">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                                Storniert
-                                @if($enrollment?->cancelled_at)
-                                <span class="text-xs text-surface-400">{{ $enrollment->cancelled_at->format('d.m.Y') }}</span>
-                                @endif
-                            </div>
-                            @php $nextSession = $upcomingSessions->first(); @endphp
-                            @if($nextSession)
-                            <form method="POST" action="{{ route('enroll') }}">
-                                @csrf
-                                <input type="hidden" name="module_id" value="{{ $module->id }}">
-                                <input type="hidden" name="training_session_id" value="{{ $nextSession->id }}">
-                                <button type="submit" class="btn-primary w-full">
-                                    Erneut buchen
-                                </button>
-                            </form>
                             @endif
                         @endif
                     </div>
@@ -364,6 +595,10 @@
                         <div class="flex justify-between">
                             <dt class="text-surface-500">Methode</dt>
                             <dd class="font-medium text-brand-dark">{{ $module->method->name }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-surface-500">Terminart</dt>
+                            <dd class="font-medium text-brand-dark">{{ $module->method->schedulingLabel() }}</dd>
                         </div>
                         @endif
                         @if($module->skillCategory)

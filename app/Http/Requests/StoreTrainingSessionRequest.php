@@ -15,7 +15,7 @@ class StoreTrainingSessionRequest extends FormRequest
 
     public function rules(): array
     {
-        return [
+        $rules = [
             'module_id' => ['required', 'exists:modules,id', function (string $attribute, mixed $value, \Closure $fail) {
                 $user = $this->user();
                 if ($user->isAdmin()) {
@@ -41,7 +41,18 @@ class StoreTrainingSessionRequest extends FormRequest
             'max_participants' => ['nullable', 'integer', 'min:1', 'max:100'],
             'calendar_description' => ['nullable', 'string', 'max:2000'],
             'google_meet' => ['nullable', 'boolean'],
+            'is_recurring' => ['nullable', 'boolean'],
         ];
+
+        if ($this->boolean('is_recurring')) {
+            $rules['frequency'] = ['required', 'in:daily,weekly,monthly'];
+            $rules['frequency_interval'] = ['required', 'integer', 'min:1', 'max:12'];
+            $rules['days_of_week'] = ['nullable', 'array'];
+            $rules['days_of_week.*'] = ['integer', 'min:1', 'max:7'];
+            $rules['series_end_date'] = ['nullable', 'date', 'after:start_date'];
+        }
+
+        return $rules;
     }
 
     public function withValidator($validator): void
@@ -83,6 +94,9 @@ class StoreTrainingSessionRequest extends FormRequest
             'start_time.required' => 'Bitte eine Startzeit angeben.',
             'end_date.required' => 'Bitte ein Enddatum angeben.',
             'end_time.required' => 'Bitte eine Endzeit angeben.',
+            'frequency.required' => 'Bitte eine Wiederholungsfrequenz wählen.',
+            'frequency.in' => 'Ungültige Frequenz.',
+            'series_end_date.after' => 'Das Serienende muss nach dem Startdatum liegen.',
         ];
     }
 }

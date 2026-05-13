@@ -1,6 +1,7 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
 import './charts.js';
+import './quiz-engine.js';
 
 // Alpine.js Global Stores
 Alpine.store('notifications', {

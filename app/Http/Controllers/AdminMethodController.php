@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Method;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminMethodController extends Controller
 {
@@ -13,7 +14,9 @@ class AdminMethodController extends Controller
             ->orderBy('name')
             ->get();
 
-        return view('admin.methods.index', compact('methods'));
+        $schedulingTypes = Method::SCHEDULING_LABELS;
+
+        return view('admin.methods.index', compact('methods', 'schedulingTypes'));
     }
 
     public function store(Request $request)
@@ -21,9 +24,10 @@ class AdminMethodController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:methods,name'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'scheduling_type' => ['required', Rule::in(Method::SCHEDULING_TYPES)],
         ]);
 
-        Method::create($request->only('name', 'description'));
+        Method::create($request->only('name', 'description', 'scheduling_type'));
 
         return redirect()
             ->route('admin.methods.index')
@@ -35,9 +39,10 @@ class AdminMethodController extends Controller
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:methods,name,' . $method->id],
             'description' => ['nullable', 'string', 'max:1000'],
+            'scheduling_type' => ['required', Rule::in(Method::SCHEDULING_TYPES)],
         ]);
 
-        $method->update($request->only('name', 'description'));
+        $method->update($request->only('name', 'description', 'scheduling_type'));
 
         return redirect()
             ->route('admin.methods.index')
