@@ -12,8 +12,24 @@ class AdminMilestoneController extends Controller
 {
     public function index(Request $request)
     {
-        $teams = Team::orderBy('name')->get();
+        $user = auth()->user();
+        
+        // Admin sieht alle Teams, PM/HeadOf nur ihre managedTeams
+        if ($user->isAdmin()) {
+            $teams = Team::orderBy('name')->get();
+        } else {
+            $teams = $user->managedTeams()->orderBy('name')->get();
+        }
+        
         $selectedTeamId = $request->get('team');
+        
+        // Sicherheitsprüfung: PM/HeadOf dürfen nur ihre eigenen Teams sehen
+        if ($selectedTeamId && !$user->isAdmin()) {
+            $allowedTeamIds = $user->managedTeams()->pluck('teams.id')->toArray();
+            if (!in_array($selectedTeamId, $allowedTeamIds)) {
+                abort(403, 'Sie haben keinen Zugriff auf dieses Team.');
+            }
+        }
 
         $milestonesByLevel = collect();
 
@@ -42,11 +58,18 @@ class AdminMilestoneController extends Controller
 
     public function create(Request $request)
     {
+        $user = auth()->user();
+        
         $levels = CareerLevel::with('careerPath')
             ->get()
             ->groupBy(fn ($l) => $l->careerPath->name);
 
-        $teams = Team::orderBy('name')->get();
+        // Admin sieht alle Teams, PM/HeadOf nur ihre managedTeams
+        if ($user->isAdmin()) {
+            $teams = Team::orderBy('name')->get();
+        } else {
+            $teams = $user->managedTeams()->orderBy('name')->get();
+        }
 
         return view('admin.milestones.create', compact('levels', 'teams'));
     }
@@ -62,11 +85,26 @@ class AdminMilestoneController extends Controller
 
     public function edit(Milestone $milestone)
     {
+        $user = auth()->user();
+        
+        // PM/HeadOf dürfen nur Milestones ihrer Teams bearbeiten
+        if (!$user->isAdmin() && $milestone->team_id) {
+            $allowedTeamIds = $user->managedTeams()->pluck('teams.id')->toArray();
+            if (!in_array($milestone->team_id, $allowedTeamIds)) {
+                abort(403, 'Sie haben keinen Zugriff auf dieses Milestone.');
+            }
+        }
+        
         $levels = CareerLevel::with('careerPath')
             ->get()
             ->groupBy(fn ($l) => $l->careerPath->name);
 
-        $teams = Team::orderBy('name')->get();
+        // Admin sieht alle Teams, PM/HeadOf nur ihre managedTeams
+        if ($user->isAdmin()) {
+            $teams = Team::orderBy('name')->get();
+        } else {
+            $teams = $user->managedTeams()->orderBy('name')->get();
+        }
 
         return view('admin.milestones.edit', compact('milestone', 'levels', 'teams'));
     }
