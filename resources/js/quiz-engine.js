@@ -1,12 +1,16 @@
-import Alpine from 'alpinejs'
 import Sortable from 'sortablejs'
 
-/**
- * Alpine component for taking a quiz (quiz/show view).
- * Handles navigation, answer collection for all 7 question types,
- * and submit-readiness checks.
- */
-Alpine.data('quizPlayer', (questions) => ({
+// Register quiz components when Livewire/Alpine is ready
+document.addEventListener('livewire:init', () => {
+    const Alpine = window.Alpine;
+    if (!Alpine) return;
+
+    /**
+     * Alpine component for taking a quiz (quiz/show view).
+     * Handles navigation, answer collection for all 7 question types,
+     * and submit-readiness checks.
+     */
+    Alpine.data('quizPlayer', (questions) => ({
   questions,
   currentQuestion: 0,
   answers: {},
@@ -347,6 +351,8 @@ Alpine.data('quizEditor', (initialQuestions, initialPass) => ({
     this.questions[qi].blanks[bi].accepted_answers.splice(ai, 1)
   }
 }))
+
+}); // End of livewire:init event listener
 
 // Make Sortable available for ordering init in templates
 window.Sortable = Sortable

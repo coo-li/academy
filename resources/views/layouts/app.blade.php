@@ -16,6 +16,7 @@
     
     <!-- Scripts & Styles -->
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @livewireStyles
 </head>
 <body class="bg-surface-50 font-sans" x-data="{ sidebarOpen: $store.sidebar.open, mobileMenuOpen: false }">
     <div class="flex min-h-screen">
@@ -105,6 +106,7 @@
     <!-- Toast Container -->
     @include('layouts.toasts')
 
+    @livewireScripts
     @stack('scripts')
 </body>
 </html>

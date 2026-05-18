@@ -20,6 +20,12 @@ use App\Http\Controllers\SkillOverviewController;
 use App\Http\Controllers\TrainerTerminController;
 use App\Http\Controllers\TrainerSchulungController;
 use App\Http\Controllers\TrainerTeilnehmerController;
+use App\Livewire\Admin\CareerLevelRatesManager;
+use App\Livewire\Admin\CLevelDashboard;
+use App\Livewire\Admin\PeopleManagerDashboard;
+use App\Livewire\Admin\TeamBudgetOverview;
+use App\Livewire\Admin\TrainingBookingManager;
+use App\Livewire\MyBudgetStatus;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -39,6 +45,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [AcademyController::class, 'dashboard'])->name('dashboard');
     Route::get('/module/{module}', [AcademyController::class, 'showModule'])->name('academy.module.show');
     Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
+    Route::get('/my-development/budget', MyBudgetStatus::class)->name('my-budget-status');
+    Route::get('/admin/employee/{userId}/budget', MyBudgetStatus::class)->name('admin.employee-budget');
 
     Route::post('/enroll', [EnrollmentController::class, 'store'])->name('enroll');
     Route::patch('/enrollment/{enrollment}/cancel', [EnrollmentController::class, 'cancel'])->name('enrollment.cancel');
@@ -61,6 +69,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // === Mitarbeiterorga (People Manager / Head of / Admin) ===
     Route::middleware('can:manager')->group(function () {
+        // Team-Ampel Dashboard
+        Route::get('/admin/dashboard/team', PeopleManagerDashboard::class)->name('admin.dashboard.team');
+        
+        // Team Budget Übersicht
+        Route::get('/admin/dashboard/team/{teamId}', TeamBudgetOverview::class)->name('admin.team-budget');
+        
+        // Weiterbildung einbuchen
+        Route::get('/admin/training-bookings', TrainingBookingManager::class)->name('admin.training-bookings');
+
         Route::prefix('manage')->name('manage.')->group(function () {
             Route::get('/employees', [EmployeeManagementController::class, 'index'])->name('employees.index');
             Route::get('/employees/{user}', [EmployeeManagementController::class, 'show'])->name('employees.show');
@@ -134,6 +151,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/teilnehmer', [TrainerTeilnehmerController::class, 'index'])->name('teilnehmer.index');
         Route::post('/teilnehmer/{session}/confirm', [TrainerTeilnehmerController::class, 'confirmAttendance'])->name('teilnehmer.confirm');
+    });
+
+    // === Budget-Controlling (Admin / C-Level) ===
+    Route::middleware('can:admin')->group(function () {
+        Route::get('/admin/dashboard/budgets', CLevelDashboard::class)->name('admin.dashboard.budgets');
+        Route::get('/admin/budget/rates', CareerLevelRatesManager::class)->name('admin.budget.rates');
     });
 
     // === System (nur Admin) ===

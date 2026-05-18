@@ -34,6 +34,9 @@ class User extends Authenticatable
         'team_id',
         'archived_at',
         'invited_at',
+        'target_hours_per_year',
+        'budget_tracker_id',
+        'employee_category',
     ];
 
     protected $hidden = [
@@ -344,5 +347,69 @@ class User extends Authenticatable
         }
 
         return mb_strtoupper(mb_substr($name, 0, 2, 'UTF-8'), 'UTF-8');
+    }
+
+    // ========== Budget Dashboard Erweiterungen ==========
+
+    public function budgetEntries(): HasMany
+    {
+        return $this->hasMany(BudgetEntry::class);
+    }
+
+    public function userBudgets(): HasMany
+    {
+        return $this->hasMany(UserBudget::class);
+    }
+
+    public function getBudgetForYear(int $year): ?UserBudget
+    {
+        return $this->userBudgets()->where('year', $year)->first();
+    }
+
+    public function getSpentBudgetForYear(int $year, bool $deductibleOnly = false): float
+    {
+        $query = $this->budgetEntries()
+            ->whereYear('date', $year)
+            ->where('cost_type', 'monetary');
+
+        if ($deductibleOnly) {
+            $query->where('is_deductible_from_allowance', true);
+        }
+
+        return (float) $query->sum('amount');
+    }
+
+    public function getRemainingAllowanceForYear(int $year): float
+    {
+        $budget = $this->getBudgetForYear($year);
+
+        if (!$budget) {
+            return 0;
+        }
+
+        return $budget->remaining_allowance;
+    }
+
+    public function getActualHoursForYear(int $year): float
+    {
+        return (float) $this->budgetEntries()
+            ->whereYear('date', $year)
+            ->where('cost_type', BudgetEntry::COST_TYPE_TIME)
+            ->sum('amount');
+    }
+
+    public function getHourlyRate(): float
+    {
+        return $this->careerLevel?->hourly_rate ?? 100.00;
+    }
+
+    public function hasAdminAccess(): bool
+    {
+        return $this->hasRole(['admin', 'c_level']);
+    }
+
+    public function hasPeopleManagerAccess(): bool
+    {
+        return $this->hasRole(['admin', 'c_level', 'people_manager', 'head_of']);
     }
 }

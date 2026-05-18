@@ -155,6 +155,12 @@
             </div>
         </div>
 
+        {{-- Stundensätze Verwaltung --}}
+        @livewire('admin.career-level-rates-manager')
+
+        {{-- Sollstunden pro Mitarbeiter --}}
+        @livewire('admin.user-target-hours-manager')
+
         {{-- System Info --}}
         <div class="card-tool">
             <div class="card-tool-header">

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CareerLevel extends Model
 {
@@ -28,5 +29,20 @@ class CareerLevel extends Model
     public function milestones(): HasMany
     {
         return $this->hasMany(Milestone::class)->orderBy('sort_order');
+    }
+
+    public function rate(): HasOne
+    {
+        return $this->hasOne(CareerLevelRate::class);
+    }
+
+    public function getHourlyRateAttribute(): ?float
+    {
+        return $this->rate?->hourly_rate;
+    }
+
+    public function getNameAttribute(): string
+    {
+        return $this->title ?? '';
     }
 }

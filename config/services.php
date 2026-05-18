@@ -52,4 +52,8 @@ return [
         'base_url' => env('PERSONIO_BASE_URL', 'https://api.personio.de/v1'),
     ],
 
+    'budget_import' => [
+        'key' => env('BUDGET_IMPORT_KEY'),
+    ],
+
 ];
