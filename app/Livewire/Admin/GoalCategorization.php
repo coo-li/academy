@@ -4,14 +4,13 @@ namespace App\Livewire\Admin;
 
 use App\Models\BudgetEntry;
 use App\Models\Team;
+use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
-use Livewire\WithPagination;
 
 class GoalCategorization extends Component
 {
-    use WithPagination;
-
     public int $selectedYear;
     public ?int $selectedTeamId = null;
     public ?string $selectedType = null;
@@ -44,7 +43,10 @@ class GoalCategorization extends Component
         return $user->managedTeams()->orderBy('name')->get();
     }
 
-    public function getGoalsProperty()
+    /**
+     * Gruppierte Ziele: Pro user_id + budget_name nur eine Zeile
+     */
+    public function getGoalsProperty(): Collection
     {
         $user = Auth::user();
 
@@ -69,43 +71,108 @@ class GoalCategorization extends Component
             $query->where('type', $this->selectedType);
         }
 
+        $entries = $query->orderBy('user_id')->orderBy('budget_name')->get();
+
+        // Nach user_id + budget_name gruppieren
+        $grouped = $entries->groupBy(fn($entry) => $entry->user_id . '|' . $entry->budget_name);
+
+        $goals = $grouped->map(function ($group) {
+            $first = $group->first();
+            $totalHours = $group->sum(fn($entry) => $this->convertEntryToHours($entry));
+            
+            // Prüfe ob alle Einträge die gleiche Kategorie haben
+            $categories = $group->pluck('goal_category')->unique();
+            $category = $categories->count() === 1 ? $categories->first() : $first->goal_category;
+            
+            return (object) [
+                'key' => $first->user_id . '|' . $first->budget_name,
+                'user_id' => $first->user_id,
+                'user' => $first->user,
+                'budget_name' => $first->budget_name,
+                'label' => $first->label,
+                'type' => $first->type,
+                'goal_category' => $category,
+                'total_hours' => round($totalHours, 1),
+                'entry_count' => $group->count(),
+                'entry_ids' => $group->pluck('id')->toArray(),
+            ];
+        })->values();
+
+        // Filter nach Kategorie anwenden
         if ($this->categoryFilter === 'uncategorized') {
-            $query->uncategorized();
+            $goals = $goals->filter(fn($g) => $g->goal_category === null);
         } elseif ($this->categoryFilter === 'none') {
-            $query->withCategory('none');
+            $goals = $goals->filter(fn($g) => $g->goal_category === 'none');
         } elseif ($this->categoryFilter && in_array($this->categoryFilter, ['A', 'B', 'C'])) {
-            $query->withCategory($this->categoryFilter);
+            $goals = $goals->filter(fn($g) => $g->goal_category === $this->categoryFilter);
         }
 
-        return $query->orderBy('date', 'desc')->paginate(50);
+        return $goals->sortBy(fn($g) => ($g->user->name ?? '') . '|' . $g->budget_name)->values();
     }
 
+    /**
+     * Hilfsmethode: Einzelnen Entry in Stunden umrechnen
+     */
+    protected function convertEntryToHours(BudgetEntry $entry): float
+    {
+        if ($entry->cost_type === BudgetEntry::COST_TYPE_TIME) {
+            return (float) $entry->amount;
+        }
+
+        $hourlyRate = $entry->user?->getHourlyRate() ?? 100;
+        return $hourlyRate > 0 ? (float) $entry->amount / $hourlyRate : 0;
+    }
+
+    /**
+     * Stats basierend auf unique Zielen (nicht auf einzelnen Einträgen)
+     */
     public function getStatsProperty(): array
     {
         $user = Auth::user();
 
-        $baseQuery = BudgetEntry::active()->whereYear('date', $this->selectedYear);
+        $query = BudgetEntry::active()->whereYear('date', $this->selectedYear);
 
         if (!$this->showAllTeams) {
             $teamIds = $user->managedTeams()->pluck('teams.id');
-            $baseQuery->whereHas('user', function ($q) use ($teamIds) {
+            $query->whereHas('user', function ($q) use ($teamIds) {
                 $q->whereIn('team_id', $teamIds);
             });
         }
 
         if ($this->selectedTeamId) {
-            $baseQuery->whereHas('user', function ($q) {
+            $query->whereHas('user', function ($q) {
                 $q->where('team_id', $this->selectedTeamId);
             });
         }
 
-        $total = (clone $baseQuery)->count();
-        $categorized = (clone $baseQuery)->categorized()->count();
-        $uncategorized = (clone $baseQuery)->uncategorized()->count();
-        $categoryA = (clone $baseQuery)->withCategory('A')->count();
-        $categoryB = (clone $baseQuery)->withCategory('B')->count();
-        $categoryC = (clone $baseQuery)->withCategory('C')->count();
-        $categoryNone = (clone $baseQuery)->withCategory('none')->count();
+        // Gruppierte Stats: Zähle unique user_id + budget_name Kombinationen
+        $entries = $query->get();
+        $grouped = $entries->groupBy(fn($entry) => $entry->user_id . '|' . $entry->budget_name);
+
+        $total = $grouped->count();
+        $categorized = 0;
+        $uncategorized = 0;
+        $categoryA = 0;
+        $categoryB = 0;
+        $categoryC = 0;
+        $categoryNone = 0;
+
+        foreach ($grouped as $group) {
+            $category = $group->first()->goal_category;
+            
+            if ($category === null) {
+                $uncategorized++;
+            } else {
+                $categorized++;
+                match ($category) {
+                    'A' => $categoryA++,
+                    'B' => $categoryB++,
+                    'C' => $categoryC++,
+                    'none' => $categoryNone++,
+                    default => null,
+                };
+            }
+        }
 
         return [
             'total' => $total,
@@ -119,51 +186,28 @@ class GoalCategorization extends Component
         ];
     }
 
-    public function updateCategory(int $entryId, ?string $category): void
+    /**
+     * Kategorie für alle Einträge mit gleichem user_id + budget_name setzen
+     */
+    public function updateCategory(int $userId, string $budgetName, ?string $category): void
     {
-        $entry = BudgetEntry::findOrFail($entryId);
-
         $user = Auth::user();
+
+        // Berechtigungsprüfung
         if (!$this->showAllTeams) {
             $teamIds = $user->managedTeams()->pluck('teams.id');
-            if (!$teamIds->contains($entry->user->team_id)) {
+            $targetUser = User::find($userId);
+            if (!$targetUser || !$teamIds->contains($targetUser->team_id)) {
                 return;
             }
         }
 
-        $entry->update([
-            'goal_category' => $category ?: null,
-        ]);
-    }
-
-    public function updatedSelectedYear(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedSelectedTeamId(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedSelectedType(): void
-    {
-        $this->resetPage();
-    }
-
-    public function updatedCategoryFilter(): void
-    {
-        $this->resetPage();
-    }
-
-    public function convertToHours(BudgetEntry $entry): float
-    {
-        if ($entry->cost_type === BudgetEntry::COST_TYPE_TIME) {
-            return (float) $entry->amount;
-        }
-
-        $hourlyRate = $entry->user?->getHourlyRate() ?? 100;
-        return $hourlyRate > 0 ? round((float) $entry->amount / $hourlyRate, 1) : 0;
+        // Alle Einträge mit diesem user_id + budget_name im aktuellen Jahr updaten
+        BudgetEntry::where('user_id', $userId)
+            ->where('budget_name', $budgetName)
+            ->whereYear('date', $this->selectedYear)
+            ->active()
+            ->update(['goal_category' => $category ?: null]);
     }
 
     public function render()

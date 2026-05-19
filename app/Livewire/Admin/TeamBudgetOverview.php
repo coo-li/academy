@@ -165,6 +165,7 @@ class TeamBudgetOverview extends Component
             foreach ($grouped as $budgetName => $items) {
                 $goal = [
                     'name' => $budgetName ?: 'Unbenannt',
+                    'category' => $items->first()?->goal_category,
                     'months' => [],
                     'total' => 0,
                     'users' => $items->pluck('user')->unique('id')->map(fn($u) => [

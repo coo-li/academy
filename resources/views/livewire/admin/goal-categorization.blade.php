@@ -1,16 +1,10 @@
-@section('page-title', $showAllTeams ? 'Admin: Ziele kategorisieren' : 'Ziele kategorisieren')
+@section('page-title', 'Ziele kategorisieren')
 
 <div class="space-y-6">
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">
-                @if($showAllTeams)
-                    Admin: Ziele kategorisieren
-                @else
-                    Ziele kategorisieren
-                @endif
-            </h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Ziele kategorisieren</h1>
             <p class="text-surface-500 mt-1.5 text-base">
                 Priorisierung der Ziele für Traffic Design
                 @if($showAllTeams)
@@ -124,17 +118,13 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mitarbeiter</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ziel</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Typ</th>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Stunden</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider w-44">Kategorie</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-200">
                     @forelse($goals as $goal)
-                        @php
-                            $hours = $this->convertToHours($goal);
-                        @endphp
-                        <tr class="hover:bg-gray-50" wire:key="goal-{{ $goal->id }}">
+                        <tr class="hover:bg-gray-50" wire:key="goal-{{ $goal->key }}">
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium text-sm">
@@ -151,6 +141,9 @@
                                 @if($goal->budget_name && $goal->label && $goal->budget_name !== $goal->label)
                                     <p class="text-xs text-gray-500">{{ $goal->label }}</p>
                                 @endif
+                                @if($goal->entry_count > 1)
+                                    <p class="text-xs text-gray-400">{{ $goal->entry_count }} Monate</p>
+                                @endif
                             </td>
                             <td class="px-4 py-3">
                                 <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium
@@ -163,14 +156,11 @@
                                     {{ $typeLabels[$goal->type] ?? $goal->type }}
                                 </span>
                             </td>
-                            <td class="px-4 py-3 text-sm text-gray-500">
-                                {{ $goal->date?->format('d.m.Y') ?? '-' }}
-                            </td>
                             <td class="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                                {{ number_format($hours, 1, ',', '.') }} h
+                                {{ number_format($goal->total_hours, 1, ',', '.') }} h
                             </td>
                             <td class="px-4 py-3">
-                                <select wire:change="updateCategory({{ $goal->id }}, $event.target.value)"
+                                <select wire:change="updateCategory({{ $goal->user_id }}, '{{ addslashes($goal->budget_name) }}', $event.target.value)"
                                         class="w-full text-sm rounded-lg border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500
                                                {{ $goal->goal_category ? 'font-medium' : 'text-gray-400' }}
                                                {{ match($goal->goal_category) {
@@ -191,7 +181,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-12 text-center">
+                            <td colspan="5" class="px-4 py-12 text-center">
                                 <svg class="mx-auto h-12 w-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                                 </svg>
@@ -203,12 +193,6 @@
                 </tbody>
             </table>
         </div>
-
-        @if($goals->hasPages())
-            <div class="px-4 py-3 bg-gray-50 border-t border-gray-200">
-                {{ $goals->links() }}
-            </div>
-        @endif
     </div>
 
     {{-- Legende --}}

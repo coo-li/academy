@@ -41,7 +41,7 @@
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 min-w-[180px]">
+                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sticky left-0 bg-gray-50 min-w-[200px]">
                                     Ziel / Budget
                                 </th>
                                 @for($m = 1; $m <= 12; $m++)
@@ -58,8 +58,11 @@
                             @foreach($data['goals'] as $goal)
                                 <tr class="hover:bg-gray-50">
                                     <td class="px-3 py-2 sticky left-0 bg-white">
-                                        <div class="font-medium text-gray-900 truncate max-w-[200px]" title="{{ $goal['name'] }}">
-                                            {{ Str::limit($goal['name'], 30) }}
+                                        <div class="font-medium text-gray-900 text-sm whitespace-normal break-words min-w-[180px] max-w-[280px]">
+                                            {{ $goal['name'] }}
+                                            @if($goal['category'] ?? null)
+                                                <x-goal-category-badge :category="$goal['category']" />
+                                            @endif
                                         </div>
                                         {{-- Mitarbeiter-Namen klein darunter --}}
                                         @if(!empty($goal['users']))
