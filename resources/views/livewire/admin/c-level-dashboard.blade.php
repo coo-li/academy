@@ -1,11 +1,11 @@
-@section('page-title', 'Budget-Dashboard')
+@section('page-title', 'Budget-Overview')
 
 <div class="space-y-6">
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Budget-Dashboard</h1>
-            <p class="text-sm text-gray-500 mt-1">Unternehmensweite Übersicht</p>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Budget-Overview</h1>
+            <p class="text-surface-500 mt-1.5 text-base">Unternehmensweite Übersicht</p>
         </div>
         <div class="flex items-center gap-3">
             <a href="{{ route('admin.dashboard.plan-budgets') }}" 
@@ -29,7 +29,7 @@
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h3 class="text-xl font-bold text-gray-900">Weiterbildungsbudget</h3>
-                <p class="text-sm text-gray-500 mt-1">Jahr {{ $selectedYear }} · Persönliche Ziele + Externe Schulungen (automatisch: MA × 3.000€)</p>
+                <p class="text-sm text-gray-500 mt-1">Jahr {{ $selectedYear }} · Persönliche Ziele + Externe Schulungen</p>
             </div>
             <div class="text-right">
                 <p class="text-sm text-gray-500">{{ $companyBudgetSummary['team_count'] }} Teams</p>
@@ -47,7 +47,7 @@
             <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
                 <p class="text-2xl font-semibold text-blue-900">{{ number_format($companyBudgetSummary['total_budget'], 0, ',', '.') }} €</p>
                 <p class="text-sm text-blue-600">Gesamtbudget</p>
-                <p class="text-xs text-blue-500 mt-1">{{ $companyBudgetSummary['employee_count'] }} × 3.000 €</p>
+                <p class="text-xs text-blue-500 mt-1">{{ $companyBudgetSummary['employee_count'] }} Mitarbeiter</p>
             </div>
             <div class="bg-green-50 rounded-lg p-4 border border-green-100">
                 <p class="text-2xl font-semibold text-green-900">{{ number_format($companyBudgetSummary['personal_goals_spent'], 0, ',', '.') }} €</p>

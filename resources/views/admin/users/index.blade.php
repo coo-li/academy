@@ -12,7 +12,7 @@
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Nutzerverwaltung</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Nutzerverwaltung</h1>
                 <p class="text-surface-500 mt-1">{{ $activeCount }} aktive Nutzer, {{ $archivedCount }} archiviert</p>
             </div>
             @if($personioConfigured)

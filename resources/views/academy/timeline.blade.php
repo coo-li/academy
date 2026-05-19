@@ -12,8 +12,8 @@
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Meine Timeline</h1>
-                <p class="text-surface-500 mt-1">Übersicht aller deiner Buchungen und Fortschritte.</p>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine Timeline</h1>
+                <p class="text-surface-500 mt-1.5 text-base">Übersicht aller deiner Buchungen und Fortschritte.</p>
             </div>
             <a href="{{ route('dashboard') }}" class="btn-secondary">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

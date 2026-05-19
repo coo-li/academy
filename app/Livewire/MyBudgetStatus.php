@@ -6,6 +6,7 @@ use App\Models\BudgetEntry;
 use App\Models\TrainingBooking;
 use App\Models\User;
 use App\Services\BudgetDashboardService;
+use App\Services\EmployeeBudgetCategoryService;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -19,10 +20,12 @@ class MyBudgetStatus extends Component
     public bool $viewingOther = false;
 
     protected BudgetDashboardService $dashboardService;
+    protected EmployeeBudgetCategoryService $budgetCategoryService;
 
-    public function boot(BudgetDashboardService $dashboardService): void
+    public function boot(BudgetDashboardService $dashboardService, EmployeeBudgetCategoryService $budgetCategoryService): void
     {
         $this->dashboardService = $dashboardService;
+        $this->budgetCategoryService = $budgetCategoryService;
     }
 
     public function mount(?int $userId = null): void
@@ -95,11 +98,18 @@ class MyBudgetStatus extends Component
         $hourlyRate = $user->getHourlyRate();
         
         $userBudget = $user->getBudgetForYear($this->selectedYear);
-        $totalAllowance = $userBudget?->total_allowance_monetary ?? 3000;
+        $totalAllowance = $userBudget?->total_allowance_monetary 
+            ?? $this->budgetCategoryService->getBudgetAllowance($user);
+        
+        // Cash-Limit aus Overlay-Regeln holen
+        $effectiveBudget = $this->budgetCategoryService->calculateEffectiveBudget($user, $this->selectedYear);
+        $maxCash = $effectiveBudget['max_cash'];
+        $hasCashLimit = $effectiveBudget['has_cash_limit'];
         
         // Bei Zeitraum-Filter: anteiliges Budget
         $divisor = $this->getPeriodDivisor();
         $periodAllowance = $totalAllowance / $divisor;
+        $periodMaxCash = $maxCash !== null ? $maxCash / $divisor : null;
 
         // Persönliche Ziele: IST (verbraucht)
         $queryIst = $user->budgetEntries()
@@ -125,6 +135,10 @@ class MyBudgetStatus extends Component
         // Gesamtabzug: Geplante Ziele + Externe Weiterbildungen
         $geplantAbzug = $sollEuros + $trainingCostsEuros;
         $remaining = $periodAllowance - $geplantAbzug;
+        
+        // Cash-Budget Berechnung (nur "echtes Geld", keine Zeitkosten)
+        $cashSpent = $trainingCostsEuros;
+        $cashRemaining = $periodMaxCash !== null ? $periodMaxCash - $cashSpent : null;
 
         // Für Anzeige: in Stunden umrechnen
         $sollHours = $hourlyRate > 0 ? $sollEuros / $hourlyRate : 0;
@@ -143,6 +157,13 @@ class MyBudgetStatus extends Component
             'training_costs_euros' => $trainingCostsEuros,
             'training_hours' => $trainingHours,
             'training_count' => $trainingBookings->count(),
+            'max_cash' => $maxCash,
+            'max_cash_period' => $periodMaxCash,
+            'has_cash_limit' => $hasCashLimit,
+            'cash_spent' => $cashSpent,
+            'cash_remaining' => $cashRemaining,
+            'base_rule_name' => $effectiveBudget['rule_name'],
+            'overlay_rules' => $effectiveBudget['overlay_rules'],
         ];
     }
 

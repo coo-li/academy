@@ -1,14 +1,14 @@
 <x-app-layout>
-    @section('page-title', 'Methoden')
+    @section('page-title', 'Methoden-Orga')
 
-    <div class="max-w-3xl mx-auto space-y-6">
+    <div class="space-y-6">
         @if(session('success'))
             <x-alert type="success" title="Erfolg!" :dismissible="true">{{ session('success') }}</x-alert>
         @endif
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Methoden</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Methoden-Orga</h1>
                 <p class="text-surface-500 mt-1">Lehr- und Lernmethoden für Schulungsmodule verwalten.</p>
             </div>
         </div>

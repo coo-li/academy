@@ -9,6 +9,13 @@ use Illuminate\Support\Collection;
 
 class BudgetDashboardService
 {
+    protected EmployeeBudgetCategoryService $budgetCategoryService;
+
+    public function __construct(?EmployeeBudgetCategoryService $budgetCategoryService = null)
+    {
+        $this->budgetCategoryService = $budgetCategoryService ?? app(EmployeeBudgetCategoryService::class);
+    }
+
     public const AMPEL_GREEN = 'green';
     public const AMPEL_YELLOW = 'yellow';
     public const AMPEL_RED = 'red';
@@ -110,7 +117,8 @@ class BudgetDashboardService
         $other = $entries->where('type', BudgetEntry::TYPE_OTHER_INTERNAL);
 
         $userBudget = $user->userBudgets->first();
-        $totalAllowance = $userBudget?->total_allowance_monetary ?? 3000;
+        $totalAllowance = $userBudget?->total_allowance_monetary 
+            ?? $this->budgetCategoryService->getBudgetAllowance($user);
 
         $personalGoalsMonetary = $personalGoals
             ->where('cost_type', BudgetEntry::COST_TYPE_MONETARY)
@@ -541,7 +549,7 @@ class BudgetDashboardService
     {
         $headOfs = $cLevelUser->headOfReports()->get();
         $employeeCount = $headOfs->count();
-        $budget = $employeeCount * 3000;
+        $budget = $this->calculateTotalBudgetForUsers($headOfs);
 
         $userIds = $headOfs->pluck('id');
         $entries = BudgetEntry::whereIn('user_id', $userIds)
@@ -593,17 +601,15 @@ class BudgetDashboardService
 
         $teamSummaries = $teams->map(function (Team $team) use ($year) {
             $employeeCount = $team->users->count();
-            $budget = $employeeCount * 3000;
+            $budget = $this->calculateTotalBudgetForUsers($team->users);
 
             $userIds = $team->users->pluck('id');
             
-            // Persönliche Ziele (wie im C-Level Dashboard)
             $personalGoalsSpent = BudgetEntry::whereIn('user_id', $userIds)
                 ->whereYear('date', $year)
                 ->where('type', BudgetEntry::TYPE_PERSONAL_GOAL)
                 ->sum('amount');
 
-            // Externe Schulungen (TrainingBookings)
             $trainingCosts = \App\Models\TrainingBooking::whereIn('user_id', $userIds)
                 ->whereYear('created_at', $year)
                 ->sum('net_cost');
@@ -715,17 +721,15 @@ class BudgetDashboardService
         
         $teamSummaries = $teams->map(function (Team $team) use ($year) {
             $employeeCount = $team->users->count();
-            $budget = $employeeCount * 3000;
+            $budget = $this->calculateTotalBudgetForUsers($team->users);
             
             $userIds = $team->users->pluck('id');
             
-            // Persönliche Ziele (wie im C-Level Dashboard)
             $personalGoalsSpent = BudgetEntry::whereIn('user_id', $userIds)
                 ->whereYear('date', $year)
                 ->where('type', BudgetEntry::TYPE_PERSONAL_GOAL)
                 ->sum('amount');
 
-            // Externe Schulungen (TrainingBookings)
             $trainingCosts = \App\Models\TrainingBooking::whereIn('user_id', $userIds)
                 ->whereYear('created_at', $year)
                 ->sum('net_cost');
@@ -733,7 +737,6 @@ class BudgetDashboardService
             $spent = $personalGoalsSpent + $trainingCosts;
             $percentage = $budget > 0 ? round(($spent / $budget) * 100, 0) : 0;
 
-            // Service Development Daten
             $teamGoals = BudgetEntry::whereIn('user_id', $userIds)
                 ->where('type', BudgetEntry::TYPE_TEAM_GOAL)
                 ->whereYear('date', $year)
@@ -903,7 +906,8 @@ class BudgetDashboardService
 
                 $budgetBreakdown = $this->getUserBudgetBreakdown($employee, $year);
                 $monetarySpent = $budgetBreakdown['personal_goals']['monetary_spent'] ?? 0;
-                $monetaryAllowance = $budgetBreakdown['personal_goals']['monetary_allowance'] ?? 3000;
+                $monetaryAllowance = $budgetBreakdown['personal_goals']['monetary_allowance'] 
+                    ?? $this->budgetCategoryService->getBudgetAllowance($employee);
 
                 return [
                     'user' => $employee,
@@ -919,5 +923,17 @@ class BudgetDashboardService
                     'ampel_message' => $this->getAmpelMessage($utilizationRate),
                 ];
             });
+    }
+
+    /**
+     * Calculate the total budget for a collection of users based on their individual rules.
+     */
+    public function calculateTotalBudgetForUsers($users): float
+    {
+        $total = 0.0;
+        foreach ($users as $user) {
+            $total += $this->budgetCategoryService->getBudgetAllowance($user);
+        }
+        return $total;
     }
 }

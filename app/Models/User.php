@@ -29,6 +29,7 @@ class User extends Authenticatable
         'personio_level_raw',
         'personio_path_raw',
         'personio_synced_at',
+        'weekly_working_hours',
         'career_level_id',
         'head_of_user_id',
         'team_id',
@@ -37,6 +38,7 @@ class User extends Authenticatable
         'target_hours_per_year',
         'budget_tracker_id',
         'employee_category',
+        'employee_budget_rule_id',
     ];
 
     protected $hidden = [
@@ -209,6 +211,11 @@ class User extends Authenticatable
     public function team(): BelongsTo
     {
         return $this->belongsTo(Team::class);
+    }
+
+    public function employeeBudgetRule(): BelongsTo
+    {
+        return $this->belongsTo(EmployeeBudgetRule::class);
     }
 
     public function managedTeams(): BelongsToMany

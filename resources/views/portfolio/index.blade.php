@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Digitale Mappe')
+    @section('page-title', 'Meine Unterlagen')
 
     <div class="space-y-6" x-data="portfolioPreview()">
         {{-- Flash Messages --}}
@@ -13,8 +13,8 @@
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Digitale Mappe</h1>
-                <p class="text-surface-500 mt-1">Hier kannst du deine persönlichen Unterlagen und Notizen zu Schulungen sicher ablegen. Diese Dateien sind nur für dich sichtbar.</p>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine Unterlagen</h1>
+                <p class="text-surface-500 mt-1.5 text-base">Hier kannst du deine persönlichen Unterlagen und Notizen zu Schulungen sicher ablegen. Diese Dateien sind nur für dich sichtbar.</p>
             </div>
         </div>
 

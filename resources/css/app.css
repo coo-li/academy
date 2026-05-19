@@ -705,6 +705,30 @@
            transition-all duration-200;
   }
 
+  .sidebar-link-admin {
+    @apply flex items-center gap-3
+           px-3 py-2.5
+           text-sm text-orange-500
+           rounded-lg
+           border-l-[3px] border-transparent
+           transition-all duration-200
+           hover:bg-orange-50 hover:text-orange-600 hover:pl-4;
+  }
+
+  .sidebar-link-admin-active {
+    @apply flex items-center gap-3
+           px-3 py-2.5
+           text-sm font-semibold
+           rounded-lg
+           border-l-[3px] border-orange-500
+           bg-orange-50 text-orange-600
+           transition-all duration-200;
+  }
+
+  .sidebar-legend {
+    @apply mt-3 px-3 flex items-center gap-1.5 text-[0.65rem] text-surface-400;
+  }
+
   .sidebar-link-icon {
     @apply w-5 h-5 flex-shrink-0;
   }

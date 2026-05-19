@@ -1,3 +1,11 @@
+@section('page-title', 'Stundensätze pflegen')
+
+<div class="space-y-6">
+    <div>
+        <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Stundensätze pflegen</h1>
+        <p class="text-surface-500 mt-1.5 text-base">Stundensätze nach Karrierestufe verwalten</p>
+    </div>
+
 <div class="card-tool" x-data="{ rates: @js($hourlyRates) }">
     <div class="card-tool-header">
         <div class="flex items-center gap-2">
@@ -72,4 +80,5 @@
             @endforeach
         </div>
     </div>
+</div>
 </div>

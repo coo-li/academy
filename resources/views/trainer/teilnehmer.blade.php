@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Teilnehmermanagement')
+    @section('page-title', 'Mein Teilnehmermanagement')
 
     <div class="space-y-6">
         @if(session('success'))
@@ -11,7 +11,7 @@
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Teilnehmermanagement</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Mein Teilnehmermanagement</h1>
                 <p class="text-surface-500 mt-1">Anwesenheit deiner Schulungsteilnehmer bestätigen.</p>
             </div>
         </div>

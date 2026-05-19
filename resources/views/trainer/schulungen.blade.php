@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Schulungsdurchführung')
+    @section('page-title', 'Meine Schulungsinhalte')
 
     <div class="space-y-6" x-data="schulungManager()">
         @if(session('success'))
@@ -11,7 +11,7 @@
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">Schulungsdurchführung</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine Schulungsinhalte</h1>
                 <p class="text-surface-500 mt-1">Inhalte und Unterlagen deiner zugewiesenen Schulungen verwalten.</p>
             </div>
             <div class="flex items-center gap-2 text-sm text-surface-500">

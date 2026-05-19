@@ -8,6 +8,7 @@ use App\Models\Team;
 use App\Models\TrainingBooking;
 use App\Models\User;
 use App\Services\BudgetDashboardService;
+use App\Services\EmployeeBudgetCategoryService;
 use Livewire\Component;
 
 class CLevelDashboard extends Component
@@ -16,10 +17,12 @@ class CLevelDashboard extends Component
     public array $availableYears = [];
 
     protected BudgetDashboardService $dashboardService;
+    protected EmployeeBudgetCategoryService $budgetCategoryService;
 
-    public function boot(BudgetDashboardService $dashboardService): void
+    public function boot(BudgetDashboardService $dashboardService, EmployeeBudgetCategoryService $budgetCategoryService): void
     {
         $this->dashboardService = $dashboardService;
+        $this->budgetCategoryService = $budgetCategoryService;
     }
 
     public function mount(): void
@@ -49,7 +52,8 @@ class CLevelDashboard extends Component
             ->get();
 
         $employeeCount = User::count();
-        $totalBudget = $employeeCount * 3000;
+        $allUsers = User::active()->get();
+        $totalBudget = $this->dashboardService->calculateTotalBudgetForUsers($allUsers);
         
         $personalGoalsSpent = $personalGoalEntries->sum('amount');
         $trainingCosts = $trainingBookings->sum('net_cost');
@@ -121,7 +125,7 @@ class CLevelDashboard extends Component
                 ->whereYear('created_at', $this->selectedYear)
                 ->sum('net_cost');
 
-            $weiterbildungBudget = $team->users->count() * 3000;
+            $weiterbildungBudget = $this->dashboardService->calculateTotalBudgetForUsers($team->users);
             $weiterbildungSpent = $personalGoalsSpent + $trainingCosts;
             $weiterbildungPercentage = $weiterbildungBudget > 0 ? ($weiterbildungSpent / $weiterbildungBudget) * 100 : 0;
 

@@ -11,8 +11,8 @@
             </a>
             <span class="text-sm text-gray-500">Budget-Übersicht für Team</span>
         </div>
-        <h1 class="text-2xl font-bold text-gray-900">{{ $team->name }}</h1>
-        <p class="text-sm text-gray-500 mt-1">{{ $teamBudgetSummary['employee_count'] }} Mitarbeiter</p>
+        <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">{{ $team->name }}</h1>
+        <p class="text-surface-500 mt-1.5 text-base">{{ $teamBudgetSummary['employee_count'] }} Mitarbeiter</p>
     </div>
 
     {{-- Team Budget Summary --}}
@@ -42,7 +42,7 @@
             <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
                 <p class="text-2xl font-semibold text-blue-900">{{ number_format($teamBudgetSummary['total_budget'], 0, ',', '.') }} €</p>
                 <p class="text-sm text-blue-600">Gesamtbudget</p>
-                <p class="text-xs text-blue-500 mt-1">{{ $teamBudgetSummary['employee_count'] }} × 3.000 €</p>
+                <p class="text-xs text-blue-500 mt-1">{{ $teamBudgetSummary['employee_count'] }} Mitarbeiter</p>
             </div>
             <div class="bg-green-50 rounded-lg p-4 border border-green-100">
                 <p class="text-2xl font-semibold text-green-900">{{ number_format($teamBudgetSummary['personal_goals_spent'], 0, ',', '.') }} €</p>

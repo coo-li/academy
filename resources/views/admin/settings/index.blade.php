@@ -12,7 +12,7 @@
 
         {{-- Page Header --}}
         <div>
-            <h1 class="text-3xl font-bold text-brand-dark">Einstellungen</h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Einstellungen</h1>
             <p class="text-surface-500 mt-1">Integrationen & Systemstatus</p>
         </div>
 

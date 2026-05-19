@@ -6,6 +6,7 @@ use App\Models\BudgetEntry;
 use App\Models\Team;
 use App\Models\TrainingBooking;
 use App\Services\BudgetDashboardService;
+use App\Services\EmployeeBudgetCategoryService;
 use Livewire\Component;
 
 class TeamBudgetOverview extends Component
@@ -16,10 +17,12 @@ class TeamBudgetOverview extends Component
     public array $availableYears = [];
 
     protected BudgetDashboardService $dashboardService;
+    protected EmployeeBudgetCategoryService $budgetCategoryService;
 
-    public function boot(BudgetDashboardService $dashboardService): void
+    public function boot(BudgetDashboardService $dashboardService, EmployeeBudgetCategoryService $budgetCategoryService): void
     {
         $this->dashboardService = $dashboardService;
+        $this->budgetCategoryService = $budgetCategoryService;
     }
 
     public function mount(int $teamId): void
@@ -55,7 +58,7 @@ class TeamBudgetOverview extends Component
             ->whereYear('created_at', $this->selectedYear)
             ->get();
 
-        $totalBudget = $team->users->count() * 3000;
+        $totalBudget = $this->dashboardService->calculateTotalBudgetForUsers($team->users);
         
         // Nur persönliche Ziele + externe Schulungen vom Budget abziehen
         $personalGoalsSpent = $personalGoalEntries->sum('amount');

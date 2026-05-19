@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', $showAll ? 'Alle Termine' : 'Meine Termine')
+    @section('page-title', $showAll ? 'Alle Termine' : 'Mein Terminmanagement')
 
     <div class="space-y-6">
         @if(session('success'))
@@ -14,7 +14,7 @@
 
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">{{ $showAll ? 'Alle Termine' : 'Meine Termine' }}</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">{{ $showAll ? 'Alle Termine' : 'Mein Terminmanagement' }}</h1>
                 <p class="text-surface-500 mt-1">
                     {{ $showAll ? 'Alle Workshop-Termine im Überblick.' : 'Workshop-Termine für deine Schulungen verwalten.' }}
                 </p>

@@ -12,7 +12,7 @@
         {{-- Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-bold text-brand-dark">
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">
                     {{ $scope === 'all' ? 'Alle Mitarbeitenden' : 'Meine Mitarbeitenden' }}
                 </h1>
                 <p class="text-surface-500 mt-1">

@@ -17,7 +17,7 @@
     <!-- Navigation -->
     <nav class="sidebar-nav">
 
-        {{-- === Alle Rollen: Meine Entwicklung (vormals "Lernen") === --}}
+        {{-- === Alle Rollen: Meine Entwicklung === --}}
         <div class="sidebar-section">
             <div class="sidebar-section-title">Meine Entwicklung</div>
             
@@ -25,14 +25,14 @@
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
                 </svg>
-                Meine Academy
+                Meine td-Schulungen
             </a>
 
-            <a href="{{ route('academy.skill-overview') }}" class="{{ request()->routeIs('academy.skill-overview') ? 'sidebar-link-active' : 'sidebar-link' }}">
+            <a href="{{ route('user.my-milestones') }}" class="{{ request()->routeIs('user.my-milestones') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                 </svg>
-                Schulungskatalog
+                Meine Milestones
             </a>
 
             <a href="{{ route('academy.timeline') }}" class="{{ request()->routeIs('academy.timeline') ? 'sidebar-link-active' : 'sidebar-link' }}">
@@ -46,14 +46,21 @@
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"></path>
                 </svg>
-                Schulungsunterlagen
+                Meine Unterlagen
             </a>
 
             <a href="{{ route('my-budget-status') }}" class="{{ request()->routeIs('my-budget-status') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Mein Budget-Status
+                Mein Budgetstatus
+            </a>
+
+            <a href="{{ route('academy.skill-overview') }}" class="{{ request()->routeIs('academy.skill-overview') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+                </svg>
+                td-Schulungskatalog
             </a>
         </div>
 
@@ -72,17 +79,18 @@
             @endif
 
             @if(Auth::user()->isAdmin())
-            <a href="{{ route('manage.employees.index', ['scope' => 'all']) }}" class="{{ request()->routeIs('manage.employees.*') && (request()->query('scope') === 'all' || !Auth::user()->isPeopleManagerOrHeadOf()) ? 'sidebar-link-active' : 'sidebar-link' }}">
+            <a href="{{ route('manage.employees.index', ['scope' => 'all']) }}" class="{{ request()->routeIs('manage.employees.*') && (request()->query('scope') === 'all' || !Auth::user()->isPeopleManagerOrHeadOf()) ? 'sidebar-link-admin-active' : 'sidebar-link-admin' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m3 5.197V21"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
-                Admin: Module & Milestones
+                Module & Milestones
             </a>
             @endif
 
             <a href="{{ route('admin.milestones.index') }}" class="{{ request()->routeIs('admin.milestones.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
                 </svg>
                 Milestones verwalten
             </a>
@@ -90,18 +98,18 @@
             @if(Auth::user()->isPeopleManagerOrHeadOf())
             <a href="{{ route('admin.dashboard.team') }}" class="{{ request()->routeIs('admin.dashboard.team') && request()->query('scope') !== 'all' ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
                 Budget-Ampel
             </a>
             @endif
 
             @if(Auth::user()->isAdmin())
-            <a href="{{ route('admin.dashboard.team', ['scope' => 'all']) }}" class="{{ request()->routeIs('admin.dashboard.team') && (request()->query('scope') === 'all' || !Auth::user()->isPeopleManagerOrHeadOf()) ? 'sidebar-link-active' : 'sidebar-link' }}">
+            <a href="{{ route('admin.dashboard.team', ['scope' => 'all']) }}" class="{{ request()->routeIs('admin.dashboard.team') && (request()->query('scope') === 'all' || !Auth::user()->isPeopleManagerOrHeadOf()) ? 'sidebar-link-admin-active' : 'sidebar-link-admin' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Admin: Budget-Ampel
+                Budget-Ampel
             </a>
             @endif
 
@@ -115,91 +123,117 @@
             @endif
 
             @if(Auth::user()->isAdmin())
-            <a href="{{ route('admin.training-bookings', ['scope' => 'all']) }}" class="{{ request()->routeIs('admin.training-bookings') && request()->query('scope') === 'all' ? 'sidebar-link-active' : 'sidebar-link' }}">
+            <a href="{{ route('admin.training-bookings', ['scope' => 'all']) }}" class="{{ request()->routeIs('admin.training-bookings') && request()->query('scope') === 'all' ? 'sidebar-link-admin-active' : 'sidebar-link-admin' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
-                Admin: Weiterbildung buchen
+                Weiterbildung buchen
             </a>
+            @endif
+
+            @if(Auth::user()->isAdmin())
+            <div class="sidebar-legend">
+                <span class="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                td-weiter Zugriff
+            </div>
             @endif
 
         </div>
         @endif
 
-        {{-- === Akademie-Management (Schulungsmanager / Trainer / Admin) === --}}
+        {{-- === Schulungsmanagement (Schulungsmanager / Trainer / Admin) === --}}
         @if(Auth::user()?->isSchulungsmanager() || Auth::user()?->isTrainer())
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Akademie-Management</div>
+            <div class="sidebar-section-title">Schulungsmanagement</div>
 
-            {{-- Schulungsmanagement-Bereich --}}
+            {{-- Schulungsmanager-Bereich --}}
             @if(Auth::user()?->isSchulungsmanager())
             <a href="{{ route('admin.modules.index') }}" class="{{ request()->routeIs('admin.modules.*', 'admin.paths.*', 'admin.skill-categories.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
                 </svg>
-                Schulungsmanagement
+                Struktur-Orga
             </a>
 
             <a href="{{ route('admin.methods.index') }}" class="{{ request()->routeIs('admin.methods.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
                 </svg>
-                Methoden
+                Methoden-Orga
             </a>
             @endif
 
             {{-- Trainer-Bereich --}}
             @if(Auth::user()?->isTrainer())
-            <a href="{{ route('trainer.termine.index') }}" class="{{ request()->routeIs('trainer.termine.*') && request()->query('scope') !== 'all' ? 'sidebar-link-active' : 'sidebar-link' }}">
-                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                </svg>
-                Terminmanagement
-            </a>
-
-            @if(Auth::user()->isAdmin())
-            <a href="{{ route('trainer.termine.index', ['scope' => 'all']) }}" class="{{ request()->routeIs('trainer.termine.*') && request()->query('scope') === 'all' ? 'sidebar-link-active' : 'sidebar-link' }}">
-                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                </svg>
-                Alle Termine
-            </a>
-            @endif
-
             <a href="{{ route('trainer.schulungen.index') }}" class="{{ request()->routeIs('trainer.schulungen.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                 </svg>
-                Schulungsinhalte organisieren
+                Meine Schulungsinhalte
+            </a>
+
+            <a href="{{ route('trainer.termine.index') }}" class="{{ request()->routeIs('trainer.termine.*') && request()->query('scope') !== 'all' ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Mein Terminmanagement
             </a>
 
             <a href="{{ route('trainer.teilnehmer.index') }}" class="{{ request()->routeIs('trainer.teilnehmer.*') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                 </svg>
-                Teilnehmermanagement
+                Mein Teilnehmermanagement
             </a>
+
+            @if(Auth::user()->isAdmin())
+            <a href="{{ route('trainer.termine.index', ['scope' => 'all']) }}" class="{{ request()->routeIs('trainer.termine.*') && request()->query('scope') === 'all' ? 'sidebar-link-admin-active' : 'sidebar-link-admin' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+                Alle Termine
+            </a>
+
+            <div class="sidebar-legend">
+                <span class="inline-block w-2 h-2 rounded-full bg-orange-500"></span>
+                td-weiter Zugriff
+            </div>
+            @endif
             @endif
         </div>
         @endif
 
-        {{-- === Budget-Controlling (Admin / C-Level) === --}}
+        {{-- === Admin-Bereich (Admin) === --}}
         @if(Auth::user()?->isAdmin())
         <div class="sidebar-section">
-            <div class="sidebar-section-title">Unternehmen</div>
+            <div class="sidebar-section-title">Admin-Bereich</div>
 
             <a href="{{ route('admin.dashboard.budgets') }}" class="{{ request()->routeIs('admin.dashboard.budgets') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                 </svg>
-                Budget-Gesamtübersicht
+                Budget-Overview
             </a>
 
             <a href="{{ route('admin.budget.rates') }}" class="{{ request()->routeIs('admin.budget.rates') ? 'sidebar-link-active' : 'sidebar-link' }}">
                 <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                 </svg>
                 Stundensätze pflegen
+            </a>
+
+            <a href="{{ route('admin.budget.rules') }}" class="{{ request()->routeIs('admin.budget.rules') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+                </svg>
+                Budget-Regeln
+            </a>
+
+            <a href="{{ route('admin.budget.assignments') }}" class="{{ request()->routeIs('admin.budget.assignments') ? 'sidebar-link-active' : 'sidebar-link' }}">
+                <svg class="sidebar-link-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                MA-Budgets zuweisen
             </a>
 
             <a href="{{ route('admin.matrix.index') }}" class="{{ request()->routeIs('admin.matrix.*') ? 'sidebar-link-active' : 'sidebar-link' }}">

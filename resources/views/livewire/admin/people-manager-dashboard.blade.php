@@ -1,16 +1,10 @@
-@section('page-title', 'Team-Dashboard')
+@section('page-title', 'Budget-Ampel')
 
 <div class="space-y-6">
     {{-- Header mit Filter --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">
-                @if($showAllTeams ?? false)
-                    Admin: Budget-Ampel
-                @else
-                    Budget-Ampel
-                @endif
-            </h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Budget-Ampel</h1>
             <p class="text-sm text-gray-500 mt-1">
                 @if($showAllTeams ?? false)
                     Unternehmensweite Übersicht aller Teams
@@ -47,7 +41,7 @@
                         Weiterbildungsbudget meiner Teams
                     @endif
                 </h3>
-                <p class="text-sm text-gray-500 mt-1">Jahr {{ $selectedYear }} · Persönliche Ziele (automatisch: MA × 3.000€)</p>
+                <p class="text-sm text-gray-500 mt-1">Jahr {{ $selectedYear }} · Persönliche Ziele</p>
             </div>
             <div class="text-right">
                 <p class="text-sm text-gray-500">{{ $budgetSummary['team_count'] }} Teams</p>
@@ -65,7 +59,7 @@
             <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
                 <p class="text-2xl font-semibold text-blue-900">{{ number_format($budgetSummary['total_budget'], 0, ',', '.') }} €</p>
                 <p class="text-sm text-blue-600">Gesamtbudget</p>
-                <p class="text-xs text-blue-500 mt-1">{{ $budgetSummary['employee_count'] }} × 3.000 €</p>
+                <p class="text-xs text-blue-500 mt-1">{{ $budgetSummary['employee_count'] }} Mitarbeiter</p>
             </div>
             <div class="bg-green-50 rounded-lg p-4 border border-green-100">
                 <p class="text-2xl font-semibold text-green-900">{{ number_format($budgetSummary['total_spent'], 0, ',', '.') }} €</p>

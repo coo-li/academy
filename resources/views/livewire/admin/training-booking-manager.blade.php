@@ -1,7 +1,9 @@
+@section('page-title', 'Weiterbildung buchen')
+
 <div class="space-y-8">
     {{-- Header --}}
     <div>
-        <h1 class="text-2xl font-bold text-gray-900">Weiterbildung einbuchen</h1>
+        <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Weiterbildung buchen</h1>
         <p class="mt-2 text-sm text-gray-500">
             Buche eine externe Weiterbildung für einen Mitarbeiter ein. Es wird automatisch eine Asana-Task erstellt, 
             die dich daran erinnert, den Budget-Eintrag anzulegen.

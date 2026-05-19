@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Schulungskatalog')
+    @section('page-title', 'td-Schulungskatalog')
 
     <div class="space-y-6">
         {{-- Flash Messages --}}
@@ -13,7 +13,7 @@
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Schulungskatalog</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">td-Schulungskatalog</h1>
                 <p class="text-surface-500 mt-1.5 text-base">Entdecke alle verf&uuml;gbaren Schulungen und bekunde dein Interesse.</p>
             </div>
             <div class="flex items-center gap-2 text-sm text-surface-500">

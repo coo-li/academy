@@ -3,26 +3,29 @@
     <div>
         @if($viewingOther)
             <div class="flex items-center gap-3 mb-2">
-                <a href="{{ route('admin.dashboard.team') }}" class="text-gray-500 hover:text-gray-700">
+                <a href="{{ route('admin.dashboard.team') }}" class="text-surface-500 hover:text-brand-dark">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
                     </svg>
                 </a>
-                <span class="text-sm text-gray-500">Budget-Status von</span>
+                <span class="text-sm text-surface-500">Budget-Status von</span>
             </div>
-            <h1 class="text-2xl font-bold text-gray-900">{{ $targetUserName }}</h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">{{ $targetUserName }}</h1>
         @else
-            <h1 class="text-2xl font-bold text-gray-900">Mein Budget-Status</h1>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Mein Budgetstatus</h1>
         @endif
     </div>
 
-    {{-- Weiterbildungsbudget (3.000€ Topf) - HELLES DESIGN --}}
+    {{-- Weiterbildungsbudget - HELLES DESIGN --}}
     <div class="bg-white rounded-xl shadow-sm border-2 border-primary-200 p-6">
         <div class="flex items-center justify-between mb-4">
             <div>
                 <h3 class="text-xl font-bold text-gray-900">Weiterbildungsbudget</h3>
                 <p class="text-sm text-gray-500 mt-1">
                     {{ $selectedPeriodName }} {{ $selectedYear }} · Stundensatz: {{ number_format($weiterbildungData['hourly_rate'], 0, ',', '.') }} €/h
+                    @if($weiterbildungData['base_rule_name'] ?? false)
+                        <span class="text-gray-400">· {{ $weiterbildungData['base_rule_name'] }}</span>
+                    @endif
                 </p>
             </div>
             <div class="text-right">
@@ -36,6 +39,32 @@
                 @endif
             </div>
         </div>
+        
+        {{-- Cash-Limit Hinweis wenn Overlay-Regel greift --}}
+        @if($weiterbildungData['has_cash_limit'] ?? false)
+            <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
+                <svg class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-orange-800">Cash-Limit aktiv</p>
+                    <p class="text-xs text-orange-700 mt-0.5">
+                        Maximal <strong>{{ number_format($weiterbildungData['max_cash'], 0, ',', '.') }} €</strong> pro Jahr für echte Geldausgaben (externe Schulungen).
+                        @if($selectedPeriod !== 'year' && $weiterbildungData['max_cash_period'])
+                            Das entspricht <strong>{{ number_format($weiterbildungData['max_cash_period'], 0, ',', '.') }} €</strong> für {{ $selectedPeriodName }}.
+                        @endif
+                    </p>
+                    <div class="mt-2 flex items-center gap-4 text-xs">
+                        <span class="text-orange-700">
+                            Ausgegeben: <strong>{{ number_format($weiterbildungData['cash_spent'], 0, ',', '.') }} €</strong>
+                        </span>
+                        <span class="{{ ($weiterbildungData['cash_remaining'] ?? 0) < 0 ? 'text-red-600 font-semibold' : 'text-orange-700' }}">
+                            Verbleibend: <strong>{{ number_format($weiterbildungData['cash_remaining'] ?? 0, 0, ',', '.') }} €</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        @endif
         
         <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
             <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">

@@ -4,8 +4,8 @@
     {{-- Header --}}
     <div class="flex items-center justify-between">
         <div>
-            <h1 class="text-2xl font-bold text-gray-900">Planbudgets verwalten</h1>
-            <p class="text-sm text-gray-500 mt-1">Umsatzziele und Service Development Budgets festlegen</p>
+            <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Planbudgets verwalten</h1>
+            <p class="text-surface-500 mt-1.5 text-base">Umsatzziele und Service Development Budgets festlegen</p>
         </div>
         <div class="flex items-center gap-3">
             <select wire:model.live="selectedYear"
@@ -191,7 +191,7 @@
                     <li><strong>Umsatzziel</strong>: Geplanter Jahresumsatz des Unternehmens</li>
                     <li><strong>Service Dev %</strong>: Welcher Anteil vom Umsatz für Team & Service Development verwendet werden soll</li>
                     <li><strong>Team-Verteilung</strong>: Wie das Service Dev Budget auf die Teams aufgeteilt wird (sollte 100% ergeben)</li>
-                    <li>Das <strong>Weiterbildungsbudget</strong> (3.000€ pro MA) läuft separat und wird automatisch berechnet</li>
+                    <li>Das <strong>Weiterbildungsbudget</strong> läuft separat und wird automatisch anhand der Budget-Regeln berechnet</li>
                 </ul>
             </div>
         </div>

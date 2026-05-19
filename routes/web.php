@@ -20,13 +20,17 @@ use App\Http\Controllers\SkillOverviewController;
 use App\Http\Controllers\TrainerTerminController;
 use App\Http\Controllers\TrainerSchulungController;
 use App\Http\Controllers\TrainerTeilnehmerController;
+use App\Livewire\Admin\BudgetRulesManager;
 use App\Livewire\Admin\CareerLevelRatesManager;
 use App\Livewire\Admin\CLevelDashboard;
+use App\Livewire\Admin\EmployeeBudgetAssignment;
+use App\Livewire\Admin\GoalCategorization;
 use App\Livewire\Admin\PlanBudgetPage;
 use App\Livewire\Admin\PeopleManagerDashboard;
 use App\Livewire\Admin\TeamBudgetOverview;
 use App\Livewire\Admin\TrainingBookingManager;
 use App\Livewire\MyBudgetStatus;
+use App\Livewire\MyMilestones;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn () => redirect()->route('dashboard'));
@@ -47,6 +51,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/module/{module}', [AcademyController::class, 'showModule'])->name('academy.module.show');
     Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
     Route::get('/my-development/budget', MyBudgetStatus::class)->name('my-budget-status');
+    Route::get('/my-milestones', MyMilestones::class)->name('user.my-milestones');
     Route::get('/admin/employee/{userId}/budget', MyBudgetStatus::class)->name('admin.employee-budget');
 
     Route::post('/enroll', [EnrollmentController::class, 'store'])->name('enroll');
@@ -78,6 +83,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Weiterbildung einbuchen
         Route::get('/admin/training-bookings', TrainingBookingManager::class)->name('admin.training-bookings');
+
+        // Zielkategorisierung
+        Route::get('/admin/dashboard/goals/categorize', GoalCategorization::class)->name('admin.dashboard.goal-categorization');
 
         Route::prefix('manage')->name('manage.')->group(function () {
             Route::get('/employees', [EmployeeManagementController::class, 'index'])->name('employees.index');
@@ -159,6 +167,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/admin/dashboard/budgets', CLevelDashboard::class)->name('admin.dashboard.budgets');
         Route::get('/admin/dashboard/budgets/plan', PlanBudgetPage::class)->name('admin.dashboard.plan-budgets');
         Route::get('/admin/budget/rates', CareerLevelRatesManager::class)->name('admin.budget.rates');
+        Route::get('/admin/budget/rules', BudgetRulesManager::class)->name('admin.budget.rules');
+        Route::get('/admin/budget/assignments', EmployeeBudgetAssignment::class)->name('admin.budget.assignments');
     });
 
     // === System (nur Admin) ===

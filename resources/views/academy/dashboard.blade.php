@@ -1,5 +1,5 @@
 <x-app-layout>
-    @section('page-title', 'Meine Academy')
+    @section('page-title', 'Meine td-Schulungen')
 
     <div class="space-y-6">
         {{-- Flash Messages --}}
@@ -32,7 +32,7 @@
         {{-- Page Header --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine Academy</h1>
+                <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Meine td-Schulungen</h1>
                 <p class="text-surface-500 mt-1.5 text-base">Willkommen zurück, {{ $user->name }}!</p>
             </div>
             @if($careerLevel)
@@ -546,30 +546,5 @@
         </div>
         @endif
 
-        {{-- Milestones --}}
-        @if($milestonesByCategory->isNotEmpty())
-        @php $allMilestones = $milestonesByCategory->flatten(); @endphp
-        <div>
-            <h2 class="text-2xl font-extrabold text-brand-dark mb-2">Deine Milestones</h2>
-            <p class="text-sm text-surface-500 mb-4">Anforderungen, die in deiner aktuellen Karrierestufe on-the-job erwartet werden.</p>
-
-            <div class="card-tool overflow-hidden">
-                <div class="divide-y divide-surface-100">
-                    @foreach($allMilestones as $milestone)
-                    <div class="px-5 py-3 flex items-start gap-3">
-                        <div class="w-2 h-2 rounded-full mt-2 flex-shrink-0 {{ $milestone->type === 'aktiv' ? 'bg-brand-accent' : 'bg-surface-300' }}"></div>
-                        <div class="flex-1 min-w-0">
-                            <div class="text-sm font-medium text-brand-dark">{{ $milestone->title }}</div>
-                            @if($milestone->description)
-                            <p class="text-xs text-surface-500 mt-0.5 line-clamp-3">{{ $milestone->description }}</p>
-                            @endif
-                        </div>
-                        <span class="badge-{{ $milestone->type === 'aktiv' ? 'accent' : 'neutral' }} text-xs flex-shrink-0">{{ $milestone->typeLabel() }}</span>
-                    </div>
-                    @endforeach
-                </div>
-            </div>
-        </div>
-        @endif
     </div>
 </x-app-layout>

@@ -127,6 +127,7 @@ class PersonioService
                         'level_raw' => $this->extractCustomField($attrs, self::CUSTOM_FIELD_CAREER_LEVEL),
                         'path_raw' => $pathRaw,
                         'supervisor_personio_id' => $this->extractSupervisorId($attrs),
+                        'weekly_working_hours' => $this->extractNumericAttribute($attrs, 'weekly_working_hours'),
                     ];
 
                     $employees[] = $empData;
@@ -150,6 +151,17 @@ class PersonioService
         $value = $attrs[$key]['value'] ?? null;
 
         return is_string($value) ? $value : null;
+    }
+
+    protected function extractNumericAttribute(array $attrs, string $key): ?float
+    {
+        $value = $attrs[$key]['value'] ?? null;
+
+        if (is_numeric($value)) {
+            return (float) $value;
+        }
+
+        return null;
     }
 
     protected function extractSupervisorId(array $attrs): ?string
@@ -271,6 +283,7 @@ class PersonioService
                         'personio_level_raw' => $emp['level_raw'],
                         'personio_path_raw' => $emp['path_raw'],
                         'personio_synced_at' => now(),
+                        'weekly_working_hours' => $emp['weekly_working_hours'],
                     ]);
 
                     $mitarbeitenderRole = Role::where('slug', 'mitarbeitender')->first();
@@ -289,6 +302,7 @@ class PersonioService
                         'personio_level_raw' => $emp['level_raw'],
                         'personio_path_raw' => $emp['path_raw'],
                         'personio_synced_at' => now(),
+                        'weekly_working_hours' => $emp['weekly_working_hours'],
                     ]);
                     $updated++;
                 }
