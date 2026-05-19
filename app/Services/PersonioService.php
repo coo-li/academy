@@ -334,6 +334,7 @@ class PersonioService
 
         $this->syncHeadOfRelationships($employees);
         $this->ensurePositionMappingsExist($employees);
+        $mappingsCleaned = $this->cleanupOrphanedMappings();
         $autoMapped = $this->autoMapUnmappedPositions();
 
         $usersAssigned = 0;
@@ -361,6 +362,7 @@ class PersonioService
                 'errors' => $errors,
                 'positions_found' => collect($employees)->pluck('position')->filter()->unique()->values()->all(),
                 'mappings_auto_matched' => $autoMapped,
+                'mappings_cleaned' => $mappingsCleaned,
                 'users_career_assigned' => $usersAssigned,
                 'users_archived' => $archived,
                 'users_reactivated' => $reactivated,
@@ -650,6 +652,38 @@ class PersonioService
 
             $mapping->delete();
         }
+    }
+
+    /**
+     * Remove PersonioPositionMapping entries that are no longer used by any active user.
+     * Returns the number of deleted mappings.
+     */
+    protected function cleanupOrphanedMappings(): int
+    {
+        $activeUsers = User::active()
+            ->whereNotNull('personio_position')
+            ->get(['personio_position', 'personio_level_raw', 'personio_path_raw']);
+
+        $activeComboKeys = $activeUsers->flatMap(function ($user) {
+            $paths = filled($user->personio_path_raw)
+                ? array_map('trim', explode(',', $user->personio_path_raw))
+                : [null];
+
+            return collect($paths)->map(fn ($path) =>
+                $user->personio_position . '|' . $user->personio_level_raw . '|' . $path
+            );
+        })->unique()->toArray();
+
+        return PersonioPositionMapping::all()
+            ->filter(function ($mapping) use ($activeComboKeys) {
+                $key = $mapping->personio_position . '|' .
+                       $mapping->personio_level_raw . '|' .
+                       $mapping->personio_path_raw;
+
+                return ! in_array($key, $activeComboKeys);
+            })
+            ->each(fn ($mapping) => $mapping->delete())
+            ->count();
     }
 
     /**

@@ -21,6 +21,35 @@ class BudgetEntry extends Model
     public const BUDGET_TYPE_USED = 'used';
     public const BUDGET_TYPE_AVAILABLE = 'available';
 
+    public const GOAL_CATEGORY_A = 'A';
+    public const GOAL_CATEGORY_B = 'B';
+    public const GOAL_CATEGORY_C = 'C';
+
+    public const GOAL_CATEGORY_NONE = 'none';
+
+    public const GOAL_CATEGORIES = [
+        self::GOAL_CATEGORY_A => [
+            'label' => 'A-Ziel',
+            'description' => 'Hoher Impact + Hohe Dringlichkeit',
+            'color' => 'red',
+        ],
+        self::GOAL_CATEGORY_B => [
+            'label' => 'B-Ziel',
+            'description' => 'Hoher Impact (nicht dringend) oder Niedriger Impact (dringend)',
+            'color' => 'yellow',
+        ],
+        self::GOAL_CATEGORY_C => [
+            'label' => 'C-Ziel',
+            'description' => 'Niedriger Impact + Nicht dringend',
+            'color' => 'gray',
+        ],
+        self::GOAL_CATEGORY_NONE => [
+            'label' => 'Keine Kategorie',
+            'description' => 'Bewusst ohne Priorisierung',
+            'color' => 'slate',
+        ],
+    ];
+
     protected $fillable = [
         'user_id',
         'project_id',
@@ -35,6 +64,7 @@ class BudgetEntry extends Model
         'month',
         'year',
         'is_deductible_from_allowance',
+        'goal_category',
         'archived_at',
         'archived_by',
     ];
@@ -143,5 +173,47 @@ class BudgetEntry extends Model
     public function scopeOtherInternal($query)
     {
         return $query->where('type', self::TYPE_OTHER_INTERNAL);
+    }
+
+    public function scopeWithCategory($query, string $category)
+    {
+        return $query->where('goal_category', $category);
+    }
+
+    public function scopeUncategorized($query)
+    {
+        return $query->whereNull('goal_category');
+    }
+
+    public function scopeCategorized($query)
+    {
+        return $query->whereNotNull('goal_category');
+    }
+
+    public function getGoalCategoryLabelAttribute(): ?string
+    {
+        if (!$this->goal_category) {
+            return null;
+        }
+
+        return self::GOAL_CATEGORIES[$this->goal_category]['label'] ?? null;
+    }
+
+    public function getGoalCategoryColorAttribute(): ?string
+    {
+        if (!$this->goal_category) {
+            return null;
+        }
+
+        return self::GOAL_CATEGORIES[$this->goal_category]['color'] ?? null;
+    }
+
+    public static function getGoalCategoryOptions(): array
+    {
+        return collect(self::GOAL_CATEGORIES)->map(fn($config, $key) => [
+            'value' => $key,
+            'label' => $config['label'],
+            'description' => $config['description'],
+        ])->values()->toArray();
     }
 }

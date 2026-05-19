@@ -38,7 +38,11 @@
                         <select x-model="teamFilter" class="input-field w-full">
                             <option value="">Alle Teams</option>
                             @foreach($teams as $team)
-                                <option value="{{ $team->name }}">{{ $team->name }}</option>
+                                @if($team->id === 'head_ofs')
+                                    <option value="__head_ofs__">{{ $team->name }} (Direkte Reports)</option>
+                                @else
+                                    <option value="{{ $team->name }}">{{ $team->name }}</option>
+                                @endif
                             @endforeach
                         </select>
                     </div>
@@ -107,10 +111,15 @@
                                     @click="window.location.href = '/manage/employees/' + emp.id">
                                     <td>
                                         <div class="flex items-center gap-3">
-                                            <div class="avatar-sm flex-shrink-0">
+                                            <div class="avatar-sm flex-shrink-0" :class="{ 'ring-2 ring-purple-400': emp.isHeadOf }">
                                                 <span x-text="emp.initials"></span>
                                             </div>
-                                            <span class="font-medium text-brand-dark" x-text="emp.name"></span>
+                                            <div class="flex items-center gap-2">
+                                                <span class="font-medium text-brand-dark" x-text="emp.name"></span>
+                                                <template x-if="emp.isHeadOf">
+                                                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-purple-100 text-purple-700">Head-Of</span>
+                                                </template>
+                                            </div>
                                         </div>
                                     </td>
                                     <td>
@@ -172,7 +181,11 @@
                     }
 
                     if (this.teamFilter) {
-                        result = result.filter(e => e.team === this.teamFilter);
+                        if (this.teamFilter === '__head_ofs__') {
+                            result = result.filter(e => e.isHeadOf);
+                        } else {
+                            result = result.filter(e => e.team === this.teamFilter);
+                        }
                     }
 
                     if (this.pathFilter) {

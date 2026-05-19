@@ -142,6 +142,7 @@ class AdminUserController extends Controller
             $details = $log->details ?? [];
             $archivedCount = $details['users_archived'] ?? 0;
             $reactivatedCount = $details['users_reactivated'] ?? 0;
+            $mappingsCleanedCount = $details['mappings_cleaned'] ?? 0;
 
             $message = "{$log->employees_fetched} Mitarbeiter abgerufen, {$log->users_created} neu angelegt, {$log->users_updated} aktualisiert.";
 
@@ -150,6 +151,9 @@ class AdminUserController extends Controller
             }
             if ($reactivatedCount > 0) {
                 $message .= " {$reactivatedCount} reaktiviert.";
+            }
+            if ($mappingsCleanedCount > 0) {
+                $message .= " {$mappingsCleanedCount} verwaiste Positions-Mappings entfernt.";
             }
 
             return back()->with('success', "Personio-Sync erfolgreich: {$message}");

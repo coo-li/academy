@@ -14,9 +14,6 @@ class CLevelDashboard extends Component
 {
     public int $selectedYear;
     public array $availableYears = [];
-    
-    public bool $showBudgetModal = false;
-    public array $plannedBudgets = [];
 
     protected BudgetDashboardService $dashboardService;
 
@@ -29,58 +26,6 @@ class CLevelDashboard extends Component
     {
         $this->availableYears = $this->dashboardService->getAvailableYears();
         $this->selectedYear = $this->availableYears[0] ?? date('Y');
-        $this->loadPlannedBudgets();
-    }
-
-    public function loadPlannedBudgets(): void
-    {
-        $teams = Team::orderBy('name')->get();
-        $this->plannedBudgets = [];
-        
-        foreach ($teams as $team) {
-            $serviceDev = GlobalBudget::where('team_id', $team->id)
-                ->where('year', $this->selectedYear)
-                ->where('category', 'service_development')
-                ->first();
-            
-            $this->plannedBudgets[$team->id] = [
-                'team_name' => $team->name,
-                'service_dev' => $serviceDev?->amount_planned ?? 0,
-            ];
-        }
-    }
-
-    public function openBudgetModal(): void
-    {
-        $this->loadPlannedBudgets();
-        $this->showBudgetModal = true;
-    }
-
-    public function savePlannedBudgets(): void
-    {
-        foreach ($this->plannedBudgets as $teamId => $budgets) {
-            if (isset($budgets['service_dev'])) {
-                GlobalBudget::updateOrCreate(
-                    [
-                        'team_id' => $teamId,
-                        'year' => $this->selectedYear,
-                        'category' => 'service_development',
-                    ],
-                    [
-                        'budget_type' => 'planned',
-                        'amount_planned' => (float) $budgets['service_dev'],
-                    ]
-                );
-            }
-        }
-        
-        $this->showBudgetModal = false;
-        $this->dispatch('budgets-saved');
-    }
-
-    public function updatedSelectedYear(): void
-    {
-        $this->loadPlannedBudgets();
     }
 
     public function getTeamsProperty()
@@ -147,7 +92,7 @@ class CLevelDashboard extends Component
 
         // Planbudget aus GlobalBudget laden (Summe aller Teams)
         $plannedBudget = GlobalBudget::where('year', $this->selectedYear)
-            ->where('category', 'service_development')
+            ->where('category', 'Service')
             ->sum('amount_planned');
 
         return [
@@ -201,7 +146,7 @@ class CLevelDashboard extends Component
             // Planbudget aus GlobalBudget laden
             $serviceDevBudget = GlobalBudget::where('team_id', $team->id)
                 ->where('year', $this->selectedYear)
-                ->where('category', 'service_development')
+                ->where('category', 'Service')
                 ->value('amount_planned') ?? 0;
             $serviceDevPercentage = $serviceDevBudget > 0 ? ($serviceDevSpent / $serviceDevBudget) * 100 : 0;
 

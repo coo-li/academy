@@ -47,15 +47,19 @@
                     <div class="flex flex-wrap gap-2">
                         <button type="button" 
                                 wire:click="$set('selectedTeamId', null)"
-                                class="px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                                       {{ $selectedTeamId === null ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                class="px-4 py-2 text-sm font-medium rounded-lg transition-all border-2
+                                       {{ $selectedTeamId === null 
+                                          ? 'bg-cyan-100 border-cyan-500 text-cyan-800 ring-2 ring-cyan-200 shadow-sm' 
+                                          : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300' }}">
                             Alle{{ $isAdmin ? '' : ' meine' }}
                         </button>
                         @foreach($teams as $team)
                             <button type="button" 
                                     wire:click="$set('selectedTeamId', {{ $team->id }})"
-                                    class="px-4 py-2 text-sm font-medium rounded-lg transition-colors
-                                           {{ $selectedTeamId === $team->id ? 'bg-teal-600 text-white shadow-sm' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                                    class="px-4 py-2 text-sm font-medium rounded-lg transition-all border-2
+                                           {{ $selectedTeamId === $team->id 
+                                              ? 'bg-cyan-100 border-cyan-500 text-cyan-800 ring-2 ring-cyan-200 shadow-sm' 
+                                              : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100 hover:border-gray-300' }}">
                                 {{ $team->name }}
                             </button>
                         @endforeach
@@ -68,7 +72,7 @@
                         Mitarbeiter auswählen <span class="text-red-500">*</span>
                     </label>
                     <select wire:model="userId" id="userId" 
-                            class="w-full rounded-lg border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:ring-2 text-base py-3">
+                            class="w-full rounded-lg border-2 border-gray-300 bg-gray-50 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 focus:ring-2 focus:bg-white text-base py-3 pl-5 pr-10">
                         <option value="">-- Bitte auswählen --</option>
                         @foreach($employees as $employee)
                             <option value="{{ $employee->id }}">{{ $employee->name }}</option>
@@ -101,7 +105,7 @@
                         Name der Weiterbildung <span class="text-red-500">*</span>
                     </label>
                     <input type="text" wire:model="name" id="name" 
-                           class="w-full rounded-lg border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:ring-2 text-base py-3"
+                           class="w-full rounded-lg border-2 border-gray-300 bg-gray-50 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 focus:ring-2 focus:bg-white text-base py-3 pl-5 pr-4"
                            placeholder="z.B. Google Analytics 4 Zertifizierung">
                     @error('name')
                         <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
@@ -116,7 +120,7 @@
                         </label>
                         <div class="relative">
                             <input type="number" wire:model="netCost" id="netCost" step="0.01" min="0"
-                                   class="w-full rounded-lg border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:ring-2 text-base py-3 pr-12"
+                                   class="w-full rounded-lg border-2 border-gray-300 bg-gray-50 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 focus:ring-2 focus:bg-white text-base py-3 pl-5 pr-12"
                                    placeholder="0,00">
                             <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">€</span>
                         </div>
@@ -126,9 +130,9 @@
                     </div>
 
                     <div class="flex items-end">
-                        <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50 transition-colors">
+                        <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border-2 border-gray-200 hover:bg-gray-50 hover:border-gray-300 transition-colors">
                             <input type="checkbox" wire:model="requiresGrossBilling" 
-                                   class="w-5 h-5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                   class="w-5 h-5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
                             <span class="text-sm text-gray-700">Muss brutto abgerechnet werden</span>
                         </label>
                     </div>
@@ -141,10 +145,10 @@
             <div class="space-y-4">
                 <h3 class="text-sm font-semibold text-gray-700 uppercase tracking-wide">Arbeitszeit</h3>
                 
-                <div class="bg-blue-50 rounded-xl p-5 border border-blue-100">
+                <div class="bg-blue-50 rounded-xl p-5 border-2 border-blue-200">
                     <label class="flex items-start gap-4 cursor-pointer">
                         <input type="checkbox" wire:model.live="duringWorkHours" 
-                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                               class="w-5 h-5 mt-0.5 rounded border-gray-300 text-cyan-600 focus:ring-cyan-500">
                         <div>
                             <span class="text-sm font-medium text-gray-900">Wird in Arbeitszeit gemacht</span>
                             <p class="text-sm text-gray-500 mt-1">
@@ -160,7 +164,7 @@
                             </label>
                             <div class="relative w-40">
                                 <input type="number" wire:model="hours" id="hours" step="0.5" min="0"
-                                       class="w-full rounded-lg border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:ring-2 text-base py-3 pr-10"
+                                       class="w-full rounded-lg border-2 border-gray-300 bg-white shadow-sm focus:border-cyan-500 focus:ring-cyan-500 focus:ring-2 text-base py-3 pl-5 pr-10"
                                        placeholder="0">
                                 <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium">h</span>
                             </div>
@@ -180,7 +184,7 @@
                 
                 <div>
                     <textarea wire:model="notes" id="notes" rows="3"
-                              class="w-full rounded-lg border-gray-300 shadow-sm focus:border-teal-500 focus:ring-teal-500 focus:ring-2 text-base"
+                              class="w-full rounded-lg border-2 border-gray-300 bg-gray-50 shadow-sm focus:border-cyan-500 focus:ring-cyan-500 focus:ring-2 focus:bg-white text-base py-3 pl-5 pr-4"
                               placeholder="z.B. Anbieter, Link zur Schulung, besondere Hinweise..."></textarea>
                 </div>
             </div>
@@ -188,7 +192,7 @@
             {{-- Submit --}}
             <div class="pt-4">
                 <button type="submit" 
-                        class="w-full sm:w-auto px-8 py-3 bg-teal-600 text-white font-semibold rounded-lg shadow-sm hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 transition-colors text-base"
+                        class="w-full sm:w-auto px-8 py-3 bg-cyan-600 text-white font-semibold rounded-lg shadow-sm hover:bg-cyan-700 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:ring-offset-2 transition-colors text-base"
                         wire:loading.attr="disabled"
                         wire:loading.class="opacity-75 cursor-wait">
                     <span wire:loading.remove wire:target="createBooking" class="flex items-center gap-2">

@@ -18,11 +18,16 @@
                     Zur&uuml;ck
                 </a>
                 <div class="flex items-center gap-3">
-                    <div class="avatar-lg">
+                    <div class="avatar-lg {{ $user->hasHeadOfRole() ? 'ring-2 ring-purple-400' : '' }}">
                         <span>{{ $user->initials }}</span>
                     </div>
                     <div>
-                        <h1 class="text-2xl font-bold text-brand-dark">{{ $user->name }}</h1>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-2xl font-bold text-brand-dark">{{ $user->name }}</h1>
+                            @if($user->hasHeadOfRole())
+                                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">Head-Of</span>
+                            @endif
+                        </div>
                         <p class="text-sm text-surface-500">{{ $user->email }}</p>
                         <div class="flex items-center gap-2 mt-1">
                             @if($user->team)

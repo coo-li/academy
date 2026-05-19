@@ -11,6 +11,8 @@ class PeopleManagerDashboard extends Component
     public int $selectedYear;
     public ?int $selectedTeamId = null;
     public array $availableYears = [];
+    public bool $showAllTeams = false;
+    public ?string $filterAmpel = null;
 
     protected BudgetDashboardService $dashboardService;
 
@@ -23,15 +25,42 @@ class PeopleManagerDashboard extends Component
     {
         $this->availableYears = $this->dashboardService->getAvailableYears();
         $this->selectedYear = $this->availableYears[0] ?? date('Y');
+        
+        $scope = request()->query('scope');
+        $this->showAllTeams = $scope === 'all' && Auth::user()->isAdmin();
     }
 
     public function getTeamsProperty()
     {
+        if ($this->showAllTeams) {
+            return $this->dashboardService->getAllTeams();
+        }
         return $this->dashboardService->getManagerTeams(Auth::user());
+    }
+
+    public function getTeamsBudgetOverviewProperty()
+    {
+        if ($this->showAllTeams) {
+            return $this->dashboardService->getAllTeamsBudgetOverview(
+                $this->selectedYear,
+                $this->selectedTeamId
+            );
+        }
+        return $this->dashboardService->getManagerTeamsBudgetOverview(
+            Auth::user(),
+            $this->selectedYear,
+            $this->selectedTeamId
+        );
     }
 
     public function getGroupedSubordinatesProperty()
     {
+        if ($this->showAllTeams) {
+            return $this->dashboardService->getAllSubordinatesGroupedByAmpel(
+                $this->selectedYear,
+                $this->selectedTeamId
+            );
+        }
         return $this->dashboardService->getSubordinatesGroupedByAmpel(
             Auth::user(),
             $this->selectedYear,
@@ -49,10 +78,17 @@ class PeopleManagerDashboard extends Component
 
     public function render()
     {
+        $budgetOverview = $this->teamsBudgetOverview;
+
         return view('livewire.admin.people-manager-dashboard', [
             'teams' => $this->teams,
+            'teamSummaries' => $budgetOverview['teams'],
+            'budgetSummary' => $budgetOverview['summary'],
+            'budgetOverview' => $budgetOverview,
             'grouped' => $this->groupedSubordinates,
             'subordinates' => $this->subordinates,
+            'showAllTeams' => $this->showAllTeams,
+            'isCLevel' => Auth::user()->isCLevel(),
         ])->layout('layouts.app');
     }
 }

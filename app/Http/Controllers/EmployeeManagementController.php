@@ -21,6 +21,7 @@ class EmployeeManagementController extends Controller
         $manager = Auth::user();
 
         $scope = $request->query('scope', 'mine');
+        $teamFilter = $request->query('team');
 
         if ($scope === 'all' && ! $manager->isAdmin()) {
             abort(403);
@@ -34,13 +35,38 @@ class EmployeeManagementController extends Controller
             ? $manager->managedEmployees()
             : $manager->teamEmployees();
 
-        $query->with(['team', 'careerLevel.careerPath', 'careerLevels.careerPath', 'assignedModules', 'disabledCareerModules']);
+        $query->with(['team', 'careerLevel.careerPath', 'careerLevels.careerPath', 'assignedModules', 'disabledCareerModules', 'roles']);
+
+        if ($teamFilter && $teamFilter !== 'head_ofs' && $teamFilter > 0) {
+            $query->where('team_id', $teamFilter);
+        }
 
         $employees = $query->orderBy('name')->get();
+
+        if ($manager->isCLevel() && $scope !== 'all') {
+            $headOfQuery = $manager->headOfReports()
+                ->with(['team', 'careerLevel.careerPath', 'careerLevels.careerPath', 'assignedModules', 'disabledCareerModules', 'roles']);
+
+            if ($teamFilter === 'head_ofs') {
+                $employees = $headOfQuery->orderBy('name')->get();
+            } elseif (! $teamFilter) {
+                $headOfs = $headOfQuery->orderBy('name')->get();
+                $employees = $employees->merge($headOfs)->unique('id')->sortBy('name')->values();
+            }
+        }
 
         $teams = $scope === 'all'
             ? \App\Models\Team::orderBy('name')->get()
             : $manager->managedTeams()->orderBy('name')->get();
+
+        if ($manager->isCLevel() && $scope !== 'all') {
+            $headOfCount = $manager->headOfReports()->count();
+            if ($headOfCount > 0) {
+                $virtualTeam = new \App\Models\Team(['name' => 'Head-Ofs']);
+                $virtualTeam->setAttribute('id', 'head_ofs');
+                $teams->prepend($virtualTeam);
+            }
+        }
 
         $employeesJson = $employees->map(function ($e) {
             $careerModuleCount = $e->careerLevels->sum(fn ($l) => $l->modules()->count());
@@ -51,14 +77,16 @@ class EmployeeManagementController extends Controller
                 'email' => $e->email,
                 'initials' => $e->initials,
                 'team' => $e->team?->name,
+                'teamId' => $e->team_id,
                 'level' => $e->careerLevel?->title,
                 'path' => $e->careerLevel?->careerPath?->name,
                 'paths' => $e->careerLevels->map(fn ($l) => $l->careerPath->name . ' – ' . $l->title)->values()->all(),
                 'moduleCount' => $e->assignedModules->count() + $careerModuleCount - $e->disabledCareerModules->count(),
+                'isHeadOf' => $e->hasHeadOfRole(),
             ];
         })->values();
 
-        return view('manage.employees.index', compact('employees', 'teams', 'employeesJson', 'scope'));
+        return view('manage.employees.index', compact('employees', 'teams', 'employeesJson', 'scope', 'teamFilter'));
     }
 
     public function show(User $user)
@@ -372,6 +400,10 @@ class EmployeeManagementController extends Controller
         $manager = Auth::user();
 
         if ($manager->isAdmin()) {
+            return;
+        }
+
+        if ($manager->isCLevel() && $user->hasHeadOfRole()) {
             return;
         }
 

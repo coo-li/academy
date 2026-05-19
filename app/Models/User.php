@@ -74,7 +74,7 @@ class User extends Authenticatable
 
     public function isManager(): bool
     {
-        return $this->hasRole(['admin', 'people_manager', 'head_of']);
+        return $this->hasRole(['admin', 'c_level', 'people_manager', 'head_of']);
     }
 
     public function isSchulungsmanager(): bool
@@ -251,19 +251,47 @@ class User extends Authenticatable
 
     /**
      * Only employees from explicitly managed teams (ignores admin override).
+     * Head-Ofs are filtered out for non-C-Level managers (they appear on C-Level dashboard instead).
      */
     public function teamEmployees(): Builder
     {
         $teamIds = $this->managedTeams()->pluck('teams.id');
 
-        return User::active()
+        $query = User::active()
             ->whereIn('team_id', $teamIds)
             ->whereKeyNot($this->id);
+
+        if (! $this->isCLevel()) {
+            $query->whereDoesntHave('roles', fn ($q) => $q->where('slug', 'head_of'));
+        }
+
+        return $query;
     }
 
     public function isPeopleManagerOrHeadOf(): bool
     {
         return $this->hasRole(['people_manager', 'head_of']);
+    }
+
+    public function isCLevel(): bool
+    {
+        return $this->hasRole('c_level');
+    }
+
+    public function hasHeadOfRole(): bool
+    {
+        return $this->hasRole('head_of');
+    }
+
+    /**
+     * All active users with head_of role (for C-Level dashboard).
+     * Returns users regardless of their team assignment.
+     */
+    public function headOfReports(): Builder
+    {
+        return User::active()
+            ->whereHas('roles', fn ($q) => $q->where('slug', 'head_of'))
+            ->whereKeyNot($this->id);
     }
 
     public function trainableModules(): BelongsToMany

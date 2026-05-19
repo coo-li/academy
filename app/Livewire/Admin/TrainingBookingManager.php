@@ -19,8 +19,15 @@ class TrainingBookingManager extends Component
     public bool $duringWorkHours = false;
     public ?float $hours = null;
     public string $notes = '';
+    public bool $showAllTeams = false;
 
     protected TrainingBookingService $bookingService;
+
+    public function mount(): void
+    {
+        $scope = request()->query('scope');
+        $this->showAllTeams = $scope === 'all' && Auth::user()->isAdmin();
+    }
 
     protected $rules = [
         'userId' => 'required|exists:users,id',
@@ -87,17 +94,22 @@ class TrainingBookingManager extends Component
     {
         $user = Auth::user();
 
-        if ($user->hasAdminAccess()) {
+        if ($this->showAllTeams) {
             return Team::orderBy('name')->get();
         }
 
-        $teamIds = User::where('head_of_user_id', $user->id)
+        // Teams die der User als People Manager verwaltet
+        $managedTeamIds = $user->managedTeams()->pluck('teams.id');
+        
+        // Teams von Head-Of-Berichten (für C-Level)
+        $headOfTeamIds = User::where('head_of_user_id', $user->id)
             ->whereNull('archived_at')
             ->whereNotNull('team_id')
-            ->pluck('team_id')
-            ->unique();
+            ->pluck('team_id');
 
-        return Team::whereIn('id', $teamIds)->orderBy('name')->get();
+        $allTeamIds = $managedTeamIds->merge($headOfTeamIds)->unique();
+
+        return Team::whereIn('id', $allTeamIds)->orderBy('name')->get();
     }
 
     public function getEmployeesProperty()
@@ -106,8 +118,15 @@ class TrainingBookingManager extends Component
 
         $query = User::whereNull('archived_at')->orderBy('name');
 
-        if (!$user->hasAdminAccess()) {
-            $query->where('head_of_user_id', $user->id);
+        if (!$this->showAllTeams) {
+            // Teams die der User als People Manager verwaltet
+            $managedTeamIds = $user->managedTeams()->pluck('teams.id')->toArray();
+            
+            // Mitarbeiter aus verwalteten Teams ODER direkte Head-Of-Berichte
+            $query->where(function ($q) use ($user, $managedTeamIds) {
+                $q->whereIn('team_id', $managedTeamIds)
+                  ->orWhere('head_of_user_id', $user->id);
+            });
         }
 
         if ($this->selectedTeamId) {
@@ -121,7 +140,7 @@ class TrainingBookingManager extends Component
     {
         $user = Auth::user();
 
-        if ($user->hasAdminAccess()) {
+        if ($this->showAllTeams) {
             return $this->bookingService->getAllPendingBookings();
         }
 
@@ -136,7 +155,7 @@ class TrainingBookingManager extends Component
             ->where('budget_entry_created', true)
             ->orderBy('created_at', 'desc');
 
-        if (!$user->hasAdminAccess()) {
+        if (!$this->showAllTeams) {
             $query->where('booked_by_id', $user->id);
         }
 
@@ -150,7 +169,7 @@ class TrainingBookingManager extends Component
         $query = TrainingBooking::with(['user', 'user.team', 'bookedBy'])
             ->orderBy('created_at', 'desc');
 
-        if (!$user->hasAdminAccess()) {
+        if (!$this->showAllTeams) {
             $query->where('booked_by_id', $user->id);
         }
 
@@ -170,6 +189,7 @@ class TrainingBookingManager extends Component
             'pendingBookings' => $this->pendingBookings,
             'completedBookings' => $this->completedBookings,
             'isAdmin' => $this->isAdmin,
+            'showAllTeams' => $this->showAllTeams,
         ])->layout('layouts.app');
     }
 }

@@ -8,13 +8,13 @@
             <p class="text-sm text-gray-500 mt-1">Unternehmensweite Übersicht</p>
         </div>
         <div class="flex items-center gap-3">
-            <button wire:click="openBudgetModal" 
-                    class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
+            <a href="{{ route('admin.dashboard.plan-budgets') }}" 
+               class="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
                 Planbudgets bearbeiten
-            </button>
+            </a>
             <select wire:model.live="selectedYear"
                     class="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-primary-500 focus:ring-primary-500 font-medium">
                 @foreach($availableYears as $year)
@@ -232,90 +232,28 @@
     {{-- Legende --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
         <div class="flex flex-wrap items-center gap-6 text-sm">
-            <span class="font-medium text-gray-700">Ampel-Legende (Budgetnutzung):</span>
+            <span class="font-medium text-gray-700">Ampel-Legende (Stundennutzung YTD):</span>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-orange-500"></span>
+                <span class="text-gray-600">&gt; 110% - Über Budget, bitte einchecken</span>
+            </div>
             <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-green-500"></span>
-                <span class="text-gray-600">&ge; 90% - Top Auslastung</span>
+                <span class="text-gray-600">90-110% - Top Stundennutzung</span>
             </div>
             <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-yellow-500"></span>
-                <span class="text-gray-600">75-90% - Budget nutzen!</span>
+                <span class="text-gray-600">60-90% - Stunden nutzen, Achtung</span>
             </div>
             <div class="flex items-center gap-2">
                 <span class="w-3 h-3 rounded-full bg-red-500"></span>
-                <span class="text-gray-600">&lt; 75% - Intervention nötig</span>
+                <span class="text-gray-600">&lt; 60% - Eskalation, Gespräch führen</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-gray-400"></span>
+                <span class="text-gray-600">Kein Budget hinterlegt</span>
             </div>
         </div>
     </div>
 
-    {{-- Modal: Planbudgets bearbeiten --}}
-    @if($showBudgetModal)
-        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-                {{-- Overlay --}}
-                <div wire:click="$set('showBudgetModal', false)" class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
-
-                <span class="hidden sm:inline-block sm:align-middle sm:h-screen">&#8203;</span>
-
-                {{-- Modal Content --}}
-                <div class="inline-block align-bottom bg-white rounded-xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
-                    <div class="bg-white px-6 pt-6 pb-4">
-                        <div class="flex items-center justify-between mb-6">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-900">Planbudgets {{ $selectedYear }}</h3>
-                                <p class="text-sm text-gray-500 mt-1">Team & Service Development Budgets pro Team festlegen</p>
-                            </div>
-                            <button wire:click="$set('showBudgetModal', false)" class="text-gray-400 hover:text-gray-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
-
-                        <div class="space-y-4 max-h-96 overflow-y-auto">
-                            @foreach($plannedBudgets as $teamId => $budget)
-                                <div class="flex items-center gap-4 p-3 bg-gray-50 rounded-lg">
-                                    <div class="flex-1">
-                                        <label class="block text-sm font-medium text-gray-700">{{ $budget['team_name'] }}</label>
-                                    </div>
-                                    <div class="w-48">
-                                        <div class="relative">
-                                            <input type="number" 
-                                                   wire:model="plannedBudgets.{{ $teamId }}.service_dev"
-                                                   class="w-full rounded-lg border-gray-300 pr-8 text-right text-sm focus:border-purple-500 focus:ring-purple-500"
-                                                   placeholder="0"
-                                                   min="0"
-                                                   step="100">
-                                            <span class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">€</span>
-                                        </div>
-                                        <p class="text-xs text-gray-500 mt-1 text-right">Team & Service Dev</p>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-
-                        <div class="mt-6 p-3 bg-purple-50 rounded-lg">
-                            <div class="flex items-center justify-between">
-                                <span class="text-sm font-medium text-purple-800">Summe Team & Service Dev:</span>
-                                <span class="text-lg font-bold text-purple-900">
-                                    {{ number_format(collect($plannedBudgets)->sum('service_dev'), 0, ',', '.') }} €
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 px-6 py-4 flex justify-end gap-3">
-                        <button wire:click="$set('showBudgetModal', false)" 
-                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                            Abbrechen
-                        </button>
-                        <button wire:click="savePlannedBudgets"
-                                class="px-4 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700">
-                            Speichern
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endif
 </div>

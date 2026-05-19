@@ -2,7 +2,7 @@
     meineEntwicklungOpen: {{ request()->routeIs('user.budget-status*', 'learning.*') ? 'true' : 'false' }},
     akademieManagementOpen: {{ request()->routeIs('admin.trainings.*', 'admin.trainers.*') ? 'true' : 'false' }},
     mitarbeiterOrgaOpen: {{ request()->routeIs('admin.dashboard.team*', 'admin.employees.*') ? 'true' : 'false' }},
-    budgetControllingOpen: {{ request()->routeIs('admin.dashboard.budgets*') ? 'true' : 'false' }}
+    budgetControllingOpen: {{ request()->routeIs('admin.dashboard.budgets*', 'admin.dashboard.plan-budgets*') ? 'true' : 'false' }}
 }">
     <div class="p-6 border-b border-slate-700">
         <div class="flex items-center gap-3">
@@ -150,7 +150,7 @@
             <div x-show="budgetControllingOpen" x-collapse class="mt-1 ml-4 space-y-1">
                 <a href="{{ route('admin.dashboard.budgets') }}"
                    class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
-                          {{ request()->routeIs('admin.dashboard.budgets') 
+                          {{ request()->routeIs('admin.dashboard.budgets') && !request()->routeIs('admin.dashboard.plan-budgets') 
                              ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
                              : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -158,6 +158,17 @@
                               d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                     </svg>
                     <span>Gesamt-Übersicht (C-Level)</span>
+                </a>
+                <a href="{{ route('admin.dashboard.plan-budgets') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                          {{ request()->routeIs('admin.dashboard.plan-budgets') 
+                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                             : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Planbudgets bearbeiten</span>
                 </a>
             </div>
         </div>

@@ -31,6 +31,7 @@
                                 <div class="flex items-center gap-3">
                                     <span class="text-sm text-gray-500">{{ $budgetEntry->date->format('d.m.Y') }}</span>
                                     <span class="text-sm text-gray-700">{{ $budgetEntry->label ?? $budgetEntry->budget_name }}</span>
+                                    <x-goal-category-badge :category="$budgetEntry->goal_category" />
                                 </div>
                                 <div class="flex items-center gap-4">
                                     <span class="text-sm font-medium text-gray-900">{{ number_format($budgetEntry->amount, 0, ',', '.') }} €</span>

@@ -22,6 +22,7 @@ use App\Http\Controllers\TrainerSchulungController;
 use App\Http\Controllers\TrainerTeilnehmerController;
 use App\Livewire\Admin\CareerLevelRatesManager;
 use App\Livewire\Admin\CLevelDashboard;
+use App\Livewire\Admin\PlanBudgetPage;
 use App\Livewire\Admin\PeopleManagerDashboard;
 use App\Livewire\Admin\TeamBudgetOverview;
 use App\Livewire\Admin\TrainingBookingManager;
@@ -156,6 +157,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // === Budget-Controlling (Admin / C-Level) ===
     Route::middleware('can:admin')->group(function () {
         Route::get('/admin/dashboard/budgets', CLevelDashboard::class)->name('admin.dashboard.budgets');
+        Route::get('/admin/dashboard/budgets/plan', PlanBudgetPage::class)->name('admin.dashboard.plan-budgets');
         Route::get('/admin/budget/rates', CareerLevelRatesManager::class)->name('admin.budget.rates');
     });
 
