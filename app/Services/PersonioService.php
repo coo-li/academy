@@ -764,7 +764,13 @@ class PersonioService
     {
         return User::whereNotNull('personio_id')
             ->whereNull('career_level_id')
-            ->whereNotIn('personio_level_raw', ['Overhead', 'Head of'])
+            ->whereNull('archived_at')
+            ->where(function ($query) {
+                $query->whereNull('personio_level_raw')
+                    ->orWhere(function ($q) {
+                        $q->whereRaw('LOWER(personio_level_raw) NOT IN (?, ?)', ['overhead', 'head of']);
+                    });
+            })
             ->count();
     }
 }
