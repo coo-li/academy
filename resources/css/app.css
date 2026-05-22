@@ -1787,5 +1787,335 @@
   .dark-alert-info {
     @apply dark-alert bg-dark-tuerkis-dark border border-dark-tuerkis/30 text-dark-tx-2;
   }
+
+  /* ========================================
+     DARK THEME OVERRIDES
+     Überschreibt bestehende Light-Theme Klassen
+     ======================================== */
+  
+  /* Base Text & Background */
+  .dark-app {
+    color: #FFFFFF;
+  }
+
+  .dark-app h1, .dark-app h2, .dark-app h3, .dark-app h4, .dark-app h5, .dark-app h6 {
+    color: #FFFFFF;
+  }
+
+  .dark-app p, .dark-app span, .dark-app div, .dark-app label {
+    color: inherit;
+  }
+
+  .dark-app a {
+    color: #00B3C7;
+  }
+
+  .dark-app a:hover {
+    color: #1AD0E4;
+  }
+
+  /* Cards & Panels */
+  .dark-app .card-tool,
+  .dark-app .panel,
+  .dark-app .panel-compact,
+  .dark-app .panel-padded {
+    @apply bg-dark-card border-dark-line text-dark-tx;
+  }
+
+  .dark-app .card-tool-header,
+  .dark-app .card-tool-footer {
+    @apply border-dark-line bg-dark-card-hover;
+  }
+
+  /* Form Inputs */
+  .dark-app .input-field,
+  .dark-app input[type="text"],
+  .dark-app input[type="email"],
+  .dark-app input[type="password"],
+  .dark-app input[type="search"],
+  .dark-app input[type="number"],
+  .dark-app input[type="date"],
+  .dark-app input[type="time"],
+  .dark-app select,
+  .dark-app textarea {
+    @apply bg-[#181818] border-dark-line text-dark-tx placeholder:text-dark-tx-3;
+  }
+
+  .dark-app .input-field:hover,
+  .dark-app input:hover,
+  .dark-app select:hover,
+  .dark-app textarea:hover {
+    @apply border-dark-line-hover;
+  }
+
+  .dark-app .input-field:focus,
+  .dark-app input:focus,
+  .dark-app select:focus,
+  .dark-app textarea:focus {
+    @apply border-dark-tuerkis ring-dark-tuerkis/20;
+  }
+
+  .dark-app .select-field {
+    @apply bg-[#181818] border-dark-line text-dark-tx;
+  }
+
+  .dark-app .label {
+    @apply text-dark-tx;
+  }
+
+  .dark-app .help-text {
+    @apply text-dark-tx-3;
+  }
+
+  /* Tables */
+  .dark-app .table-tool {
+    @apply text-dark-tx-2;
+  }
+
+  .dark-app .table-tool thead {
+    @apply bg-dark-card-hover border-dark-line;
+  }
+
+  .dark-app .table-tool th {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .table-tool td {
+    @apply border-dark-line text-dark-tx-2;
+  }
+
+  .dark-app .table-tool tbody tr:hover {
+    @apply bg-dark-tuerkis-dark/30;
+  }
+
+  /* Badges */
+  .dark-app .badge {
+    @apply bg-dark-card-hover text-dark-tx-2 border border-dark-line;
+  }
+
+  .dark-app .badge-primary {
+    @apply bg-dark-tuerkis-dark text-dark-tuerkis border-dark-tuerkis/40;
+  }
+
+  .dark-app .badge-success {
+    @apply bg-dark-st-done/15 text-dark-st-done border-dark-st-done/40;
+  }
+
+  .dark-app .badge-warning {
+    @apply bg-dark-gelb/15 text-dark-gelb border-dark-gelb/40;
+  }
+
+  .dark-app .badge-error {
+    @apply bg-dark-st-quiz/15 text-dark-st-quiz border-dark-st-quiz/40;
+  }
+
+  .dark-app .badge-info {
+    @apply bg-dark-tuerkis-dark text-dark-tuerkis border-dark-tuerkis/40;
+  }
+
+  .dark-app .badge-neutral {
+    @apply bg-dark-card-hover text-dark-tx-3 border-dark-line;
+  }
+
+  /* Buttons */
+  .dark-app .btn-primary {
+    @apply bg-dark-tuerkis text-[#001417] hover:bg-dark-tuerkis-hover;
+  }
+
+  .dark-app .btn-secondary {
+    @apply bg-dark-card border-dark-line text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx hover:border-dark-line-hover;
+  }
+
+  .dark-app .btn-ghost {
+    @apply text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx;
+  }
+
+  .dark-app .btn-icon {
+    @apply text-dark-tx-3 hover:bg-dark-card-hover hover:text-dark-tx;
+  }
+
+  /* Alerts */
+  .dark-app .alert {
+    @apply bg-dark-card border-dark-line text-dark-tx-2;
+  }
+
+  .dark-app .alert-success {
+    @apply bg-dark-st-done/10 border-dark-st-done/30 text-dark-tx-2;
+  }
+
+  .dark-app .alert-warning {
+    @apply bg-dark-gelb/10 border-dark-gelb/30 text-dark-tx-2;
+  }
+
+  .dark-app .alert-error {
+    @apply bg-dark-st-quiz/10 border-dark-st-quiz/30 text-dark-tx-2;
+  }
+
+  .dark-app .alert-info {
+    @apply bg-dark-tuerkis-dark border-dark-tuerkis/30 text-dark-tx-2;
+  }
+
+  /* Dropdowns */
+  .dark-app .dropdown-menu {
+    @apply bg-dark-card border-dark-line shadow-lg;
+  }
+
+  .dark-app .dropdown-item {
+    @apply text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx;
+  }
+
+  .dark-app .dropdown-header {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .dropdown-divider {
+    @apply border-dark-line;
+  }
+
+  /* Tabs */
+  .dark-app .tabs {
+    @apply border-dark-line;
+  }
+
+  .dark-app .tab {
+    @apply text-dark-tx-3 border-transparent hover:text-dark-tx hover:border-dark-line-hover;
+  }
+
+  .dark-app .tab-active {
+    @apply text-dark-tuerkis border-dark-tuerkis;
+  }
+
+  /* Progress Bars */
+  .dark-app .progress-bar {
+    @apply bg-dark-line;
+  }
+
+  .dark-app .progress-bar-fill {
+    @apply bg-dark-tuerkis;
+  }
+
+  /* Stat Cards */
+  .dark-app .stat-card {
+    @apply bg-dark-card border-dark-line;
+  }
+
+  .dark-app .stat-label {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .stat-value {
+    @apply text-dark-tx;
+  }
+
+  /* Sidebar (falls alte Klassen noch genutzt werden) */
+  .dark-app .sidebar {
+    @apply bg-dark-bg-side border-dark-line;
+  }
+
+  .dark-app .sidebar-brand {
+    @apply bg-transparent;
+  }
+
+  .dark-app .sidebar-section-title {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .sidebar-link {
+    @apply text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx;
+  }
+
+  .dark-app .sidebar-link-active {
+    @apply bg-dark-tuerkis text-[#001417];
+  }
+
+  /* Avatars */
+  .dark-app .avatar {
+    background: linear-gradient(135deg, #00B3C7, #0B7C8A);
+    color: #001417;
+  }
+
+  /* Empty States */
+  .dark-app .empty-state-icon {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .empty-state-title {
+    @apply text-dark-tx;
+  }
+
+  .dark-app .empty-state-description {
+    @apply text-dark-tx-3;
+  }
+
+  /* Modals */
+  .dark-app .modal {
+    @apply bg-dark-card;
+  }
+
+  .dark-app .modal-header {
+    @apply border-dark-line;
+  }
+
+  .dark-app .modal-title {
+    @apply text-dark-tx;
+  }
+
+  .dark-app .modal-footer {
+    @apply border-dark-line bg-dark-card-hover;
+  }
+
+  /* Text Colors */
+  .dark-app .text-brand-dark {
+    @apply text-dark-tx;
+  }
+
+  .dark-app .text-surface-500,
+  .dark-app .text-surface-600 {
+    @apply text-dark-tx-2;
+  }
+
+  .dark-app .text-surface-400,
+  .dark-app .text-surface-300 {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .text-brand-primary {
+    @apply text-dark-tuerkis;
+  }
+
+  /* Background Colors */
+  .dark-app .bg-white {
+    @apply bg-dark-card;
+  }
+
+  .dark-app .bg-surface-50,
+  .dark-app .bg-surface-100 {
+    @apply bg-dark-card-hover;
+  }
+
+  /* Border Colors */
+  .dark-app .border-surface-100,
+  .dark-app .border-surface-200 {
+    @apply border-dark-line;
+  }
+
+  /* Hover States */
+  .dark-app .hover\:bg-surface-50:hover,
+  .dark-app .hover\:bg-surface-100:hover {
+    @apply bg-dark-card-hover;
+  }
+
+  /* Breadcrumbs */
+  .dark-app .breadcrumbs {
+    @apply text-dark-tx-3;
+  }
+
+  .dark-app .breadcrumbs-current {
+    @apply text-dark-tx;
+  }
+
+  .dark-app .breadcrumbs-item {
+    @apply hover:text-dark-tuerkis;
+  }
 }
 
