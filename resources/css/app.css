@@ -2124,17 +2124,25 @@
      ======================================== */
 
   /* Gray Backgrounds -> Dark */
-  .dark-app .bg-gray-50,
-  .dark-app .bg-gray-100 {
+  body.dark-app .bg-gray-50,
+  body.dark-app .bg-gray-100,
+  .dark-app div.bg-gray-50,
+  .dark-app div.bg-gray-100 {
     background-color: #262626 !important;
   }
 
-  .dark-app .bg-gray-200 {
+  body.dark-app .bg-gray-200,
+  .dark-app div.bg-gray-200 {
     background-color: #2E2E2E !important;
   }
 
   /* White -> Dark Card */
-  .dark-app .bg-white {
+  body.dark-app .bg-white,
+  .dark-app div.bg-white,
+  .dark-app article.bg-white,
+  .dark-app section.bg-white,
+  .dark-app .rounded-xl.bg-white,
+  .dark-app [class*="bg-white"] {
     background-color: #1E1E1E !important;
   }
 
@@ -2386,6 +2394,19 @@
   /* Shadow overrides */
   .dark-app .shadow-sm {
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* NUCLEAR OPTION: Override ALL bg-white regardless of context */
+  body.dark-app [class*="bg-white"] {
+    background-color: #1E1E1E !important;
+  }
+
+  body.dark-app [class*="bg-gray-50"] {
+    background-color: #262626 !important;
+  }
+
+  body.dark-app [class*="bg-gray-100"] {
+    background-color: #262626 !important;
   }
 }
 
