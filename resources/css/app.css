@@ -1741,5 +1741,51 @@
   .dark-table tbody tr:hover {
     @apply bg-dark-tuerkis-dark/30;
   }
+
+  /* ----------------------------------------
+     DARK TOASTS
+     ---------------------------------------- */
+  .dark-app .toast {
+    @apply flex items-center gap-3 px-4 py-3 bg-dark-card border border-dark-line rounded-dark shadow-lg;
+  }
+
+  .dark-app .toast-success {
+    @apply border-l-4 border-l-dark-st-done;
+  }
+
+  .dark-app .toast-warning {
+    @apply border-l-4 border-l-dark-gelb;
+  }
+
+  .dark-app .toast-error {
+    @apply border-l-4 border-l-dark-st-quiz;
+  }
+
+  .dark-app .toast-info {
+    @apply border-l-4 border-l-dark-tuerkis;
+  }
+
+  /* ----------------------------------------
+     DARK ALERTS
+     ---------------------------------------- */
+  .dark-alert {
+    @apply flex items-start gap-3 p-4 rounded-dark text-sm;
+  }
+
+  .dark-alert-success {
+    @apply dark-alert bg-dark-st-done/10 border border-dark-st-done/30 text-dark-tx-2;
+  }
+
+  .dark-alert-warning {
+    @apply dark-alert bg-dark-gelb/10 border border-dark-gelb/30 text-dark-tx-2;
+  }
+
+  .dark-alert-error {
+    @apply dark-alert bg-dark-st-quiz/10 border border-dark-st-quiz/30 text-dark-tx-2;
+  }
+
+  .dark-alert-info {
+    @apply dark-alert bg-dark-tuerkis-dark border border-dark-tuerkis/30 text-dark-tx-2;
+  }
 }
 
