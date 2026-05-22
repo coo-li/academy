@@ -2408,5 +2408,40 @@
   body.dark-app [class*="bg-gray-100"] {
     background-color: #262626 !important;
   }
+
+  /* Table row backgrounds */
+  body.dark-app tr:nth-child(odd) {
+    background-color: #1E1E1E !important;
+  }
+
+  body.dark-app tr:nth-child(even) {
+    background-color: #262626 !important;
+  }
+
+  body.dark-app tr:hover {
+    background-color: rgba(0, 179, 199, 0.15) !important;
+  }
+
+  body.dark-app thead tr,
+  body.dark-app thead tr:nth-child(odd),
+  body.dark-app thead tr:nth-child(even) {
+    background-color: #0C0C0C !important;
+  }
+
+  body.dark-app tfoot tr,
+  body.dark-app tfoot tr:nth-child(odd),
+  body.dark-app tfoot tr:nth-child(even) {
+    background-color: #1a1a1a !important;
+  }
+
+  /* Gradient backgrounds -> solid dark */
+  body.dark-app [class*="bg-gradient"] {
+    background: linear-gradient(to right, #00B3C7, #0B7C8A) !important;
+  }
+
+  body.dark-app .from-primary-600,
+  body.dark-app .to-primary-700 {
+    background: linear-gradient(to right, #00B3C7, #0B7C8A) !important;
+  }
 }
 
