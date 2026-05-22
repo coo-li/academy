@@ -38,6 +38,9 @@ Route::get('/', fn () => redirect()->route('dashboard'));
 Route::get('/demo', fn () => view('demo'))
     ->middleware(['auth', 'verified'])->name('demo');
 
+Route::get('/dark-demo', fn () => view('dark-demo'))
+    ->middleware(['auth', 'verified'])->name('dark-demo');
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // === Globale Suche & Benachrichtigungen ===
