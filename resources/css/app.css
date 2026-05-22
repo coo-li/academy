@@ -1323,7 +1323,25 @@
      DARK CONTENT AREA
      ---------------------------------------- */
   .dark-content {
-    @apply p-8 max-w-[1180px] w-full;
+    @apply p-8 w-full max-w-[1600px] mx-auto;
+  }
+  
+  @media (min-width: 1400px) {
+    .dark-content {
+      @apply max-w-[1400px];
+    }
+  }
+  
+  @media (min-width: 1600px) {
+    .dark-content {
+      @apply max-w-[1560px];
+    }
+  }
+  
+  @media (min-width: 1920px) {
+    .dark-content {
+      max-width: calc(100% - 4rem);
+    }
   }
 
   /* ----------------------------------------
@@ -1331,6 +1349,16 @@
      ---------------------------------------- */
   .dark-hero {
     @apply bg-dark-card border border-dark-line rounded-[20px] p-8 flex gap-8 items-center mb-8 relative overflow-hidden;
+  }
+  
+  @media (max-width: 1024px) {
+    .dark-hero {
+      @apply flex-col items-start;
+    }
+    
+    .dark-ring-wrap {
+      @apply self-center;
+    }
   }
 
   .dark-hero::before {
@@ -1493,7 +1521,19 @@
      ---------------------------------------- */
   .dark-grid {
     @apply grid gap-4;
-    grid-template-columns: repeat(auto-fill, minmax(322px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+  
+  @media (min-width: 1400px) {
+    .dark-grid {
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    }
+  }
+  
+  @media (min-width: 1920px) {
+    .dark-grid {
+      grid-template-columns: repeat(4, 1fr);
+    }
   }
 
   .dark-module {
