@@ -41,6 +41,9 @@ Route::get('/demo', fn () => view('demo'))
 Route::get('/dark-demo', fn () => view('dark-demo'))
     ->middleware(['auth', 'verified'])->name('dark-demo');
 
+Route::get('/dark-dashboard-demo', fn () => view('dark-dashboard-demo'))
+    ->middleware(['auth', 'verified'])->name('dark-dashboard-demo');
+
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // === Globale Suche & Benachrichtigungen ===
