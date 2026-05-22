@@ -9,7 +9,7 @@
                 @if($showAllTeams ?? false)
                     Unternehmensweite Übersicht aller Teams
                 @else
-                    Übersicht deiner Teams
+                    Übersicht {{ count($teams) === 1 ? 'deines Teams' : 'deiner Teams' }}
                 @endif
             </p>
         </div>
@@ -22,7 +22,7 @@
             </select>
             <select wire:model.live="selectedTeamId"
                     class="rounded-lg border-gray-300 text-sm py-2 px-3 focus:border-primary-500 focus:ring-primary-500">
-                <option value="">Alle meine Teams</option>
+                <option value="">{{ count($teams) === 1 ? 'Mein Team' : 'Alle meine Teams' }}</option>
                 @foreach($teams as $team)
                     <option value="{{ $team->id }}">{{ $team->name }}{{ $team->id === -1 ? ' (Direkte Reports)' : '' }}</option>
                 @endforeach
@@ -38,7 +38,7 @@
                     @if($showAllTeams ?? false)
                         Weiterbildungsbudget (alle Teams)
                     @else
-                        Weiterbildungsbudget meiner Teams
+                        Weiterbildungsbudget {{ count($teams) === 1 ? 'meines Teams' : 'meiner Teams' }}
                     @endif
                 </h3>
                 <p class="text-sm text-gray-500 mt-1">Jahr {{ $selectedYear }} · Persönliche Ziele</p>

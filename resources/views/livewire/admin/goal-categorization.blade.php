@@ -6,7 +6,7 @@
         <div>
             <h1 class="text-3xl font-extrabold text-brand-dark tracking-tight">Ziele kategorisieren</h1>
             <p class="text-surface-500 mt-1.5 text-base">
-                Priorisierung der Ziele für Traffic Design
+                Priorisierung der Ziele für td
                 @if($showAllTeams)
                     <span class="ml-2 px-2 py-0.5 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">Alle Teams</span>
                 @endif
