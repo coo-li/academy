@@ -2117,5 +2117,275 @@
   .dark-app .breadcrumbs-item {
     @apply hover:text-dark-tuerkis;
   }
+
+  /* ========================================
+     TAILWIND COLOR OVERRIDES
+     Überschreibt Standard-Tailwind-Farben
+     ======================================== */
+
+  /* Gray Backgrounds -> Dark */
+  .dark-app .bg-gray-50,
+  .dark-app .bg-gray-100 {
+    background-color: #262626 !important;
+  }
+
+  .dark-app .bg-gray-200 {
+    background-color: #2E2E2E !important;
+  }
+
+  /* White -> Dark Card */
+  .dark-app .bg-white {
+    background-color: #1E1E1E !important;
+  }
+
+  /* Colored Backgrounds -> Dark variants */
+  .dark-app .bg-blue-50,
+  .dark-app .bg-blue-100 {
+    background-color: rgba(0, 179, 199, 0.15) !important;
+  }
+
+  .dark-app .bg-green-50,
+  .dark-app .bg-green-100 {
+    background-color: rgba(61, 214, 140, 0.15) !important;
+  }
+
+  .dark-app .bg-teal-50,
+  .dark-app .bg-teal-100 {
+    background-color: rgba(0, 179, 199, 0.15) !important;
+  }
+
+  .dark-app .bg-purple-50,
+  .dark-app .bg-purple-100 {
+    background-color: rgba(168, 85, 247, 0.15) !important;
+  }
+
+  .dark-app .bg-amber-50,
+  .dark-app .bg-amber-100 {
+    background-color: rgba(249, 238, 128, 0.15) !important;
+  }
+
+  .dark-app .bg-orange-50,
+  .dark-app .bg-orange-100 {
+    background-color: rgba(255, 138, 61, 0.15) !important;
+  }
+
+  .dark-app .bg-cyan-50,
+  .dark-app .bg-cyan-100 {
+    background-color: rgba(0, 179, 199, 0.15) !important;
+  }
+
+  .dark-app .bg-red-50,
+  .dark-app .bg-red-100 {
+    background-color: rgba(239, 68, 68, 0.15) !important;
+  }
+
+  .dark-app .bg-yellow-50,
+  .dark-app .bg-yellow-100 {
+    background-color: rgba(249, 238, 128, 0.15) !important;
+  }
+
+  .dark-app .bg-primary-50,
+  .dark-app .bg-primary-100 {
+    background-color: rgba(0, 179, 199, 0.15) !important;
+  }
+
+  /* Text Colors -> Light variants */
+  .dark-app .text-gray-900,
+  .dark-app .text-gray-800,
+  .dark-app .text-gray-700 {
+    color: #FFFFFF !important;
+  }
+
+  .dark-app .text-gray-600,
+  .dark-app .text-gray-500 {
+    color: #A6A6A6 !important;
+  }
+
+  .dark-app .text-gray-400,
+  .dark-app .text-gray-300 {
+    color: #6E6E6E !important;
+  }
+
+  /* Colored Text -> Brighter variants */
+  .dark-app .text-blue-900,
+  .dark-app .text-blue-800,
+  .dark-app .text-blue-700 {
+    color: #00B3C7 !important;
+  }
+
+  .dark-app .text-blue-600,
+  .dark-app .text-blue-500 {
+    color: #1AD0E4 !important;
+  }
+
+  .dark-app .text-green-900,
+  .dark-app .text-green-800,
+  .dark-app .text-green-700 {
+    color: #3DD68C !important;
+  }
+
+  .dark-app .text-green-600,
+  .dark-app .text-green-500 {
+    color: #5EE0A0 !important;
+  }
+
+  .dark-app .text-teal-900,
+  .dark-app .text-teal-800,
+  .dark-app .text-teal-700 {
+    color: #00B3C7 !important;
+  }
+
+  .dark-app .text-teal-600,
+  .dark-app .text-teal-500 {
+    color: #1AD0E4 !important;
+  }
+
+  .dark-app .text-purple-900,
+  .dark-app .text-purple-800,
+  .dark-app .text-purple-700 {
+    color: #A855F7 !important;
+  }
+
+  .dark-app .text-purple-600,
+  .dark-app .text-purple-500 {
+    color: #C084FC !important;
+  }
+
+  .dark-app .text-amber-900,
+  .dark-app .text-amber-800,
+  .dark-app .text-amber-700 {
+    color: #F9EE80 !important;
+  }
+
+  .dark-app .text-amber-600,
+  .dark-app .text-amber-500 {
+    color: #FBBF24 !important;
+  }
+
+  .dark-app .text-orange-900,
+  .dark-app .text-orange-800,
+  .dark-app .text-orange-700 {
+    color: #FF8A3D !important;
+  }
+
+  .dark-app .text-orange-600,
+  .dark-app .text-orange-500 {
+    color: #FB923C !important;
+  }
+
+  .dark-app .text-cyan-900,
+  .dark-app .text-cyan-800,
+  .dark-app .text-cyan-700 {
+    color: #00B3C7 !important;
+  }
+
+  .dark-app .text-cyan-600,
+  .dark-app .text-cyan-500 {
+    color: #1AD0E4 !important;
+  }
+
+  .dark-app .text-red-900,
+  .dark-app .text-red-800,
+  .dark-app .text-red-700 {
+    color: #EF4444 !important;
+  }
+
+  .dark-app .text-red-600,
+  .dark-app .text-red-500 {
+    color: #F87171 !important;
+  }
+
+  .dark-app .text-primary-900,
+  .dark-app .text-primary-800,
+  .dark-app .text-primary-700 {
+    color: #00B3C7 !important;
+  }
+
+  .dark-app .text-primary-600,
+  .dark-app .text-primary-500 {
+    color: #1AD0E4 !important;
+  }
+
+  /* Borders -> Dark */
+  .dark-app .border-gray-100,
+  .dark-app .border-gray-200,
+  .dark-app .border-gray-300 {
+    border-color: #2E2E2E !important;
+  }
+
+  .dark-app .border-blue-100,
+  .dark-app .border-blue-200 {
+    border-color: rgba(0, 179, 199, 0.4) !important;
+  }
+
+  .dark-app .border-green-100,
+  .dark-app .border-green-200 {
+    border-color: rgba(61, 214, 140, 0.4) !important;
+  }
+
+  .dark-app .border-teal-100,
+  .dark-app .border-teal-200 {
+    border-color: rgba(0, 179, 199, 0.4) !important;
+  }
+
+  .dark-app .border-purple-100,
+  .dark-app .border-purple-200 {
+    border-color: rgba(168, 85, 247, 0.4) !important;
+  }
+
+  .dark-app .border-amber-100,
+  .dark-app .border-amber-200 {
+    border-color: rgba(249, 238, 128, 0.4) !important;
+  }
+
+  .dark-app .border-orange-100,
+  .dark-app .border-orange-200 {
+    border-color: rgba(255, 138, 61, 0.4) !important;
+  }
+
+  .dark-app .border-cyan-100,
+  .dark-app .border-cyan-200 {
+    border-color: rgba(0, 179, 199, 0.4) !important;
+  }
+
+  .dark-app .border-primary-100,
+  .dark-app .border-primary-200 {
+    border-color: rgba(0, 179, 199, 0.4) !important;
+  }
+
+  /* Divide colors */
+  .dark-app .divide-gray-200 > :not([hidden]) ~ :not([hidden]) {
+    border-color: #2E2E2E !important;
+  }
+
+  /* Ring colors */
+  .dark-app .ring-primary-300,
+  .dark-app .ring-primary-500 {
+    --tw-ring-color: rgba(0, 179, 199, 0.4) !important;
+  }
+
+  /* Hover states */
+  .dark-app .hover\:bg-gray-50:hover,
+  .dark-app .hover\:bg-gray-100:hover {
+    background-color: #262626 !important;
+  }
+
+  .dark-app .hover\:shadow-md:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Focus states */
+  .dark-app .focus\:border-primary-500:focus {
+    border-color: #00B3C7 !important;
+  }
+
+  .dark-app .focus\:ring-primary-500:focus {
+    --tw-ring-color: rgba(0, 179, 199, 0.3) !important;
+  }
+
+  /* Shadow overrides */
+  .dark-app .shadow-sm {
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+  }
 }
 
