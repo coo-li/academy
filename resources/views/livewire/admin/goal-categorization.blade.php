@@ -90,9 +90,9 @@
             <p class="text-2xl font-bold text-gray-600">{{ $stats['category_c'] }}</p>
             <p class="text-xs text-gray-500">C-Ziele</p>
         </div>
-        <div class="bg-white rounded-xl shadow-sm border-2 border-slate-300 p-4">
-            <p class="text-2xl font-bold text-slate-500">{{ $stats['category_none'] ?? 0 }}</p>
-            <p class="text-xs text-gray-500">Keine Kat.</p>
+        <div class="bg-slate-700 rounded-xl shadow-sm border-2 border-slate-500 p-4">
+            <p class="text-2xl font-bold text-slate-200">{{ $stats['category_none'] ?? 0 }}</p>
+            <p class="text-xs text-slate-400">Keine Kat.</p>
         </div>
     </div>
 
@@ -205,7 +205,7 @@
                         'A' => 'bg-red-50 border border-red-200',
                         'B' => 'bg-yellow-50 border border-yellow-200',
                         'C' => 'bg-gray-100 border border-gray-200',
-                        'none' => 'bg-slate-50 border border-slate-200',
+                        'none' => 'bg-slate-600 border border-slate-500',
                         default => 'bg-gray-50 border border-gray-200',
                     } }}">
                     <span class="inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold
@@ -219,8 +219,8 @@
                         {{ $key === 'none' ? '–' : $key }}
                     </span>
                     <div>
-                        <p class="font-semibold text-gray-900">{{ $config['label'] }}</p>
-                        <p class="text-xs text-gray-600">{{ $config['description'] }}</p>
+                        <p class="font-semibold {{ $key === 'none' ? 'text-slate-200' : 'text-gray-900' }}">{{ $config['label'] }}</p>
+                        <p class="text-xs {{ $key === 'none' ? 'text-slate-400' : 'text-gray-600' }}">{{ $config['description'] }}</p>
                     </div>
                 </div>
             @endforeach

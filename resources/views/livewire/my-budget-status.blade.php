@@ -16,109 +16,295 @@
         @endif
     </div>
 
-    {{-- Weiterbildungsbudget - HELLES DESIGN --}}
-    <div class="bg-white rounded-xl shadow-sm border-2 border-primary-200 p-6">
-        <div class="flex items-center justify-between mb-4">
-            <div>
-                <h3 class="text-xl font-bold text-gray-900">Weiterbildungsbudget</h3>
-                <p class="text-sm text-gray-500 mt-1">
-                    {{ $selectedPeriodName }} {{ $selectedYear }} · Stundensatz: {{ number_format($weiterbildungData['hourly_rate'], 0, ',', '.') }} €/h
-                    @if($weiterbildungData['base_rule_name'] ?? false)
-                        <span class="text-gray-400">· {{ $weiterbildungData['base_rule_name'] }}</span>
-                    @endif
-                </p>
-            </div>
-            <div class="text-right">
-                <span class="text-sm bg-primary-100 text-primary-800 px-3 py-1 rounded-full font-semibold">
-                    {{ number_format($weiterbildungData['full_year_allowance'], 0, ',', '.') }} € / Jahr
-                </span>
-                @if($selectedPeriod !== 'year')
-                    <p class="text-xs text-gray-500 mt-1">
-                        {{ number_format($weiterbildungData['total_allowance'], 0, ',', '.') }} € für Zeitraum
-                    </p>
-                @endif
-            </div>
-        </div>
-        
-        {{-- Cash-Limit Hinweis wenn Overlay-Regel greift --}}
-        @if($weiterbildungData['has_cash_limit'] ?? false)
-            <div class="mb-4 p-3 bg-orange-50 border border-orange-200 rounded-lg flex items-start gap-3">
-                <svg class="w-5 h-5 text-orange-500 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-                <div class="flex-1">
-                    <p class="text-sm font-medium text-orange-800">Cash-Limit aktiv</p>
-                    <p class="text-xs text-orange-700 mt-0.5">
-                        Maximal <strong>{{ number_format($weiterbildungData['max_cash'], 0, ',', '.') }} €</strong> pro Jahr für echte Geldausgaben (externe Schulungen).
-                        @if($selectedPeriod !== 'year' && $weiterbildungData['max_cash_period'])
-                            Das entspricht <strong>{{ number_format($weiterbildungData['max_cash_period'], 0, ',', '.') }} €</strong> für {{ $selectedPeriodName }}.
-                        @endif
-                    </p>
-                    <div class="mt-2 flex items-center gap-4 text-xs">
-                        <span class="text-orange-700">
-                            Ausgegeben: <strong>{{ number_format($weiterbildungData['cash_spent'], 0, ',', '.') }} €</strong>
-                        </span>
-                        <span class="{{ ($weiterbildungData['cash_remaining'] ?? 0) < 0 ? 'text-red-600 font-semibold' : 'text-orange-700' }}">
-                            Verbleibend: <strong>{{ number_format($weiterbildungData['cash_remaining'] ?? 0, 0, ',', '.') }} €</strong>
-                        </span>
+    {{-- WEITERBILDUNGSBUDGET - Persönliche Entwicklung --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-primary-200 overflow-hidden">
+        {{-- Header --}}
+        <div class="bg-gradient-to-r from-primary-600 to-primary-700 px-6 py-4 border-b border-primary-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Weiterbildungsbudget</h3>
+                        <p class="text-xs text-white/70">Budget für eigene Entwicklung · {{ $selectedPeriodName }} {{ $selectedYear }}</p>
                     </div>
                 </div>
-            </div>
-        @endif
-        
-        <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-            <div class="bg-gray-50 rounded-lg p-4 border border-gray-100">
-                <p class="text-3xl font-bold {{ $weiterbildungData['remaining'] < 0 ? 'text-red-600' : 'text-gray-900' }}">
-                    {{ number_format($weiterbildungData['remaining'], 0, ',', '.') }} €
-                </p>
-                <p class="text-sm text-gray-500 mt-1">verbleibend</p>
-            </div>
-            <div class="bg-blue-50 rounded-lg p-4 border border-blue-100">
-                <p class="text-2xl font-semibold text-blue-900">{{ number_format($weiterbildungData['geplant_hours'], 1, ',', '.') }} h</p>
-                <p class="text-sm text-blue-600">geplant (Soll)</p>
-                <p class="text-xs text-blue-500 mt-1">= {{ number_format($weiterbildungData['geplant_euros'], 0, ',', '.') }} €</p>
-            </div>
-            <div class="bg-green-50 rounded-lg p-4 border border-green-100">
-                <p class="text-2xl font-semibold text-green-900">{{ number_format($weiterbildungData['genutzt_hours'], 1, ',', '.') }} h</p>
-                <p class="text-sm text-green-600">genutzt (Ist)</p>
-                <p class="text-xs text-green-500 mt-1">= {{ number_format($weiterbildungData['genutzt_euros'], 0, ',', '.') }} €</p>
-            </div>
-            @if(($weiterbildungData['training_count'] ?? 0) > 0)
-            <div class="bg-teal-50 rounded-lg p-4 border border-teal-100">
-                <p class="text-2xl font-semibold text-teal-900">{{ number_format($weiterbildungData['training_costs_euros'], 0, ',', '.') }} €</p>
-                <p class="text-sm text-teal-600">Externe Schulungen</p>
-                <p class="text-xs text-teal-500 mt-1">{{ $weiterbildungData['training_count'] }} Buchung(en)</p>
-            </div>
-            @endif
-            <div class="bg-purple-50 rounded-lg p-4 border border-purple-100">
-                @php
-                    $nutzung = $weiterbildungData['geplant_hours'] > 0 
-                        ? ($weiterbildungData['genutzt_hours'] / $weiterbildungData['geplant_hours']) * 100 
-                        : 0;
-                @endphp
-                <p class="text-2xl font-semibold text-purple-900">{{ number_format($nutzung, 0) }}%</p>
-                <p class="text-sm text-purple-600">Ist / Soll</p>
+                <div class="text-right">
+                    <span class="text-sm bg-white text-primary-700 px-3 py-1.5 rounded-lg font-semibold shadow-sm">
+                        {{ number_format($weiterbildungData['full_year_allowance'], 0, ',', '.') }} € / Jahr
+                    </span>
+                    @if($selectedPeriod !== 'year')
+                        <p class="text-xs text-white/70 mt-1">{{ number_format($weiterbildungData['total_allowance'], 0, ',', '.') }} € für Zeitraum</p>
+                    @endif
+                </div>
             </div>
         </div>
 
-        <div class="relative">
+        <div class="p-6">
             @php
-                $barPercentage = min($weiterbildungData['percentage'], 100);
-                $barColor = $weiterbildungData['percentage'] > 100 ? 'bg-red-500' : 'bg-teal-500';
-                $totalGeplant = $weiterbildungData['geplant_euros'] + ($weiterbildungData['training_costs_euros'] ?? 0);
+                $ringPercentage = min($weiterbildungData['percentage'], 100);
+                $ringColor = $weiterbildungData['percentage'] > 100 ? '#ef4444' : '#00B3C7';
+                $circumference = 2 * 3.14159 * 54;
+                $dashOffset = $circumference - ($circumference * $ringPercentage / 100);
+
+                $verfuegbarPercentage = $weiterbildungData['total_allowance'] > 0
+                    ? max(0, min(100, ($weiterbildungData['remaining'] / $weiterbildungData['total_allowance']) * 100))
+                    : 0;
+                $verfuegbarColor = $weiterbildungData['remaining'] < 0 ? '#ef4444' : '#6366f1';
+                $verfuegbarDashOffset = $circumference - ($circumference * $verfuegbarPercentage / 100);
             @endphp
-            <div class="overflow-hidden h-3 rounded-full bg-gray-200">
-                <div style="width: {{ $barPercentage }}%"
-                     class="h-3 rounded-full {{ $barColor }} transition-all duration-500"></div>
+
+            {{-- Hauptbereich: Zwei Ringe nebeneinander --}}
+            <div class="flex items-center justify-center gap-12 mb-6">
+                {{-- Ring 1: Verwendungsgrad --}}
+                <div class="flex flex-col items-center">
+                    <div class="relative w-36 h-36">
+                        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#262626" stroke-width="10"/>
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="{{ $ringColor }}" stroke-width="10"
+                                    stroke-linecap="round"
+                                    stroke-dasharray="{{ $circumference }}"
+                                    stroke-dashoffset="{{ $dashOffset }}"
+                                    class="transition-all duration-1000 ease-out"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-3xl font-black {{ $weiterbildungData['percentage'] > 100 ? 'text-red-500' : 'text-dark-tuerkis' }}">
+                                {{ number_format($weiterbildungData['percentage'], 0) }}%
+                            </span>
+                        </div>
+                    </div>
+                    <span class="mt-2 text-sm font-bold text-gray-600 uppercase tracking-wider">Verwendet</span>
+                    <span class="text-xs text-gray-400">{{ number_format($weiterbildungData['total_allowance'] - $weiterbildungData['remaining'], 0, ',', '.') }} € von {{ number_format($weiterbildungData['total_allowance'], 0, ',', '.') }} €</span>
+                </div>
+
+                {{-- Ring 2: Verfügbares Budget --}}
+                <div class="flex flex-col items-center">
+                    <div class="relative w-36 h-36">
+                        <svg class="w-36 h-36 transform -rotate-90" viewBox="0 0 120 120">
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="#262626" stroke-width="10"/>
+                            <circle cx="60" cy="60" r="54" fill="none" stroke="{{ $verfuegbarColor }}" stroke-width="10"
+                                    stroke-linecap="round"
+                                    stroke-dasharray="{{ $circumference }}"
+                                    stroke-dashoffset="{{ $verfuegbarDashOffset }}"
+                                    class="transition-all duration-1000 ease-out"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span class="text-2xl font-black {{ $weiterbildungData['remaining'] < 0 ? 'text-red-500' : 'text-indigo-600' }}">
+                                {{ number_format($weiterbildungData['remaining'], 0, ',', '.') }} €
+                            </span>
+                        </div>
+                    </div>
+                    <span class="mt-2 text-sm font-bold text-gray-600 uppercase tracking-wider">Verfügbar</span>
+                    <span class="text-xs text-gray-400">{{ number_format($verfuegbarPercentage, 0) }}% vom Budget übrig</span>
+                </div>
             </div>
-            <div class="flex justify-between text-sm text-gray-600 mt-2">
-                <span>
-                    {{ number_format($totalGeplant, 0, ',', '.') }} € verplant
-                    @if(($weiterbildungData['training_costs_euros'] ?? 0) > 0)
-                        <span class="text-xs text-gray-400">(inkl. {{ number_format($weiterbildungData['training_costs_euros'], 0, ',', '.') }} € externe Schulungen)</span>
-                    @endif
-                </span>
-                <span class="font-medium">{{ number_format($weiterbildungData['total_allowance'], 0, ',', '.') }} € Budget</span>
+
+            {{-- Sub-Blöcke: Persönliche Ziele + Externe Schulungen --}}
+            <div class="grid md:grid-cols-2 gap-4">
+                {{-- Persönliche Ziele --}}
+                <button type="button" wire:click="setTab('weiterbildung')"
+                        class="text-left p-4 rounded-lg border-2 transition-all hover:shadow-md
+                               {{ $activeTab === 'weiterbildung' ? 'bg-primary-50 border-primary-400 ring-2 ring-primary-200' : 'bg-white border-gray-200 hover:border-primary-300' }}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 bg-primary-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-900">Persönliche Ziele</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Anzahl Ziele:</span>
+                            <span class="font-medium text-gray-900">{{ $categoryStats['personal_goals']['count'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Geplant:</span>
+                            <span class="font-medium text-blue-600">{{ number_format($categoryStats['personal_goals']['soll_hours'], 1, ',', '.') }} h</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Genutzt:</span>
+                            <span class="font-medium text-green-600">{{ number_format($categoryStats['personal_goals']['ist_hours'], 1, ',', '.') }} h</span>
+                        </div>
+                        @if(($categoryStats['personal_goals']['soll_hours'] ?? 0) > 0)
+                            <div class="mt-2">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="text-gray-500">Fortschritt</span>
+                                    <span class="font-medium text-gray-700">{{ number_format($categoryStats['personal_goals']['verwendung'], 0) }}%</span>
+                                </div>
+                                <div class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                                    <div class="h-full bg-primary-500 rounded-full" style="width: {{ min($categoryStats['personal_goals']['verwendung'], 100) }}%"></div>
+                                </div>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="mt-3 text-xs text-primary-600 font-medium flex items-center gap-1">
+                        Details anzeigen
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+
+                {{-- Externe Schulungen --}}
+                <button type="button" wire:click="setTab('externe')"
+                        class="text-left p-4 rounded-lg border-2 transition-all hover:shadow-md
+                               {{ $activeTab === 'externe' ? 'bg-cyan-50 border-cyan-400 ring-2 ring-cyan-200' : 'bg-white border-gray-200 hover:border-cyan-300' }}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 bg-cyan-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-900">Externe Schulungen</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Buchungen:</span>
+                            <span class="font-medium text-gray-900">{{ $weiterbildungData['training_count'] ?? 0 }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Stunden:</span>
+                            <span class="font-medium text-blue-600">{{ number_format($weiterbildungData['training_hours'] ?? 0, 1, ',', '.') }} h</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Kosten:</span>
+                            <span class="font-bold text-cyan-700">{{ number_format($weiterbildungData['training_costs_euros'] ?? 0, 0, ',', '.') }} €</span>
+                        </div>
+                        @if($weiterbildungData['has_cash_limit'] ?? false)
+                            <div class="mt-2 p-2 bg-orange-50 rounded text-xs">
+                                <span class="text-orange-700">Cash-Limit: {{ number_format($weiterbildungData['cash_remaining'] ?? 0, 0, ',', '.') }} € verbleibend</span>
+                            </div>
+                        @endif
+                    </div>
+                    <div class="mt-3 text-xs text-cyan-600 font-medium flex items-center gap-1">
+                        Details anzeigen
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    {{-- TEAM & SERVICE DEVELOPMENT --}}
+    <div class="bg-white rounded-xl shadow-sm border-2 border-purple-200 overflow-hidden">
+        {{-- Header --}}
+        <div class="bg-gradient-to-r from-purple-600 to-purple-700 px-6 py-4 border-b border-purple-200">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Team & Service Development</h3>
+                        <p class="text-xs text-white/70">Teamziele, interne Schulungen & Sonstiges · {{ $selectedPeriodName }} {{ $selectedYear }}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-white/80 bg-white/20 px-3 py-1 rounded-full">Wird nicht vom eigenen Budget abgezogen</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6">
+            {{-- Sub-Blöcke: Teamziele + Interne Schulungen + Sonstiges --}}
+            <div class="grid md:grid-cols-3 gap-4">
+                {{-- Teamziele --}}
+                <button type="button" wire:click="setTab('teamziele')"
+                        class="text-left p-4 rounded-lg border-2 transition-all hover:shadow-md
+                               {{ $activeTab === 'teamziele' ? 'bg-purple-50 border-purple-400 ring-2 ring-purple-200' : 'bg-white border-gray-200 hover:border-purple-300' }}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-900">Teamziele</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Anzahl:</span>
+                            <span class="font-medium text-gray-900">{{ $categoryStats['team_goals']['count'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Genutzt:</span>
+                            <span class="font-medium text-green-600">{{ number_format($categoryStats['team_goals']['ist_hours'], 1, ',', '.') }} h</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs text-purple-600 font-medium flex items-center gap-1">
+                        Details
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+
+                {{-- Interne Schulungen --}}
+                <button type="button" wire:click="setTab('schulungen')"
+                        class="text-left p-4 rounded-lg border-2 transition-all hover:shadow-md
+                               {{ $activeTab === 'schulungen' ? 'bg-teal-50 border-teal-400 ring-2 ring-teal-200' : 'bg-white border-gray-200 hover:border-teal-300' }}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 bg-teal-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-900">Interne Schulungen</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Anzahl:</span>
+                            <span class="font-medium text-gray-900">{{ $categoryStats['internal_training']['count'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Genutzt:</span>
+                            <span class="font-medium text-green-600">{{ number_format($categoryStats['internal_training']['ist_hours'], 1, ',', '.') }} h</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs text-teal-600 font-medium flex items-center gap-1">
+                        Details
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
+
+                {{-- Sonstiges --}}
+                <button type="button" wire:click="setTab('sonstiges')"
+                        class="text-left p-4 rounded-lg border-2 transition-all hover:shadow-md
+                               {{ $activeTab === 'sonstiges' ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-200' : 'bg-white border-gray-200 hover:border-amber-300' }}">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-8 h-8 bg-amber-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                            </svg>
+                        </div>
+                        <span class="font-semibold text-gray-900">Sonstiges</span>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Anzahl:</span>
+                            <span class="font-medium text-gray-900">{{ $categoryStats['other']['count'] }}</span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-gray-500">Genutzt:</span>
+                            <span class="font-medium text-green-600">{{ number_format($categoryStats['other']['ist_hours'], 1, ',', '.') }} h</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 text-xs text-amber-600 font-medium flex items-center gap-1">
+                        Details
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                        </svg>
+                    </div>
+                </button>
             </div>
         </div>
     </div>
@@ -181,71 +367,90 @@
         </div>
     @endif
 
-    {{-- Tabs --}}
+    {{-- Tabs mit visueller Gruppierung --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="border-b border-gray-200 overflow-x-auto">
-            <nav class="flex -mb-px min-w-max">
+            <nav class="flex -mb-px min-w-max items-end">
+                {{-- Jahresübersicht --}}
                 <button type="button" wire:click="setTab('uebersicht')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-5 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'uebersicht' ? 'border-gray-900 text-gray-900 bg-gray-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Jahresübersicht
                 </button>
+
+                {{-- Trenner --}}
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+                {{-- WEITERBILDUNG Gruppe --}}
+                <div class="flex items-end">
+                    <span class="px-2 py-1 text-[10px] font-semibold text-primary-600 uppercase tracking-wider bg-primary-50 rounded-t border-t border-x border-primary-200">Weiterbildung</span>
+                </div>
                 <button type="button" wire:click="setTab('weiterbildung')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'weiterbildung' ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Persönliche Ziele
+                    Pers. Ziele
                     @if($categoryStats['personal_goals']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'weiterbildung' ? 'bg-primary-200 text-primary-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'weiterbildung' ? 'bg-primary-200 text-primary-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['personal_goals']['count'] }}
                         </span>
                     @endif
                 </button>
+                <button type="button" wire:click="setTab('externe')"
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
+                               {{ $activeTab === 'externe' ? 'border-cyan-500 text-cyan-600 bg-cyan-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
+                    Ext. Schulungen
+                    @if($trainingBookings->count() > 0)
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'externe' ? 'bg-cyan-200 text-cyan-800' : 'bg-gray-200 text-gray-700' }}">
+                            {{ $trainingBookings->count() }}
+                        </span>
+                    @endif
+                </button>
+
+                {{-- Trenner --}}
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+                {{-- TEAM DEVELOPMENT Gruppe --}}
+                <div class="flex items-end">
+                    <span class="px-2 py-1 text-[10px] font-semibold text-purple-600 uppercase tracking-wider bg-purple-50 rounded-t border-t border-x border-purple-200">Team Dev</span>
+                </div>
                 <button type="button" wire:click="setTab('teamziele')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'teamziele' ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Teamziele
                     @if($categoryStats['team_goals']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'teamziele' ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'teamziele' ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['team_goals']['count'] }}
                         </span>
                     @endif
                 </button>
                 <button type="button" wire:click="setTab('schulungen')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'schulungen' ? 'border-teal-500 text-teal-600 bg-teal-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Interne Schulungen
+                    Int. Schulungen
                     @if($categoryStats['internal_training']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'schulungen' ? 'bg-teal-200 text-teal-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'schulungen' ? 'bg-teal-200 text-teal-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['internal_training']['count'] }}
                         </span>
                     @endif
                 </button>
                 <button type="button" wire:click="setTab('sonstiges')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'sonstiges' ? 'border-amber-500 text-amber-600 bg-amber-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Sonstiges
                     @if($categoryStats['other']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'sonstiges' ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'sonstiges' ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['other']['count'] }}
                         </span>
                     @endif
                 </button>
-                <button type="button" wire:click="setTab('externe')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
-                               {{ $activeTab === 'externe' ? 'border-cyan-500 text-cyan-600 bg-cyan-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Externe Schulungen
-                    @if($trainingBookings->count() > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'externe' ? 'bg-cyan-200 text-cyan-800' : 'bg-gray-200 text-gray-700' }}">
-                            {{ $trainingBookings->count() }}
-                        </span>
-                    @endif
-                </button>
+
+                {{-- Archiv --}}
                 <button type="button" wire:click="setTab('archiv')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'archiv' ? 'border-orange-500 text-orange-600 bg-orange-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Archiv
                     @if($archivedCount > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'archiv' ? 'bg-orange-200 text-orange-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'archiv' ? 'bg-orange-200 text-orange-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $archivedCount }}
                         </span>
                     @endif
@@ -411,63 +616,4 @@
         </div>
     </div>
 
-    {{-- Kategorie-Übersicht (klickbar!) --}}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <button type="button" wire:click="setTab('weiterbildung')"
-                class="text-left rounded-lg p-4 transition-all hover:shadow-md border-2
-                       {{ $activeTab === 'weiterbildung' ? 'bg-primary-100 border-primary-400 ring-2 ring-primary-300' : 'bg-primary-50 border-primary-200 hover:border-primary-400' }}">
-            <p class="text-sm text-primary-700 font-medium">Persönliche Ziele</p>
-            <p class="text-2xl font-bold text-primary-900">{{ number_format($categoryStats['personal_goals']['ist_hours'], 1, ',', '.') }} h</p>
-            <p class="text-xs text-primary-600">
-                {{ $categoryStats['personal_goals']['count'] }} Ziele · 
-                @if(($categoryStats['personal_goals']['soll_hours'] ?? 0) > 0)
-                    {{ number_format($categoryStats['personal_goals']['verwendung'], 0) }}%
-                @else
-                    -
-                @endif
-            </p>
-        </button>
-        <button type="button" wire:click="setTab('teamziele')"
-                class="text-left rounded-lg p-4 transition-all hover:shadow-md border-2
-                       {{ $activeTab === 'teamziele' ? 'bg-purple-100 border-purple-400 ring-2 ring-purple-300' : 'bg-purple-50 border-purple-200 hover:border-purple-400' }}">
-            <p class="text-sm text-purple-700 font-medium">Teamziele</p>
-            <p class="text-2xl font-bold text-purple-900">{{ number_format($categoryStats['team_goals']['ist_hours'], 1, ',', '.') }} h</p>
-            <p class="text-xs text-purple-600">
-                {{ $categoryStats['team_goals']['count'] }} Ziele · 
-                @if(($categoryStats['team_goals']['soll_hours'] ?? 0) > 0)
-                    {{ number_format($categoryStats['team_goals']['verwendung'], 0) }}%
-                @else
-                    -
-                @endif
-            </p>
-        </button>
-        <button type="button" wire:click="setTab('schulungen')"
-                class="text-left rounded-lg p-4 transition-all hover:shadow-md border-2
-                       {{ $activeTab === 'schulungen' ? 'bg-teal-100 border-teal-400 ring-2 ring-teal-300' : 'bg-teal-50 border-teal-200 hover:border-teal-400' }}">
-            <p class="text-sm text-teal-700 font-medium">Interne Schulungen</p>
-            <p class="text-2xl font-bold text-teal-900">{{ number_format($categoryStats['internal_training']['ist_hours'], 1, ',', '.') }} h</p>
-            <p class="text-xs text-teal-600">
-                {{ $categoryStats['internal_training']['count'] }} Ziele · 
-                @if(($categoryStats['internal_training']['soll_hours'] ?? 0) > 0)
-                    {{ number_format($categoryStats['internal_training']['verwendung'], 0) }}%
-                @else
-                    -
-                @endif
-            </p>
-        </button>
-        <button type="button" wire:click="setTab('sonstiges')"
-                class="text-left rounded-lg p-4 transition-all hover:shadow-md border-2
-                       {{ $activeTab === 'sonstiges' ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300' : 'bg-amber-50 border-amber-200 hover:border-amber-400' }}">
-            <p class="text-sm text-amber-700 font-medium">Sonstiges</p>
-            <p class="text-2xl font-bold text-amber-900">{{ number_format($categoryStats['other']['ist_hours'], 1, ',', '.') }} h</p>
-            <p class="text-xs text-amber-600">
-                {{ $categoryStats['other']['count'] }} Ziele · 
-                @if(($categoryStats['other']['soll_hours'] ?? 0) > 0)
-                    {{ number_format($categoryStats['other']['verwendung'], 0) }}%
-                @else
-                    -
-                @endif
-            </p>
-        </button>
-    </div>
 </div>

@@ -77,63 +77,78 @@
         </div>
     </div>
 
-    {{-- Tabs --}}
+    {{-- Tabs mit visueller Gruppierung --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="border-b border-gray-200 overflow-x-auto">
-            <nav class="flex -mb-px min-w-max">
+            <nav class="flex -mb-px min-w-max items-end">
+                {{-- Jahresübersicht --}}
                 <button type="button" wire:click="setTab('uebersicht')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-5 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'uebersicht' ? 'border-gray-900 text-gray-900 bg-gray-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Jahresübersicht
                 </button>
+
+                {{-- Trenner --}}
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+                {{-- WEITERBILDUNG Gruppe --}}
+                <div class="flex items-end">
+                    <span class="px-2 py-1 text-[10px] font-semibold text-primary-600 uppercase tracking-wider bg-primary-50 rounded-t border-t border-x border-primary-200">Weiterbildung</span>
+                </div>
                 <button type="button" wire:click="setTab('weiterbildung')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'weiterbildung' ? 'border-primary-500 text-primary-600 bg-primary-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Persönliche Ziele
+                    Pers. Ziele
                     @if($categoryStats['personal_goals']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'weiterbildung' ? 'bg-primary-200 text-primary-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'weiterbildung' ? 'bg-primary-200 text-primary-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['personal_goals']['count'] }}
                         </span>
                     @endif
                 </button>
                 <button type="button" wire:click="setTab('externe')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'externe' ? 'border-cyan-500 text-cyan-600 bg-cyan-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Externe Schulungen
+                    Ext. Schulungen
                     @if($trainingBookings->count() > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'externe' ? 'bg-cyan-200 text-cyan-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'externe' ? 'bg-cyan-200 text-cyan-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $trainingBookings->count() }}
                         </span>
                     @endif
                 </button>
+
+                {{-- Trenner --}}
+                <div class="h-8 w-px bg-gray-200 mx-1"></div>
+
+                {{-- TEAM DEVELOPMENT Gruppe --}}
+                <div class="flex items-end">
+                    <span class="px-2 py-1 text-[10px] font-semibold text-purple-600 uppercase tracking-wider bg-purple-50 rounded-t border-t border-x border-purple-200">Team Dev</span>
+                </div>
                 <button type="button" wire:click="setTab('teamziele')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'teamziele' ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Teamziele
-                    <span class="text-xs text-gray-400 ml-1">(Service)</span>
                     @if($categoryStats['team_goals']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'teamziele' ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'teamziele' ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['team_goals']['count'] }}
                         </span>
                     @endif
                 </button>
                 <button type="button" wire:click="setTab('schulungen')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'schulungen' ? 'border-teal-500 text-teal-600 bg-teal-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
-                    Interne Schulungen
-                    <span class="text-xs text-gray-400 ml-1">(Service)</span>
+                    Int. Schulungen
                     @if($categoryStats['internal_training']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'schulungen' ? 'bg-teal-200 text-teal-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'schulungen' ? 'bg-teal-200 text-teal-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['internal_training']['count'] }}
                         </span>
                     @endif
                 </button>
                 <button type="button" wire:click="setTab('sonstiges')"
-                        class="px-6 py-4 text-sm font-medium border-b-2 transition-colors
+                        class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'sonstiges' ? 'border-amber-500 text-amber-600 bg-amber-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Sonstiges
                     @if($categoryStats['other']['count'] > 0)
-                        <span class="ml-2 px-2 py-0.5 text-xs rounded-full {{ $activeTab === 'sonstiges' ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-700' }}">
+                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'sonstiges' ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-700' }}">
                             {{ $categoryStats['other']['count'] }}
                         </span>
                     @endif
