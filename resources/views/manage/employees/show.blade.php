@@ -17,6 +17,15 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     Zur&uuml;ck
                 </a>
+                @if(auth()->user()->canImpersonate($user))
+                    <form action="{{ route('impersonate.start', $user) }}" method="POST" class="inline">
+                        @csrf
+                        <button type="submit" class="btn-sm inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors">
+                            <i class="ti ti-user-check"></i>
+                            Als Nutzer anmelden
+                        </button>
+                    </form>
+                @endif
                 <div class="flex items-center gap-3">
                     <div class="avatar-lg {{ $user->hasHeadOfRole() ? 'ring-2 ring-purple-400' : '' }}">
                         <span>{{ $user->initials }}</span>

@@ -125,11 +125,11 @@
                 </div>
                 
                 <div class="py-2">
-                    <a href="{{ route('profile.edit') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx transition-colors">
+                    <a href="{{ Route::has('profile.edit') ? route('profile.edit') : '#' }}" class="flex items-center gap-3 px-4 py-2 text-sm text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx transition-colors">
                         <i class="ti ti-user text-lg"></i>
                         Profil bearbeiten
                     </a>
-                    @if(auth()->user()->isAdmin())
+                    @if(auth()->user()->isAdmin() && Route::has('admin.settings.index'))
                     <a href="{{ route('admin.settings.index') }}" class="flex items-center gap-3 px-4 py-2 text-sm text-dark-tx-2 hover:bg-dark-card-hover hover:text-dark-tx transition-colors">
                         <i class="ti ti-settings text-lg"></i>
                         Einstellungen

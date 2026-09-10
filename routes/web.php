@@ -57,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/module/{module}', [AcademyController::class, 'showModule'])->name('academy.module.show');
     Route::get('/my-timeline', [AcademyController::class, 'timeline'])->name('academy.timeline');
     Route::get('/my-development/budget', MyBudgetStatus::class)->name('my-budget-status');
+    Route::get('/my-budget-status', MyBudgetStatus::class)->name('user.budget-status');
     Route::get('/my-milestones', MyMilestones::class)->name('user.my-milestones');
     Route::get('/admin/employee/{userId}/budget', MyBudgetStatus::class)->name('admin.employee-budget');
 
@@ -195,6 +196,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Profile
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    
+    // === Budget Sync & Coaching (neue Routes) ===
+    Route::middleware('can:admin')->group(function () {
+        Route::get('/admin/dashboard/budget-sync-projects', \App\Livewire\Admin\BudgetSyncProjects::class)->name('admin.budget-sync-projects');
+    });
+    
+    Route::middleware('can:manager')->group(function () {
+        Route::get('/admin/dashboard/coaching-overview', \App\Livewire\Admin\CoachingSlotOverview::class)->name('admin.coaching-overview');
+    });
+    
+    // === User Impersonation ===
+    // WICHTIG: /stop muss VOR /{user} stehen, sonst wird "stop" als User-ID interpretiert
+    Route::match(['get', 'post'], '/impersonate/stop', [\App\Http\Controllers\ImpersonationController::class, 'stop'])->name('impersonate.stop');
+    Route::post('/impersonate/{user}', [\App\Http\Controllers\ImpersonationController::class, 'start'])->name('impersonate.start');
 });
 
 require __DIR__.'/auth.php';

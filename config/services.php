@@ -56,4 +56,12 @@ return [
         'key' => env('BUDGET_IMPORT_KEY'),
     ],
 
+    'trafficdesign' => [
+        'enabled' => env('TRAFFICDESIGN_SYNC_ENABLED', false),
+        'budget_api_url' => env('TRAFFICDESIGN_BUDGET_API_URL', 'https://budgets.trafficdesign.de/api'),
+        'tm_api_url' => env('TRAFFICDESIGN_TM_API_URL', 'https://tm-test.trafficdesign.de/api'),
+        'api_key' => env('TRAFFICDESIGN_TM_API_KEY'),
+        'timeout' => 120,
+    ],
+
 ];

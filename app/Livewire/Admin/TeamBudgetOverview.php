@@ -101,13 +101,14 @@ class TeamBudgetOverview extends Component
                 ->orderBy('date', 'desc')
                 ->get();
 
-            $grouped = $entries->groupBy('budget_name');
+            // Gruppiere nach label (einzelne Budget-Posten) statt budget_name (Projekt-Ebene)
+            $grouped = $entries->groupBy('label');
             
             $result = [];
-            foreach ($grouped as $budgetName => $items) {
+            foreach ($grouped as $label => $items) {
                 $totalAmount = $items->sum('amount');
                 $result[] = [
-                    'budget_name' => $budgetName ?: 'Unbenannt',
+                    'budget_name' => $label ?: 'Unbenannt',
                     'total_amount' => $totalAmount,
                     'entries' => $items,
                     'users' => $items->pluck('user')->unique('id')->values(),
@@ -157,17 +158,19 @@ class TeamBudgetOverview extends Component
                 ->with('user')
                 ->get();
 
-            $grouped = $entries->groupBy('budget_name');
+            // Gruppiere nach label (einzelne Budget-Posten) statt budget_name (Projekt-Ebene)
+            $grouped = $entries->groupBy('label');
             
             $goals = [];
-            $monthTotals = array_fill(1, 12, ['amount' => 0]);
+            $monthTotals = array_fill(1, 12, ['ist' => 0, 'soll' => 0]);
             
-            foreach ($grouped as $budgetName => $items) {
+            foreach ($grouped as $label => $items) {
                 $goal = [
-                    'name' => $budgetName ?: 'Unbenannt',
+                    'name' => $label ?: 'Unbenannt',
                     'category' => $items->first()?->goal_category,
                     'months' => [],
-                    'total' => 0,
+                    'total_ist' => 0,
+                    'total_soll' => 0,
                     'users' => $items->pluck('user')->unique('id')->map(fn($u) => [
                         'id' => $u->id,
                         'name' => $u->name,
@@ -176,32 +179,43 @@ class TeamBudgetOverview extends Component
                 
                 for ($month = 1; $month <= 12; $month++) {
                     $monthEntries = $items->filter(fn($e) => $e->date->month === $month);
-                    $amount = $monthEntries->sum('amount');
+                    
+                    // Ist-Werte (budget_type = 'used')
+                    $istAmount = $monthEntries->where('budget_type', BudgetEntry::BUDGET_TYPE_USED)->sum('amount');
+                    // Soll-Werte (budget_type = 'available')
+                    $sollAmount = $monthEntries->where('budget_type', BudgetEntry::BUDGET_TYPE_AVAILABLE)->sum('amount');
                     
                     $goal['months'][$month] = [
-                        'amount' => round($amount, 2),
+                        'ist' => round($istAmount, 2),
+                        'soll' => round($sollAmount, 2),
                         'users' => $monthEntries->pluck('user')->unique('id')->map(fn($u) => [
                             'id' => $u->id,
                             'name' => $u->name,
                         ])->values()->toArray(),
                     ];
                     
-                    $goal['total'] += $amount;
-                    $monthTotals[$month]['amount'] += $amount;
+                    $goal['total_ist'] += $istAmount;
+                    $goal['total_soll'] += $sollAmount;
+                    $monthTotals[$month]['ist'] += $istAmount;
+                    $monthTotals[$month]['soll'] += $sollAmount;
                 }
                 
-                $goal['total'] = round($goal['total'], 2);
+                $goal['total_ist'] = round($goal['total_ist'], 2);
+                $goal['total_soll'] = round($goal['total_soll'], 2);
                 $goals[] = $goal;
             }
             
-            usort($goals, fn($a, $b) => $b['total'] <=> $a['total']);
+            // Sortiere nach Ist-Werten (höchste zuerst)
+            usort($goals, fn($a, $b) => $b['total_ist'] <=> $a['total_ist']);
             
-            $totalAll = array_sum(array_column($monthTotals, 'amount'));
+            $totalIst = array_sum(array_column($monthTotals, 'ist'));
+            $totalSoll = array_sum(array_column($monthTotals, 'soll'));
             
             return [
                 'goals' => $goals,
                 'month_totals' => $monthTotals,
-                'total' => round($totalAll, 2),
+                'total_ist' => round($totalIst, 2),
+                'total_soll' => round($totalSoll, 2),
             ];
         };
         

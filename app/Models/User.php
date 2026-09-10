@@ -37,6 +37,7 @@ class User extends Authenticatable
         'invited_at',
         'target_hours_per_year',
         'budget_tracker_id',
+        'tm_user_id',
         'employee_category',
         'employee_budget_rule_id',
     ];
@@ -391,6 +392,16 @@ class User extends Authenticatable
         return $this->hasMany(BudgetEntry::class);
     }
 
+    public function trainingBookings(): HasMany
+    {
+        return $this->hasMany(TrainingBooking::class);
+    }
+
+    public function coachingBookings(): HasMany
+    {
+        return $this->hasMany(CoachingBooking::class);
+    }
+
     public function userBudgets(): HasMany
     {
         return $this->hasMany(UserBudget::class);
@@ -446,5 +457,58 @@ class User extends Authenticatable
     public function hasPeopleManagerAccess(): bool
     {
         return $this->hasRole(['admin', 'c_level', 'people_manager', 'head_of']);
+    }
+
+    /**
+     * Check if this user can impersonate another user.
+     */
+    public function canImpersonate(User $target): bool
+    {
+        // Can't impersonate yourself
+        if ($this->id === $target->id) {
+            return false;
+        }
+        
+        // Can't impersonate while already impersonating
+        if (session('impersonating_from')) {
+            return false;
+        }
+        
+        // Can't impersonate archived users
+        if ($target->isArchived()) {
+            return false;
+        }
+        
+        // Admin can impersonate anyone (except other admins)
+        if ($this->isAdmin()) {
+            return !$target->isAdmin();
+        }
+        
+        // People Manager / Head of can only impersonate their managed employees
+        if ($this->isPeopleManagerOrHeadOf()) {
+            // Can't impersonate admins or c-level
+            if ($target->hasAdminAccess()) {
+                return false;
+            }
+            return $this->managedEmployees()->where('users.id', $target->id)->exists();
+        }
+        
+        return false;
+    }
+
+    /**
+     * Check if current session is impersonating another user.
+     */
+    public function isImpersonating(): bool
+    {
+        return session()->has('impersonating_from');
+    }
+
+    /**
+     * Get the original user's name if impersonating.
+     */
+    public function getImpersonatorName(): ?string
+    {
+        return session('impersonating_from_name');
     }
 }

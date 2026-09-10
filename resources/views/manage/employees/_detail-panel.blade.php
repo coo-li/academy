@@ -24,6 +24,16 @@
                     </div>
                 </div>
             </div>
+            {{-- Impersonate Button --}}
+            @if(auth()->user()->canImpersonate($user))
+                <form action="{{ route('impersonate.start', $user) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-amber-700 bg-amber-100 rounded-lg hover:bg-amber-200 transition-colors" title="Als {{ $user->name }} anmelden">
+                        <i class="ti ti-user-check"></i>
+                        Als Nutzer anmelden
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 

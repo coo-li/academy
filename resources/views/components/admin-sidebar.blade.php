@@ -1,7 +1,7 @@
 <aside class="w-64 bg-gradient-to-b from-slate-800 to-slate-900 text-white flex flex-col" x-data="{ 
     meineEntwicklungOpen: {{ request()->routeIs('user.budget-status*', 'learning.*') ? 'true' : 'false' }},
     akademieManagementOpen: {{ request()->routeIs('admin.trainings.*', 'admin.trainers.*') ? 'true' : 'false' }},
-    mitarbeiterOrgaOpen: {{ request()->routeIs('admin.dashboard.team*', 'admin.employees.*') ? 'true' : 'false' }},
+    mitarbeiterOrgaOpen: {{ request()->routeIs('admin.dashboard.team*', 'admin.employees.*', 'admin.dashboard.goal-categorization*', 'admin.training-bookings*', 'admin.coaching-overview*') ? 'true' : 'false' }},
     budgetControllingOpen: {{ request()->routeIs('admin.dashboard.budgets*', 'admin.dashboard.plan-budgets*') ? 'true' : 'false' }}
 }">
     <div class="p-6 border-b border-slate-700">
@@ -127,6 +127,52 @@
                     </svg>
                     <span>Team-Ampel (Manager)</span>
                 </a>
+                <a href="{{ route('admin.dashboard.goal-categorization') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                          {{ request()->routeIs('admin.dashboard.goal-categorization') && !request()->has('scope')
+                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                             : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <span>Ziele kategorisieren</span>
+                </a>
+                <a href="{{ route('admin.training-bookings') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                          {{ request()->routeIs('admin.training-bookings')
+                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                             : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <span>Weiterbildung buchen</span>
+                </a>
+                <a href="{{ route('admin.coaching-overview') }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                          {{ request()->routeIs('admin.coaching-overview')
+                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                             : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <span>Coach-Übersicht</span>
+                </a>
+                @if($isCLevelOrAdmin)
+                <a href="{{ route('admin.dashboard.goal-categorization', ['scope' => 'all']) }}"
+                   class="flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 text-sm
+                          {{ request()->routeIs('admin.dashboard.goal-categorization') && request()->get('scope') === 'all'
+                             ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/30' 
+                             : 'text-slate-400 hover:bg-slate-700/50 hover:text-white' }}">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    <span>Admin: Ziele kategorisieren</span>
+                </a>
+                @endif
             </div>
         </div>
         @endif

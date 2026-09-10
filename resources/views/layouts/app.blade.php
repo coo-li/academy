@@ -18,6 +18,26 @@
     @livewireStyles
 </head>
 <body class="dark-app" x-data="{ sidebarOpen: true, mobileMenuOpen: false }">
+    {{-- Impersonation Banner --}}
+    @if(session('impersonating_from'))
+        <div class="fixed top-0 left-0 right-0 z-[100] bg-amber-500 text-amber-900 px-4 py-2 text-center shadow-lg">
+            <div class="flex items-center justify-center gap-4">
+                <span class="flex items-center gap-2">
+                    <i class="ti ti-user-check text-lg"></i>
+                    <span class="font-semibold">Du siehst die Anwendung als <strong>{{ Auth::user()->name }}</strong></span>
+                </span>
+                <form action="{{ route('impersonate.stop') }}" method="POST" class="inline">
+                    @csrf
+                    <button type="submit" class="inline-flex items-center gap-1 px-3 py-1 bg-amber-700 text-white rounded-lg hover:bg-amber-800 transition-colors text-sm font-medium">
+                        <i class="ti ti-arrow-back-up"></i>
+                        Zurück zu {{ session('impersonating_from_name') }}
+                    </button>
+                </form>
+            </div>
+        </div>
+        <div class="h-10"></div> {{-- Spacer for fixed banner --}}
+    @endif
+
     <div class="flex min-h-screen">
         
         {{-- Mobile Sidebar Backdrop --}}
@@ -40,26 +60,7 @@
             {{-- Dark Topbar --}}
             @include('layouts.dark-topbar')
             
-            {{-- Admin Warning --}}
-            @if(Auth::user()?->isAdmin())
-                @php
-                    $teamsWithoutPeopleManager = \App\Models\Team::whereDoesntHave('managers', function ($q) {
-                        $q->whereHas('roles', fn ($r) => $r->where('slug', 'people_manager'));
-                    })->pluck('name');
-                @endphp
-                @if($teamsWithoutPeopleManager->isNotEmpty())
-                    <div class="px-8 pt-4">
-                        <div class="flex items-start gap-3 p-4 rounded-dark bg-dark-st-quiz/10 border border-dark-st-quiz/30 text-sm">
-                            <i class="ti ti-alert-triangle text-dark-st-quiz text-lg flex-shrink-0 mt-0.5"></i>
-                            <div class="text-dark-tx-2">
-                                <strong class="text-dark-st-quiz">{{ $teamsWithoutPeopleManager->count() }} Team(s) ohne People Manager:</strong>
-                                {{ $teamsWithoutPeopleManager->join(', ') }}.
-                                <a href="{{ route('admin.users.index') }}" class="text-dark-tuerkis underline font-semibold ml-1">Zur Nutzerverwaltung →</a>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            @endif
+            {{-- Admin Warning removed - managers() relation not available --}}
 
             {{-- Page Content --}}
             <main class="flex-1 overflow-auto">

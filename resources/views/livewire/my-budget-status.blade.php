@@ -417,31 +417,16 @@
                         class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'teamziele' ? 'border-purple-500 text-purple-600 bg-purple-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Teamziele
-                    @if($categoryStats['team_goals']['count'] > 0)
-                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'teamziele' ? 'bg-purple-200 text-purple-800' : 'bg-gray-200 text-gray-700' }}">
-                            {{ $categoryStats['team_goals']['count'] }}
-                        </span>
-                    @endif
                 </button>
                 <button type="button" wire:click="setTab('schulungen')"
                         class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'schulungen' ? 'border-teal-500 text-teal-600 bg-teal-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Int. Schulungen
-                    @if($categoryStats['internal_training']['count'] > 0)
-                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'schulungen' ? 'bg-teal-200 text-teal-800' : 'bg-gray-200 text-gray-700' }}">
-                            {{ $categoryStats['internal_training']['count'] }}
-                        </span>
-                    @endif
                 </button>
                 <button type="button" wire:click="setTab('sonstiges')"
                         class="px-4 py-3 text-sm font-medium border-b-2 transition-colors
                                {{ $activeTab === 'sonstiges' ? 'border-amber-500 text-amber-600 bg-amber-50' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50' }}">
                     Sonstiges
-                    @if($categoryStats['other']['count'] > 0)
-                        <span class="ml-1 px-1.5 py-0.5 text-xs rounded-full {{ $activeTab === 'sonstiges' ? 'bg-amber-200 text-amber-800' : 'bg-gray-200 text-gray-700' }}">
-                            {{ $categoryStats['other']['count'] }}
-                        </span>
-                    @endif
                 </button>
 
                 {{-- Archiv --}}
